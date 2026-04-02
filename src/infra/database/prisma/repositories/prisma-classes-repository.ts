@@ -192,7 +192,7 @@ export class PrismaClassesRepository implements ClassesRepository {
   async create(input: CreateClassRepositoryInput) {
     const categoryIds = await this.resolveCategoryIds(input.categories)
 
-    const classItem = await this.prisma.$transaction(async (tx) => {
+    const createdId = await this.prisma.$transaction(async (tx) => {
       const created = await tx.swimmingClass.create({
         data: {
           name: input.name,
@@ -205,11 +205,13 @@ export class PrismaClassesRepository implements ClassesRepository {
 
       await this.replaceRelations(tx, created.id, categoryIds, input.classTeachers, input.schedules)
 
-      return (await tx.swimmingClass.findUniqueOrThrow({
-        where: { id: created.id },
-        include: classInclude,
-      })) as unknown as PrismaClassRecord
+      return created.id
     })
+
+    const classItem = (await this.prisma.swimmingClass.findUniqueOrThrow({
+      where: { id: createdId },
+      include: classInclude,
+    })) as unknown as PrismaClassRecord
 
     await this.cache.deleteMatching('classes:list:')
     return PrismaClassMapper.toDomain(classItem)
@@ -225,7 +227,7 @@ export class PrismaClassesRepository implements ClassesRepository {
 
     const categoryIds = await this.resolveCategoryIds(input.categories)
 
-    const classItem = await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx) => {
       await tx.swimmingClass.update({
         where: { id },
         data: {
@@ -238,17 +240,16 @@ export class PrismaClassesRepository implements ClassesRepository {
       })
 
       await this.replaceRelations(tx, id, categoryIds, input.classTeachers, input.schedules)
-
-      return (await tx.swimmingClass.findUniqueOrThrow({
-        where: { id },
-        include: classInclude,
-      })) as unknown as PrismaClassRecord
     })
+
+    const classItem = (await this.prisma.swimmingClass.findUniqueOrThrow({
+      where: { id },
+      include: classInclude,
+    })) as unknown as PrismaClassRecord
 
     await this.cache.deleteMatching('classes:list:')
     return PrismaClassMapper.toDomain(classItem)
   }
-
   async addTeacher(classId: string, input: AssignClassTeacherRepositoryInput) {
     const classItem = (await this.prisma.swimmingClass.findUnique({
       where: { id: classId },
@@ -570,3 +571,7 @@ export class PrismaClassesRepository implements ClassesRepository {
     }
   }
 }
+
+
+
+
