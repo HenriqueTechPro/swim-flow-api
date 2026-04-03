@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger'
 import { createResultSchema, updateResultSchema, type CreateResultDto, type UpdateResultDto } from '@/shared/contracts/management'
 import { CreateResultUseCase } from '@/domain/results/application/use-cases/create-result'
 import { DeleteResultUseCase } from '@/domain/results/application/use-cases/delete-result'
+import { ListResultFilterOptionsUseCase } from '@/domain/results/application/use-cases/list-result-filter-options'
 import { ListResultsUseCase } from '@/domain/results/application/use-cases/list-results'
 import { UpdateResultUseCase } from '@/domain/results/application/use-cases/update-result'
 import { normalizePaginationParams } from '@/domain/shared/pagination/pagination-utils'
@@ -21,10 +22,17 @@ import { ResultPresenter } from '../presenters/result.presenter'
 export class ResultsController {
   constructor(
     private readonly listResults: ListResultsUseCase,
+    private readonly listResultFilterOptions: ListResultFilterOptionsUseCase,
     private readonly createResult: CreateResultUseCase,
     private readonly updateResult: UpdateResultUseCase,
     private readonly deleteResult: DeleteResultUseCase,
   ) {}
+
+  @Get('options')
+  async options() {
+    const { options } = await this.listResultFilterOptions.execute()
+    return { data: options }
+  }
 
   @Get()
   async index(

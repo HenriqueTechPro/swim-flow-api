@@ -7,6 +7,7 @@ import {
   ResultsRepository,
   type CreateResultRepositoryInput,
   type ListResultsRepositoryParams,
+  type ResultFilterOptions,
   type UpdateResultRepositoryInput,
 } from '@/domain/results/application/repositories/results-repository'
 import { AppError } from '@/shared/errors/app-error'
@@ -37,6 +38,36 @@ export class PrismaResultsRepository implements ResultsRepository {
     private readonly cache: CacheRepository,
     private readonly env: EnvService,
   ) {}
+
+  async getFilterOptions(): Promise<ResultFilterOptions> {
+    const [
+      disciplines,
+      styles,
+      distances,
+      competitions,
+      eventFormats,
+      categories,
+    ] = await this.prisma.$transaction([
+      this.prisma.result.findMany({ distinct: ['discipline'], select: { discipline: true } }),
+      this.prisma.result.findMany({ distinct: ['style'], select: { style: true } }),
+      this.prisma.result.findMany({ distinct: ['distance'], select: { distance: true } }),
+      this.prisma.result.findMany({ distinct: ['competition'], select: { competition: true } }),
+      this.prisma.result.findMany({ distinct: ['eventFormat'], select: { eventFormat: true } }),
+      this.prisma.result.findMany({ distinct: ['category'], select: { category: true } }),
+    ])
+
+    const unique = (values: string[]) =>
+      [...new Set(values.filter(Boolean))].sort((left, right) => left.localeCompare(right, 'pt-BR'))
+
+    return {
+      disciplines: unique(disciplines.map((item) => item.discipline || 'Piscina')),
+      styles: unique(styles.map((item) => item.style)),
+      distances: unique(distances.map((item) => item.distance)),
+      competitions: unique(competitions.map((item) => item.competition)),
+      eventFormats: unique(eventFormats.map((item) => item.eventFormat || 'Prova Individual')),
+      categories: unique(categories.map((item) => item.category)),
+    }
+  }
 
   async list(params?: ListResultsRepositoryParams) {
     const { page, perPage } = normalizePaginationParams(params)

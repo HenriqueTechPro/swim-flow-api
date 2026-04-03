@@ -54,6 +54,8 @@ npm run build
 npm run start:prod
 ```
 
+`start:prod` tambem executa `prisma:generate` antes de subir a aplicacao, para evitar cliente Prisma desatualizado em deploys.
+
 ## Railway
 
 Build command:

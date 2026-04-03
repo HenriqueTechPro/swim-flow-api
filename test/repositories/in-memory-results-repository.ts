@@ -2,6 +2,7 @@
 import type {
   CreateResultRepositoryInput,
   ListResultsRepositoryParams,
+  ResultFilterOptions,
   UpdateResultRepositoryInput,
 } from '@/domain/results/application/repositories/results-repository'
 import { ResultsRepository } from '@/domain/results/application/repositories/results-repository'
@@ -11,6 +12,19 @@ import { makeResult } from '../factories/make-result'
 
 export class InMemoryResultsRepository implements ResultsRepository {
   public items: Result[] = []
+
+  async getFilterOptions(): Promise<ResultFilterOptions> {
+    const unique = (values: string[]) => [...new Set(values.filter(Boolean))].sort((left, right) => left.localeCompare(right, 'pt-BR'))
+
+    return {
+      disciplines: unique(this.items.map((item) => item.discipline || 'Piscina')),
+      styles: unique(this.items.map((item) => item.style)),
+      distances: unique(this.items.map((item) => item.distance)),
+      competitions: unique(this.items.map((item) => item.competition)),
+      eventFormats: unique(this.items.map((item) => item.eventFormat || 'Prova Individual')),
+      categories: unique(this.items.map((item) => item.category)),
+    }
+  }
 
   async list(params?: ListResultsRepositoryParams) {
     const search = params?.search?.trim().toLowerCase()

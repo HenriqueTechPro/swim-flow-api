@@ -20,8 +20,18 @@ export interface ListResultsRepositoryParams extends PaginationParams {
   studentId?: string
 }
 
+export interface ResultFilterOptions {
+  disciplines: string[]
+  styles: string[]
+  distances: string[]
+  competitions: string[]
+  eventFormats: string[]
+  categories: string[]
+}
+
 export abstract class ResultsRepository {
   abstract list(params?: ListResultsRepositoryParams): Promise<PaginatedResult<Result>>
+  abstract getFilterOptions(): Promise<ResultFilterOptions>
   abstract create(input: CreateResultRepositoryInput): Promise<Result>
   abstract update(id: string, input: UpdateResultRepositoryInput): Promise<Result>
   abstract remove(id: string): Promise<Result>

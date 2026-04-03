@@ -29,6 +29,7 @@ import { ListPoolsUseCase } from '@/domain/pools/application/use-cases/list-pool
 import { UpdatePoolUseCase } from '@/domain/pools/application/use-cases/update-pool'
 import { CreateResultUseCase } from '@/domain/results/application/use-cases/create-result'
 import { DeleteResultUseCase } from '@/domain/results/application/use-cases/delete-result'
+import { ListResultFilterOptionsUseCase } from '@/domain/results/application/use-cases/list-result-filter-options'
 import { ListResultsUseCase } from '@/domain/results/application/use-cases/list-results'
 import { UpdateResultUseCase } from '@/domain/results/application/use-cases/update-result'
 import { CreateStudentUseCase } from '@/domain/students/application/use-cases/create-student'
@@ -89,6 +90,7 @@ import { TrainingsController } from './controllers/trainings.controller'
     CreatePoolUseCase,
     UpdatePoolUseCase,
     DeletePoolUseCase,
+    ListResultFilterOptionsUseCase,
     ListResultsUseCase,
     CreateResultUseCase,
     UpdateResultUseCase,
