@@ -50,7 +50,7 @@ enum SwimmingCategory {
   Juvenil_2  @map("Juvenil 2")
   Junior_1   @map("Júnior 1")
   Junior_2   @map("Júnior 2")
-  Senior     @map("Senior")
+  Senior     @map("Sênior")
   Pre_Master @map("Pré-Master")
   Master_A   @map("Master A")
   Master_B   @map("Master B")

@@ -1,7 +1,7 @@
 export const REFERENCE_YEAR = 2026
 
 export type SwimmingCategory =
-  | 'Pre-Mirim'
+  | 'Pré-Mirim'
   | 'Mirim 1'
   | 'Mirim 2'
   | 'Petiz 1'
@@ -10,10 +10,10 @@ export type SwimmingCategory =
   | 'Infantil 2'
   | 'Juvenil 1'
   | 'Juvenil 2'
-  | 'Junior 1'
-  | 'Junior 2'
-  | 'Senior'
-  | 'Pre-Master'
+  | 'Júnior 1'
+  | 'Júnior 2'
+  | 'Sênior'
+  | 'Pré-Master'
   | 'Master A'
   | 'Master B'
   | 'Master C'
@@ -31,28 +31,28 @@ export type SwimmingCategory =
   | 'Master O'
 
 export const TEACHER_CATEGORY_OPTIONS: string[] = [
-  'Pre-Mirim',
+  'Pré-Mirim',
   'Mirim',
   'Petiz',
   'Infantil',
   'Juvenil',
-  'Junior',
-  'Senior',
+  'Júnior',
+  'Sênior',
   'Master',
 ]
 
 export const CATEGORY_GROUPS = [
-  { label: 'Pre-Mirim', categories: ['Pre-Mirim'] as SwimmingCategory[] },
+  { label: 'Pré-Mirim', categories: ['Pré-Mirim'] as SwimmingCategory[] },
   { label: 'Mirim', categories: ['Mirim 1', 'Mirim 2'] as SwimmingCategory[] },
   { label: 'Petiz', categories: ['Petiz 1', 'Petiz 2'] as SwimmingCategory[] },
   { label: 'Infantil', categories: ['Infantil 1', 'Infantil 2'] as SwimmingCategory[] },
   { label: 'Juvenil', categories: ['Juvenil 1', 'Juvenil 2'] as SwimmingCategory[] },
-  { label: 'Junior', categories: ['Junior 1', 'Junior 2'] as SwimmingCategory[] },
-  { label: 'Senior', categories: ['Senior'] as SwimmingCategory[] },
+  { label: 'Júnior', categories: ['Júnior 1', 'Júnior 2'] as SwimmingCategory[] },
+  { label: 'Sênior', categories: ['Sênior'] as SwimmingCategory[] },
   {
     label: 'Master',
     categories: [
-      'Pre-Master',
+      'Pré-Master',
       'Master A',
       'Master B',
       'Master C',
@@ -83,8 +83,8 @@ export function getCategoryByBirthYear(birthYear: number): SwimmingCategory {
 }
 
 export function getCategoryByAge(age: number): SwimmingCategory {
-  if (age < 6) return 'Pre-Mirim'
-  if (age <= 8) return 'Pre-Mirim'
+  if (age < 6) return 'Pré-Mirim'
+  if (age <= 8) return 'Pré-Mirim'
   if (age === 9) return 'Mirim 1'
   if (age === 10) return 'Mirim 2'
   if (age === 11) return 'Petiz 1'
@@ -93,9 +93,9 @@ export function getCategoryByAge(age: number): SwimmingCategory {
   if (age === 14) return 'Infantil 2'
   if (age === 15) return 'Juvenil 1'
   if (age === 16) return 'Juvenil 2'
-  if (age === 17) return 'Junior 1'
-  if (age <= 19) return 'Junior 2'
-  if (age <= 24) return 'Senior'
+  if (age === 17) return 'Júnior 1'
+  if (age <= 19) return 'Júnior 2'
+  if (age <= 24) return 'Sênior'
   if (age <= 29) return 'Master A'
   if (age <= 34) return 'Master B'
   if (age <= 39) return 'Master C'
@@ -130,7 +130,7 @@ const joinCategoryLabels = (labels: string[]) => {
 export function formatMixedCategoryLabel(categories: string[]): string {
   const sorted = sortGroupedCategories(categories)
 
-  if (sorted.length === 0) return 'Nao informada'
+  if (sorted.length === 0) return 'Não informada'
   if (sorted.length === 1) return sorted[0]
 
   const indexes = sorted.map((category) => CATEGORY_GROUP_ORDER[category] ?? -1)
