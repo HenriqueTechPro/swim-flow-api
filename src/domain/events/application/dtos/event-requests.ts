@@ -1,4 +1,4 @@
-export interface CreateEventRequest {
+﻿export interface CreateEventRequest {
   title: string
   description?: string
   type: 'Competição' | 'Reunião' | 'Festival' | 'Outro'

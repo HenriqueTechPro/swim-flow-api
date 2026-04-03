@@ -1,4 +1,4 @@
-import { z } from 'zod'
+﻿import { z } from 'zod'
 
 export const classScheduleSchema = z.object({
   dayOfWeek: z.string().min(1),
@@ -135,12 +135,18 @@ export const saveAttendanceBatchSchema = z.object({
 export const createResultSchema = z.object({
   studentId: z.string().uuid(),
   studentName: z.string().optional(),
-  style: z.enum(['Livre', 'Costas', 'Peito', 'Borboleta']),
-  distance: z.enum(['25m', '50m', '100m', '200m']),
+  discipline: z.string().min(1).default('Piscina'),
+  style: z.string().min(1),
+  distance: z.string().min(1),
+  customDistance: z.string().optional().default(''),
+  competitionType: z.string().optional().default(''),
+  courseType: z.string().optional().default(''),
+  eventFormat: z.string().optional().default('Prova Individual'),
   time: z.string().min(1),
   date: z.string().min(1),
   competition: z.string().optional().default(''),
   position: z.number().int().min(0).optional().default(0),
+  resultStatus: z.enum(['Classificado', 'Desclassificado']).optional().default('Classificado'),
   category: z.string().optional().default(''),
   notes: z.string().optional(),
 })

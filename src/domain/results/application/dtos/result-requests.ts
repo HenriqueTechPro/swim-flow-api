@@ -1,17 +1,38 @@
-export interface CreateResultRequest {
+﻿export interface CreateResultRequest {
   studentId: string
-  style: 'Livre' | 'Costas' | 'Peito' | 'Borboleta'
-  distance: '25m' | '50m' | '100m' | '200m'
+  discipline: string
+  style: string
+  distance: string
+  customDistance?: string
+  competitionType?: string
+  courseType?: string
+  eventFormat?: string
   time: string
   date: string
   competition?: string
   position?: number
+  resultStatus?: 'Classificado' | 'Desclassificado'
   category?: string
   notes?: string
 }
 
-export interface UpdateResultRequest extends CreateResultRequest {
+export interface UpdateResultRequest {
+  studentId: string
+  discipline: string
+  style: string
+  distance: string
+  customDistance?: string
+  competitionType?: string
+  courseType?: string
+  eventFormat?: string
+  time: string
   timeInSeconds: number
+  date: string
+  competition?: string
+  position?: number
+  resultStatus?: 'Classificado' | 'Desclassificado'
   personalBest: boolean
   improvement: number
+  category?: string
+  notes?: string
 }

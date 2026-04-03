@@ -1,14 +1,20 @@
-export interface Result {
+﻿export interface Result {
   id: string
   studentId: string
   studentName: string
-  style: 'Livre' | 'Costas' | 'Peito' | 'Borboleta'
-  distance: '25m' | '50m' | '100m' | '200m'
+  discipline?: string
+  style: string
+  distance: string
+  customDistance?: string
+  competitionType?: string
+  courseType?: string
+  eventFormat?: string
   time: string
   timeInSeconds: number
   date: string
   competition: string
   position: number
+  resultStatus?: 'Classificado' | 'Desclassificado'
   personalBest: boolean
   improvement: number
   category: string

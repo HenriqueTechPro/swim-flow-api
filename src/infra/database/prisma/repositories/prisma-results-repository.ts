@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+﻿import { Injectable } from '@nestjs/common'
 import { CacheRepository } from '@/infra/cache/cache-repository'
 import { buildPaginatedCacheKey, rememberPaginatedResult } from '@/infra/cache/cache.helpers'
 import { EnvService } from '@/infra/env/env.service'
@@ -30,13 +30,6 @@ const timeToSeconds = (time: string) => {
   return parseFloat(time)
 }
 
-const DISTANCE_TO_PRISMA = {
-  '25m': 'D25m',
-  '50m': 'D50m',
-  '100m': 'D100m',
-  '200m': 'D200m',
-} as const
-
 @Injectable()
 export class PrismaResultsRepository implements ResultsRepository {
   constructor(
@@ -48,21 +41,31 @@ export class PrismaResultsRepository implements ResultsRepository {
   async list(params?: ListResultsRepositoryParams) {
     const { page, perPage } = normalizePaginationParams(params)
     const search = params?.search?.trim()
+    const discipline = params?.discipline?.trim()
     const style = params?.style?.trim()
     const distance = params?.distance?.trim()
     const competition = params?.competition?.trim()
+    const competitionType = params?.competitionType?.trim()
+    const courseType = params?.courseType?.trim()
+    const eventFormat = params?.eventFormat?.trim()
+    const resultStatus = params?.resultStatus?.trim()
     const category = params?.category?.trim()
     const startDate = params?.startDate?.trim()
     const endDate = params?.endDate?.trim()
     const studentId = params?.studentId?.trim()
-    const cacheKey = `${buildPaginatedCacheKey('results', page, perPage)}:${search ?? ''}:${style ?? ''}:${distance ?? ''}:${competition ?? ''}:${category ?? ''}:${startDate ?? ''}:${endDate ?? ''}:${studentId ?? ''}`
+    const cacheKey = `${buildPaginatedCacheKey('results', page, perPage)}:${search ?? ''}:${discipline ?? ''}:${style ?? ''}:${distance ?? ''}:${competition ?? ''}:${competitionType ?? ''}:${courseType ?? ''}:${eventFormat ?? ''}:${resultStatus ?? ''}:${category ?? ''}:${startDate ?? ''}:${endDate ?? ''}:${studentId ?? ''}`
 
     return rememberPaginatedResult(this.cache, cacheKey, this.env.cacheTtlSeconds, async () => {
       const skip = (page - 1) * perPage
       const where = {
-        ...(style ? { style: style as never } : {}),
-        ...(distance ? { distance: DISTANCE_TO_PRISMA[distance as keyof typeof DISTANCE_TO_PRISMA] } : {}),
+        ...(discipline ? { discipline } : {}),
+        ...(style ? { style } : {}),
+        ...(distance ? { distance } : {}),
         ...(competition ? { competition } : {}),
+        ...(competitionType ? { competitionType } : {}),
+        ...(courseType ? { courseType } : {}),
+        ...(eventFormat ? { eventFormat } : {}),
+        ...(resultStatus ? { resultStatus } : {}),
         ...(category ? { category } : {}),
         ...(studentId ? { studentId } : {}),
         ...(startDate || endDate
@@ -78,7 +81,15 @@ export class PrismaResultsRepository implements ResultsRepository {
               OR: [
                 { student: { name: { contains: search, mode: 'insensitive' as const } } },
                 { competition: { contains: search, mode: 'insensitive' as const } },
+                { discipline: { contains: search, mode: 'insensitive' as const } },
+                { competitionType: { contains: search, mode: 'insensitive' as const } } ,
+                { courseType: { contains: search, mode: 'insensitive' as const } },
+                { eventFormat: { contains: search, mode: 'insensitive' as const } },
+                { resultStatus: { contains: search, mode: 'insensitive' as const } },
                 { category: { contains: search, mode: 'insensitive' as const } },
+                { style: { contains: search, mode: 'insensitive' as const } },
+                { distance: { contains: search, mode: 'insensitive' as const } },
+                { customDistance: { contains: search, mode: 'insensitive' as const } },
               ],
             }
           : {}),
@@ -116,13 +127,19 @@ export class PrismaResultsRepository implements ResultsRepository {
     const result = await this.prisma.result.create({
       data: {
         studentId: input.studentId,
+        discipline: input.discipline || 'Piscina',
         style: input.style,
-        distance: DISTANCE_TO_PRISMA[input.distance],
+        distance: input.distance,
+        customDistance: input.customDistance || '',
+        competitionType: input.competitionType || '',
+        courseType: input.courseType || '',
+        eventFormat: input.eventFormat || 'Prova Individual',
         time: input.time,
         timeInSeconds: timeToSeconds(input.time),
         date: new Date(input.date),
         competition: input.competition || '',
         position: input.position ?? 0,
+        resultStatus: input.resultStatus || 'Classificado',
         personalBest: false,
         improvement: 0,
         category: input.category || student.categoryLabel || '',
@@ -149,13 +166,19 @@ export class PrismaResultsRepository implements ResultsRepository {
       where: { id },
       data: {
         studentId: input.studentId,
+        discipline: input.discipline || 'Piscina',
         style: input.style,
-        distance: DISTANCE_TO_PRISMA[input.distance],
+        distance: input.distance,
+        customDistance: input.customDistance || '',
+        competitionType: input.competitionType || '',
+        courseType: input.courseType || '',
+        eventFormat: input.eventFormat || 'Prova Individual',
         time: input.time,
         timeInSeconds: input.timeInSeconds,
         date: new Date(input.date),
         competition: input.competition || '',
         position: input.position ?? 0,
+        resultStatus: input.resultStatus || 'Classificado',
         personalBest: input.personalBest,
         improvement: input.improvement,
         category: input.category || '',

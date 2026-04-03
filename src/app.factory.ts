@@ -62,7 +62,7 @@ export async function configureApp(app: INestApplication) {
 export async function createApp() {
   const app = await NestFactory.create(AppModule, {
     cors: {
-      origin: env.corsOrigin,
+      origin: env.corsOrigins,
       credentials: true,
     },
   })

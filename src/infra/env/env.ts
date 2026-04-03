@@ -39,12 +39,14 @@ const envSchema = z.object({
 })
 
 const parsedEnv = envSchema.parse(process.env)
+const corsOrigins = parsedEnv.API_CORS_ORIGIN.split(',').map((origin) => origin.trim()).filter(Boolean)
 
 export const env = {
   databaseUrl: parsedEnv.DATABASE_URL,
   supabaseUrl: parsedEnv.VITE_SUPABASE_URL,
   supabasePublishableKey: parsedEnv.VITE_SUPABASE_PUBLISHABLE_KEY,
   corsOrigin: parsedEnv.API_CORS_ORIGIN,
+  corsOrigins,
   cacheTtlSeconds: parsedEnv.CACHE_TTL_SECONDS,
   port: parsedEnv.NEST_API_PORT,
   swaggerEnabled: parsedEnv.SWAGGER_ENABLED,

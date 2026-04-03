@@ -1,4 +1,4 @@
-export interface CreateTrainingRequest {
+﻿export interface CreateTrainingRequest {
   title: string
   description?: string
   type: 'Técnico' | 'Resistência' | 'Velocidade' | 'Misto'

@@ -25,7 +25,7 @@ enum Gender {
 
 enum EntityStatus {
   Ativo
-  Licenca @map("Licença")
+  Licenca @map("LicenÃ§a")
   Inativo
 
   @@map("entity_status")
@@ -39,34 +39,34 @@ enum EntityStatusActive {
 }
 
 enum SwimmingCategory {
-  Pre_Mirim @map("Pré-Mirim")
-  Mirim_1 @map("Mirim 1")
-  Mirim_2 @map("Mirim 2")
-  Petiz_1 @map("Petiz 1")
-  Petiz_2 @map("Petiz 2")
+  Pre_Mirim  @map("PrÃ©-Mirim")
+  Mirim_1    @map("Mirim 1")
+  Mirim_2    @map("Mirim 2")
+  Petiz_1    @map("Petiz 1")
+  Petiz_2    @map("Petiz 2")
   Infantil_1 @map("Infantil 1")
   Infantil_2 @map("Infantil 2")
-  Juvenil_1 @map("Juvenil 1")
-  Juvenil_2 @map("Juvenil 2")
-  Junior_1 @map("Júnior 1")
-  Junior_2 @map("Júnior 2")
-  Senior @map("Sênior")
-  Pre_Master @map("Pré-Master")
-  Master_A @map("Master A")
-  Master_B @map("Master B")
-  Master_C @map("Master C")
-  Master_D @map("Master D")
-  Master_E @map("Master E")
-  Master_F @map("Master F")
-  Master_G @map("Master G")
-  Master_H @map("Master H")
-  Master_I @map("Master I")
-  Master_J @map("Master J")
-  Master_K @map("Master K")
-  Master_L @map("Master L")
-  Master_M @map("Master M")
-  Master_N @map("Master N")
-  Master_O @map("Master O")
+  Juvenil_1  @map("Juvenil 1")
+  Juvenil_2  @map("Juvenil 2")
+  Junior_1   @map("JÃºnior 1")
+  Junior_2   @map("JÃºnior 2")
+  Senior     @map("Senior")
+  Pre_Master @map("PrÃ©-Master")
+  Master_A   @map("Master A")
+  Master_B   @map("Master B")
+  Master_C   @map("Master C")
+  Master_D   @map("Master D")
+  Master_E   @map("Master E")
+  Master_F   @map("Master F")
+  Master_G   @map("Master G")
+  Master_H   @map("Master H")
+  Master_I   @map("Master I")
+  Master_J   @map("Master J")
+  Master_K   @map("Master K")
+  Master_L   @map("Master L")
+  Master_M   @map("Master M")
+  Master_N   @map("Master N")
+  Master_O   @map("Master O")
 
   @@map("swimming_category")
 }
@@ -89,15 +89,15 @@ enum ClassStatus {
 enum EventStatus {
   Agendado
   Em_Andamento @map("Em Andamento")
-  Concluido @map("Concluído")
+  Concluido    @map("ConcluÃ­do")
   Cancelado
 
   @@map("event_status")
 }
 
 enum TipoEvento {
-  Competicao @map("Competição")
-  Reuniao @map("Reunião")
+  Competicao @map("CompetiÃ§Ã£o")
+  Reuniao    @map("ReuniÃ£o")
   Festival
   Outro
 
@@ -113,8 +113,8 @@ enum PoolStatus {
 }
 
 enum TipoTreino {
-  Tecnico @map("Técnico")
-  Resistencia @map("Resistência")
+  Tecnico     @map("TÃ©cnico")
+  Resistencia @map("ResistÃªncia")
   Velocidade
   Misto
 
@@ -123,8 +123,8 @@ enum TipoTreino {
 
 enum NivelTreino {
   Iniciante
-  Intermediario @map("Intermediário")
-  Avancado @map("Avançado")
+  Intermediario @map("IntermediÃ¡rio")
+  Avancado      @map("AvanÃ§ado")
   Todos
 
   @@map("nivel_treino")
@@ -157,8 +157,8 @@ enum SwimmingStyle {
 }
 
 enum SwimmingDistance {
-  D25m @map("25m")
-  D50m @map("50m")
+  D25m  @map("25m")
+  D50m  @map("50m")
   D100m @map("100m")
   D200m @map("200m")
 
@@ -177,12 +177,12 @@ model Profile {
 }
 
 model Category {
-  id        String           @id @default(uuid()) @db.Uuid
-  name      SwimmingCategory @unique
-  ageMin    Int?             @map("age_min")
-  ageMax    Int?             @map("age_max")
-  sortOrder Int              @default(0) @map("sort_order")
-  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  id                String            @id @default(uuid()) @db.Uuid
+  name              SwimmingCategory  @unique
+  ageMin            Int?              @map("age_min")
+  ageMax            Int?              @map("age_max")
+  sortOrder         Int               @default(0) @map("sort_order")
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   students          Student[]
   teacherCategories TeacherCategory[]
   swimmingClasses   SwimmingClass[]
@@ -224,28 +224,33 @@ model Parent {
 }
 
 model Result {
-  id           String           @id @default(uuid()) @db.Uuid
-  studentId    String           @map("student_id") @db.Uuid
-  style        SwimmingStyle
-  distance     SwimmingDistance
-  time         String
-  timeInSeconds Decimal         @map("time_in_seconds") @db.Decimal
-  date         DateTime?        @db.Date
-  competition  String           @default("")
-  position     Int              @default(0)
-  personalBest Boolean          @default(false) @map("personal_best")
-  improvement  Decimal          @default(0) @db.Decimal
-  category     String           @default("")
-  notes        String?
-  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime         @default(now()) @map("updated_at") @db.Timestamptz(6)
-  student      Student          @relation(fields: [studentId], references: [id])
+  id              String    @id @default(uuid()) @db.Uuid
+  studentId       String    @map("student_id") @db.Uuid
+  discipline      String    @default("Piscina")
+  style           String
+  distance        String
+  customDistance  String    @default("") @map("custom_distance")
+  competitionType String    @default("") @map("competition_type")
+  courseType      String    @default("") @map("course_type")
+  eventFormat     String    @default("Prova Individual") @map("event_format")
+  time            String
+  timeInSeconds   Decimal   @map("time_in_seconds") @db.Decimal
+  date            DateTime? @db.Date
+  competition     String    @default("")
+  position        Int       @default(0)
+  resultStatus    String    @default("Classificado") @map("result_status")
+  personalBest    Boolean   @default(false) @map("personal_best")
+  improvement     Decimal   @default(0) @db.Decimal
+  category        String    @default("")
+  notes           String?
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  student         Student   @relation(fields: [studentId], references: [id])
 
   @@map("results")
   @@index([studentId, date])
   @@index([date, competition])
 }
-
 model ExStudent {
   id                  String    @id @default(uuid()) @db.Uuid
   studentId           String?   @map("student_id") @db.Uuid
@@ -288,8 +293,8 @@ model Event {
   createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime    @default(now()) @map("updated_at") @db.Timestamptz(6)
 
-  @@map("events")
   @@index([date, status])
+  @@map("events")
 }
 
 model Teacher {
@@ -316,51 +321,51 @@ model Teacher {
 }
 
 model Student {
-  id              String       @id @default(uuid()) @db.Uuid
-  name            String
-  gender          Gender       @default(Masculino)
-  birthDate       DateTime?    @map("birth_date") @db.Date
-  categoryId      String       @map("category_id") @db.Uuid
-  levelId         String       @map("level_id") @db.Uuid
-  parentId        String?      @map("parent_id") @db.Uuid
-  phone           String       @default("")
-  status          EntityStatus @default(Ativo)
-  achievements    Int          @default(0)
-  photo           String?
-  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime     @default(now()) @map("updated_at") @db.Timestamptz(6)
-  categoryLabel   String?      @map("category")
-  levelLabel      String?      @map("level")
-  lastCompetition String       @default("") @map("last_competition")
-  category        Category     @relation(fields: [categoryId], references: [id])
-  level           Level        @relation(fields: [levelId], references: [id])
-  parent          Parent?      @relation(fields: [parentId], references: [id])
-  exStudents      ExStudent[]
-  results         Result[]
-  studentClasses  StudentClass[]
+  id                String             @id @default(uuid()) @db.Uuid
+  name              String
+  gender            Gender             @default(Masculino)
+  birthDate         DateTime?          @map("birth_date") @db.Date
+  categoryId        String             @map("category_id") @db.Uuid
+  levelId           String             @map("level_id") @db.Uuid
+  parentId          String?            @map("parent_id") @db.Uuid
+  phone             String             @default("")
+  status            EntityStatus       @default(Ativo)
+  achievements      Int                @default(0)
+  photo             String?
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime           @default(now()) @map("updated_at") @db.Timestamptz(6)
+  categoryLabel     String?            @map("category")
+  levelLabel        String?            @map("level")
+  lastCompetition   String             @default("") @map("last_competition")
+  category          Category           @relation(fields: [categoryId], references: [id])
+  level             Level              @relation(fields: [levelId], references: [id])
+  parent            Parent?            @relation(fields: [parentId], references: [id])
+  exStudents        ExStudent[]
+  results           Result[]
+  studentClasses    StudentClass[]
   attendanceRecords AttendanceRecord[]
 
-  @@map("students")
   @@index([categoryId, levelId])
   @@index([parentId])
   @@index([status, createdAt])
+  @@map("students")
 }
 
 model SwimmingClass {
-  id            String         @id @default(uuid()) @db.Uuid
-  name          String
-  categoryId    String         @map("category_id") @db.Uuid
-  maxStudents   Int            @default(10) @map("max_students")
-  poolId        String?        @map("pool_id") @db.Uuid
-  status        ClassStatus    @default(Ativa)
-  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime       @default(now()) @map("updated_at") @db.Timestamptz(6)
-  category      Category       @relation(fields: [categoryId], references: [id])
-  pool          Pool?          @relation(fields: [poolId], references: [id])
-  studentClasses StudentClass[]
-  classTeachers ClassTeacher[]
-  classSchedules ClassSchedule[]
-  classCategories ClassCategory[]
+  id                String             @id @default(uuid()) @db.Uuid
+  name              String
+  categoryId        String             @map("category_id") @db.Uuid
+  maxStudents       Int                @default(10) @map("max_students")
+  poolId            String?            @map("pool_id") @db.Uuid
+  status            ClassStatus        @default(Ativa)
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime           @default(now()) @map("updated_at") @db.Timestamptz(6)
+  category          Category           @relation(fields: [categoryId], references: [id])
+  pool              Pool?              @relation(fields: [poolId], references: [id])
+  studentClasses    StudentClass[]
+  classTeachers     ClassTeacher[]
+  classSchedules    ClassSchedule[]
+  classCategories   ClassCategory[]
   attendanceRecords AttendanceRecord[]
 
   @@map("classes")
@@ -379,43 +384,43 @@ model AttendanceRecord {
   swimmingClass SwimmingClass    @relation(fields: [classId], references: [id])
 
   @@unique([studentId, classId, date])
-  @@map("attendance_records")
   @@index([classId, date])
   @@index([studentId, date])
   @@index([createdAt])
+  @@map("attendance_records")
 }
 
 model StudentClass {
-  id        String    @id @default(uuid()) @db.Uuid
-  studentId String    @map("student_id") @db.Uuid
-  classId   String    @map("class_id") @db.Uuid
-  isPrimary Boolean   @default(false) @map("is_primary")
-  fromDate  DateTime? @map("from_date") @db.Date
-  toDate    DateTime? @map("to_date") @db.Date
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  student   Student   @relation(fields: [studentId], references: [id])
+  id            String        @id @default(uuid()) @db.Uuid
+  studentId     String        @map("student_id") @db.Uuid
+  classId       String        @map("class_id") @db.Uuid
+  isPrimary     Boolean       @default(false) @map("is_primary")
+  fromDate      DateTime?     @map("from_date") @db.Date
+  toDate        DateTime?     @map("to_date") @db.Date
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  student       Student       @relation(fields: [studentId], references: [id])
   swimmingClass SwimmingClass @relation(fields: [classId], references: [id])
 
-  @@map("student_classes")
   @@index([studentId, toDate])
   @@index([classId, toDate])
   @@index([studentId, classId, toDate])
+  @@map("student_classes")
 }
 
 model Pool {
-  id           String         @id @default(uuid()) @db.Uuid
-  name         String
-  lengthMeters Int            @default(25) @map("length_meters")
-  address      String         @default("")
-  status       PoolStatus     @default(Ativa)
-  maxCapacity  Int?           @map("max_capacity")
-  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime       @default(now()) @map("updated_at") @db.Timestamptz(6)
+  id              String          @id @default(uuid()) @db.Uuid
+  name            String
+  lengthMeters    Int             @default(25) @map("length_meters")
+  address         String          @default("")
+  status          PoolStatus      @default(Ativa)
+  maxCapacity     Int?            @map("max_capacity")
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime        @default(now()) @map("updated_at") @db.Timestamptz(6)
   swimmingClasses SwimmingClass[]
-  trainings    Training[]
+  trainings       Training[]
 
-  @@map("pools")
   @@index([status, name])
+  @@map("pools")
 }
 
 model Training {
@@ -437,10 +442,10 @@ model Training {
   instructor          Teacher?       @relation(fields: [instructorId], references: [id])
   pool                Pool?          @relation(fields: [poolId], references: [id])
 
-  @@map("trainings")
   @@index([instructorId, dayOfWeek])
   @@index([poolId, dayOfWeek])
   @@index([status, level])
+  @@map("trainings")
 }
 
 model TeacherCategory {
@@ -455,23 +460,23 @@ model TeacherCategory {
 }
 
 model ClassCategory {
-  id         String        @id @default(uuid()) @db.Uuid
-  classId    String        @map("class_id") @db.Uuid
-  categoryId String        @map("category_id") @db.Uuid
-  isPrimary  Boolean       @default(false) @map("is_primary")
+  id            String        @id @default(uuid()) @db.Uuid
+  classId       String        @map("class_id") @db.Uuid
+  categoryId    String        @map("category_id") @db.Uuid
+  isPrimary     Boolean       @default(false) @map("is_primary")
   swimmingClass SwimmingClass @relation(fields: [classId], references: [id])
-  category   Category      @relation(fields: [categoryId], references: [id])
+  category      Category      @relation(fields: [categoryId], references: [id])
 
   @@map("class_categories")
 }
 
 model ClassSchedule {
-  id          String        @id @default(uuid()) @db.Uuid
-  classId      String        @map("class_id") @db.Uuid
-  dayOfWeek    String        @map("day_of_week")
-  startTime    DateTime      @map("start_time") @db.Time(6)
-  endTime      DateTime      @map("end_time") @db.Time(6)
-  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  id            String        @id @default(uuid()) @db.Uuid
+  classId       String        @map("class_id") @db.Uuid
+  dayOfWeek     String        @map("day_of_week")
+  startTime     DateTime      @map("start_time") @db.Time(6)
+  endTime       DateTime      @map("end_time") @db.Time(6)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   swimmingClass SwimmingClass @relation(fields: [classId], references: [id])
 
   @@map("class_schedules")
@@ -496,7 +501,7 @@ model ClassTeacher {
   swimmingClass SwimmingClass @relation(fields: [classId], references: [id])
   teacher       Teacher       @relation(fields: [teacherId], references: [id])
 
-  @@map("class_teachers")
   @@index([classId, role])
   @@index([teacherId])
+  @@map("class_teachers")
 }
