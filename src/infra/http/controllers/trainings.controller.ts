@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger'
-import { createTrainingSchema, updateTrainingSchema, type CreateTrainingDto, type UpdateTrainingDto } from '@/shared/contracts/management'
+import { createTrainingSchema, updateTrainingSchema, type CreateTrainingDto, type UpdateTrainingDto } from '@/shared/contracts/trainings.contracts'
 import { CreateTrainingUseCase } from '@/domain/trainings/application/use-cases/create-training'
 import { DeleteTrainingUseCase } from '@/domain/trainings/application/use-cases/delete-training'
 import { ListTrainingsUseCase } from '@/domain/trainings/application/use-cases/list-trainings'
@@ -9,6 +9,7 @@ import { normalizePaginationParams } from '@/domain/shared/pagination/pagination
 import { JwtAuthGuard } from '@/infra/auth/jwt-auth.guard'
 import { Roles } from '@/infra/auth/roles.decorator'
 import { RolesGuard } from '@/infra/auth/roles.guard'
+import { trainingsListQuerySchema, type TrainingsListQuery } from '../queries/list-query-schemas'
 import { ZodValidationPipe } from '../pipes/zod-validation-pipe'
 import { TrainingRequestMapper } from '../mappers/training-request.mapper'
 import { TrainingPresenter } from '../presenters/training.presenter'
@@ -27,22 +28,15 @@ export class TrainingsController {
   ) {}
 
   @Get()
-  async index(
-    @Query('page') page?: string,
-    @Query('perPage') perPage?: string,
-    @Query('search') search?: string,
-    @Query('type') type?: string,
-    @Query('status') status?: string,
-    @Query('poolId') poolId?: string,
-  ) {
-    const pagination = normalizePaginationParams({ page: Number(page), perPage: Number(perPage) })
+  async index(@Query(new ZodValidationPipe(trainingsListQuerySchema)) query: TrainingsListQuery) {
+    const pagination = normalizePaginationParams({ page: query.page, perPage: query.perPage })
     const { trainings, meta } = await this.listTrainings.execute({
       page: pagination.page,
       perPage: pagination.perPage,
-      search,
-      type,
-      status,
-      poolId,
+      search: query.search,
+      type: query.type,
+      status: query.status,
+      poolId: query.poolId,
     })
     return { data: trainings.map(TrainingPresenter.toHTTP), meta }
   }

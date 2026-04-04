@@ -5,7 +5,7 @@ import type {
   TransferStudentDto,
   UpdateClassDto,
   UpdateClassTeacherRoleDto,
-} from '@/shared/contracts/management'
+} from '@/shared/contracts/classes.contracts'
 import type {
   AssignClassTeacherRequest,
   CreateClassRequest,

@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger'
-import { createParentSchema, updateParentSchema, type CreateParentDto, type UpdateParentDto } from '@/shared/contracts/management'
+import { createParentSchema, updateParentSchema, type CreateParentDto, type UpdateParentDto } from '@/shared/contracts/parents.contracts'
 import { CreateParentUseCase } from '@/domain/parents/application/use-cases/create-parent'
 import { DeleteParentUseCase } from '@/domain/parents/application/use-cases/delete-parent'
 import { ListParentsUseCase } from '@/domain/parents/application/use-cases/list-parents'
@@ -9,6 +9,7 @@ import { normalizePaginationParams } from '@/domain/shared/pagination/pagination
 import { JwtAuthGuard } from '@/infra/auth/jwt-auth.guard'
 import { Roles } from '@/infra/auth/roles.decorator'
 import { RolesGuard } from '@/infra/auth/roles.guard'
+import { parentsListQuerySchema, type ParentsListQuery } from '../queries/list-query-schemas'
 import { ZodValidationPipe } from '../pipes/zod-validation-pipe'
 import { ParentRequestMapper } from '../mappers/parent-request.mapper'
 import { ParentPresenter } from '../presenters/parent.presenter'
@@ -27,16 +28,11 @@ export class ParentsController {
   ) {}
 
   @Get()
-  async index(
-    @Query('page') page?: string,
-    @Query('perPage') perPage?: string,
-    @Query('search') search?: string,
-    @Query('status') status?: string,
-  ) {
+  async index(@Query(new ZodValidationPipe(parentsListQuerySchema)) query: ParentsListQuery) {
     const { parents, meta } = await this.listParents.execute({
-      ...normalizePaginationParams({ page: Number(page), perPage: Number(perPage) }),
-      search,
-      status,
+      ...normalizePaginationParams({ page: query.page, perPage: query.perPage }),
+      search: query.search,
+      status: query.status,
     })
     return { data: parents.map(ParentPresenter.toHTTP), meta }
   }

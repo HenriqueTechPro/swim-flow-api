@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger'
-import { createStudentSchema, updateStudentSchema, type CreateStudentDto, type UpdateStudentDto } from '@/shared/contracts/management'
+import { createStudentSchema, updateStudentSchema, type CreateStudentDto, type UpdateStudentDto } from '@/shared/contracts/students.contracts'
 import { CreateStudentUseCase } from '@/domain/students/application/use-cases/create-student'
 import { DeleteStudentUseCase } from '@/domain/students/application/use-cases/delete-student'
 import { ListStudentsUseCase } from '@/domain/students/application/use-cases/list-students'
@@ -9,6 +9,7 @@ import { normalizePaginationParams } from '@/domain/shared/pagination/pagination
 import { JwtAuthGuard } from '@/infra/auth/jwt-auth.guard'
 import { Roles } from '@/infra/auth/roles.decorator'
 import { RolesGuard } from '@/infra/auth/roles.guard'
+import { studentsListQuerySchema, type StudentsListQuery } from '../queries/list-query-schemas'
 import { ZodValidationPipe } from '../pipes/zod-validation-pipe'
 import { StudentRequestMapper } from '../mappers/student-request.mapper'
 import { StudentPresenter } from '../presenters/student.presenter'
@@ -27,19 +28,13 @@ export class StudentsController {
   ) {}
 
   @Get()
-  async index(
-    @Query('page') page?: string,
-    @Query('perPage') perPage?: string,
-    @Query('search') search?: string,
-    @Query('category') category?: string,
-    @Query('status') status?: string,
-  ) {
+  async index(@Query(new ZodValidationPipe(studentsListQuerySchema)) query: StudentsListQuery) {
     const { students, meta } = await this.listStudents.execute(
       {
-        ...normalizePaginationParams({ page: Number(page), perPage: Number(perPage) }),
-        search,
-        category: category && category !== 'all' ? category : undefined,
-        status: status && status !== 'all' ? status : undefined,
+        ...normalizePaginationParams({ page: query.page, perPage: query.perPage }),
+        search: query.search,
+        category: query.category,
+        status: query.status,
       },
     )
     return { data: students.map(StudentPresenter.toHTTP), meta }

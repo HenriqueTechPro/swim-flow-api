@@ -165,6 +165,18 @@ enum SwimmingDistance {
   @@map("swimming_distance")
 }
 
+enum ExitReason {
+  Mudanca_de_cidade          @map("Mudança de cidade")
+  Falta_de_tempo             @map("Falta de tempo")
+  Interesse_por_outro_esporte @map("Interesse por outro esporte")
+  Idade_limite_da_categoria  @map("Idade limite da categoria")
+  Motivos_financeiros        @map("Motivos financeiros")
+  Motivos_de_saude           @map("Motivos de saúde")
+  Outro
+
+  @@map("exit_reason")
+}
+
 model Profile {
   id        String   @id @db.Uuid
   fullName  String   @default("") @map("full_name")
@@ -332,6 +344,9 @@ model Student {
   status            EntityStatus       @default(Ativo)
   achievements      Int                @default(0)
   photo             String?
+  exitDate          DateTime?          @map("exit_date") @db.Date
+  exitReason        ExitReason?        @map("exit_reason")
+  exitNotes         String?            @map("exit_notes")
   createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime           @default(now()) @map("updated_at") @db.Timestamptz(6)
   categoryLabel     String?            @map("category")
@@ -432,10 +447,12 @@ model Training {
   startTime           DateTime       @map("start_time") @db.Time(6)
   endTime             DateTime       @map("end_time") @db.Time(6)
   instructorId        String?        @map("instructor_id") @db.Uuid
-  level               NivelTreino    @default(Iniciante)
-  maxParticipants     Int            @default(0) @map("max_participants")
+  level               NivelTreino    @default(Todos)
+  maxParticipants     Int            @default(10) @map("max_participants")
   currentParticipants Int            @default(0) @map("current_participants")
   status              TrainingStatus @default(Ativo)
+  venueType           String         @default("Piscina") @map("venue_type")
+  locationName        String         @default("") @map("location_name")
   poolId              String?        @map("pool_id") @db.Uuid
   createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime       @default(now()) @map("updated_at") @db.Timestamptz(6)

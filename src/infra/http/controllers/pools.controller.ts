@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger'
-import { createPoolSchema, updatePoolSchema, type CreatePoolDto, type UpdatePoolDto } from '@/shared/contracts/management'
+import { createPoolSchema, updatePoolSchema, type CreatePoolDto, type UpdatePoolDto } from '@/shared/contracts/pools.contracts'
 import { CreatePoolUseCase } from '@/domain/pools/application/use-cases/create-pool'
 import { DeletePoolUseCase } from '@/domain/pools/application/use-cases/delete-pool'
 import { ListPoolsUseCase } from '@/domain/pools/application/use-cases/list-pools'
@@ -9,6 +9,7 @@ import { normalizePaginationParams } from '@/domain/shared/pagination/pagination
 import { JwtAuthGuard } from '@/infra/auth/jwt-auth.guard'
 import { Roles } from '@/infra/auth/roles.decorator'
 import { RolesGuard } from '@/infra/auth/roles.guard'
+import { poolsListQuerySchema, type PoolsListQuery } from '../queries/list-query-schemas'
 import { ZodValidationPipe } from '../pipes/zod-validation-pipe'
 import { PoolRequestMapper } from '../mappers/pool-request.mapper'
 import { PoolPresenter } from '../presenters/pool.presenter'
@@ -27,18 +28,13 @@ export class PoolsController {
   ) {}
 
   @Get()
-  async index(
-    @Query('page') page?: string,
-    @Query('perPage') perPage?: string,
-    @Query('search') search?: string,
-    @Query('status') status?: string,
-  ) {
-    const pagination = normalizePaginationParams({ page: Number(page), perPage: Number(perPage) })
+  async index(@Query(new ZodValidationPipe(poolsListQuerySchema)) query: PoolsListQuery) {
+    const pagination = normalizePaginationParams({ page: query.page, perPage: query.perPage })
     const { pools, meta } = await this.listPools.execute({
       page: pagination.page,
       perPage: pagination.perPage,
-      search,
-      status,
+      search: query.search,
+      status: query.status,
     })
     return { data: pools.map(PoolPresenter.toHTTP), meta }
   }

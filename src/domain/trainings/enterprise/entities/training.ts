@@ -12,6 +12,8 @@ export interface Training {
   maxParticipants: number
   currentParticipants: number
   status: 'Ativo' | 'Pausado' | 'Encerrado'
+  venueType: 'Piscina' | 'Mar' | 'Rio' | 'Lago' | 'Represa' | 'Outro'
+  locationName: string
   poolId?: string
   pool: string
 }

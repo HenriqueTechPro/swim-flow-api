@@ -1,4 +1,4 @@
-import express, { type NextFunction, type Request, type Response } from 'express'
+import express from 'express'
 import { INestApplication } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
@@ -6,30 +6,9 @@ import { AppModule } from './app.module'
 import { env } from '@/infra/env/env'
 import { AppErrorFilter } from '@/infra/http/filters/app-error.filter'
 
-function normalizeJsonBody(req: Request, _res: Response, next: NextFunction) {
-  if (typeof req.body !== 'string') {
-    return next()
-  }
-
-  const trimmedBody = req.body.trim()
-  if (!trimmedBody || !(trimmedBody.startsWith('{') || trimmedBody.startsWith('['))) {
-    return next()
-  }
-
-  try {
-    req.body = JSON.parse(trimmedBody)
-  } catch {
-    // Keep the original body so the validation layer can respond consistently.
-  }
-
-  return next()
-}
-
 export async function configureApp(app: INestApplication) {
   app.use(express.json({ strict: true }))
   app.use(express.urlencoded({ extended: true }))
-  app.use(express.text({ type: ['text/plain'] }))
-  app.use(normalizeJsonBody)
   app.useGlobalFilters(new AppErrorFilter())
 
   if (env.swaggerEnabled) {

@@ -7,7 +7,7 @@ import {
   type CreateExStudentDto,
   type ReactivateExStudentDto,
   type UpdateExStudentDto,
-} from '@/shared/contracts/management'
+} from '@/shared/contracts/ex-students.contracts'
 import { CreateExStudentUseCase } from '@/domain/ex-students/application/use-cases/create-ex-student'
 import { DeleteExStudentUseCase } from '@/domain/ex-students/application/use-cases/delete-ex-student'
 import { ListExStudentsUseCase } from '@/domain/ex-students/application/use-cases/list-ex-students'
@@ -17,6 +17,7 @@ import { normalizePaginationParams } from '@/domain/shared/pagination/pagination
 import { JwtAuthGuard } from '@/infra/auth/jwt-auth.guard'
 import { Roles } from '@/infra/auth/roles.decorator'
 import { RolesGuard } from '@/infra/auth/roles.guard'
+import { exStudentsListQuerySchema, type ExStudentsListQuery } from '../queries/list-query-schemas'
 import { ZodValidationPipe } from '../pipes/zod-validation-pipe'
 import { ExStudentRequestMapper } from '../mappers/ex-student-request.mapper'
 import { ExStudentPresenter } from '../presenters/ex-student.presenter'
@@ -36,18 +37,13 @@ export class ExStudentsController {
   ) {}
 
   @Get()
-  async index(
-    @Query('page') page?: string,
-    @Query('perPage') perPage?: string,
-    @Query('search') search?: string,
-    @Query('category') category?: string,
-  ) {
-    const pagination = normalizePaginationParams({ page: Number(page), perPage: Number(perPage) })
+  async index(@Query(new ZodValidationPipe(exStudentsListQuerySchema)) query: ExStudentsListQuery) {
+    const pagination = normalizePaginationParams({ page: query.page, perPage: query.perPage })
     const { exStudents, meta } = await this.listExStudents.execute({
       page: pagination.page,
       perPage: pagination.perPage,
-      search,
-      category,
+      search: query.search,
+      category: query.category,
     })
     return { data: exStudents.map(ExStudentPresenter.toHTTP), meta }
   }

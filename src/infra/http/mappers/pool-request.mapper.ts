@@ -1,4 +1,4 @@
-import type { CreatePoolDto, UpdatePoolDto } from '@/shared/contracts/management'
+import type { CreatePoolDto, UpdatePoolDto } from '@/shared/contracts/pools.contracts'
 import type { CreatePoolRequest, UpdatePoolRequest } from '@/domain/pools/application/dtos/pool-requests'
 
 export class PoolRequestMapper {

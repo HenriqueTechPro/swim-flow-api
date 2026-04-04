@@ -6,7 +6,7 @@ import { getCategoryByBirthYear } from '@/shared/lib/categories'
 import { createPaginatedResult, normalizePaginationParams } from '@/domain/shared/pagination/pagination-utils'
 import { StudentsRepository, type CreateStudentRepositoryInput, type ListStudentsRepositoryParams, type UpdateStudentRepositoryInput } from '@/domain/students/application/repositories/students-repository'
 import { AppError } from '@/shared/errors/app-error'
-import { normalizeHumanLabel, parseCategoryValue } from '@/shared/utils/domain-formatters'
+import { normalizeHumanLabel, parseCategoryValue, parseEntityStatus } from '@/shared/utils/domain-formatters'
 import { PrismaService } from '../prisma.service'
 import { PrismaStudentMapper, type PrismaStudentRecord } from '../mappers/prisma-student-mapper'
 
@@ -52,13 +52,14 @@ export class PrismaStudentsRepository implements StudentsRepository {
     const normalizedSearch = params?.search?.trim().toLowerCase() || ''
     const normalizedCategory = params?.category?.trim() || ''
     const normalizedStatus = params?.status?.trim() || ''
-    const cacheKey = `${buildPaginatedCacheKey('students', page, perPage)}:${normalizedSearch}:${normalizedCategory}:${normalizedStatus}`
+    const prismaStatus = normalizedStatus ? parseEntityStatus(normalizedStatus) : ''
+    const cacheKey = `${buildPaginatedCacheKey('students', page, perPage)}:${normalizedSearch}:${normalizedCategory}:${prismaStatus}`
 
     return rememberPaginatedResult(this.cache, cacheKey, this.env.cacheTtlSeconds, async () => {
       const skip = (page - 1) * perPage
       const where = {
         ...(normalizedCategory ? { categoryLabel: normalizedCategory } : {}),
-        ...(normalizedStatus ? { status: normalizedStatus as never } : {}),
+        ...(prismaStatus ? { status: prismaStatus as never } : {}),
         ...(normalizedSearch
           ? {
               OR: [
@@ -110,7 +111,7 @@ export class PrismaStudentsRepository implements StudentsRepository {
           parentId: input.parentId || null,
           phone: input.phone,
           photo: input.photo || null,
-          status: input.status as never,
+          status: parseEntityStatus(input.status) as never,
           achievements: 0,
         },
       })
@@ -161,7 +162,7 @@ export class PrismaStudentsRepository implements StudentsRepository {
           parentId: input.parentId || null,
           phone: input.phone,
           photo: input.photo || null,
-          status: input.status as never,
+          status: parseEntityStatus(input.status) as never,
         },
       })
 

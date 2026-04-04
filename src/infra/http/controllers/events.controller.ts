@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger'
-import { createEventSchema, updateEventSchema, type CreateEventDto, type UpdateEventDto } from '@/shared/contracts/management'
+import { createEventSchema, updateEventSchema, type CreateEventDto, type UpdateEventDto } from '@/shared/contracts/events.contracts'
 import { CreateEventUseCase } from '@/domain/events/application/use-cases/create-event'
 import { DeleteEventUseCase } from '@/domain/events/application/use-cases/delete-event'
 import { ListEventsUseCase } from '@/domain/events/application/use-cases/list-events'
@@ -9,6 +9,7 @@ import { normalizePaginationParams } from '@/domain/shared/pagination/pagination
 import { JwtAuthGuard } from '@/infra/auth/jwt-auth.guard'
 import { Roles } from '@/infra/auth/roles.decorator'
 import { RolesGuard } from '@/infra/auth/roles.guard'
+import { eventsListQuerySchema, type EventsListQuery } from '../queries/list-query-schemas'
 import { ZodValidationPipe } from '../pipes/zod-validation-pipe'
 import { EventRequestMapper } from '../mappers/event-request.mapper'
 import { EventPresenter } from '../presenters/event.presenter'
@@ -27,20 +28,14 @@ export class EventsController {
   ) {}
 
   @Get()
-  async index(
-    @Query('page') page?: string,
-    @Query('perPage') perPage?: string,
-    @Query('search') search?: string,
-    @Query('type') type?: string,
-    @Query('status') status?: string,
-  ) {
-    const pagination = normalizePaginationParams({ page: Number(page), perPage: Number(perPage) })
+  async index(@Query(new ZodValidationPipe(eventsListQuerySchema)) query: EventsListQuery) {
+    const pagination = normalizePaginationParams({ page: query.page, perPage: query.perPage })
     const { events, meta } = await this.listEvents.execute({
       page: pagination.page,
       perPage: pagination.perPage,
-      search,
-      type,
-      status,
+      search: query.search,
+      type: query.type,
+      status: query.status,
     })
     return { data: events.map(EventPresenter.toHTTP), meta }
   }

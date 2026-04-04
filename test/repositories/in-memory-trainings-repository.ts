@@ -48,6 +48,8 @@ export class InMemoryTrainingsRepository implements TrainingsRepository {
       maxParticipants: input.maxParticipants,
       currentParticipants: input.currentParticipants,
       status: input.status,
+      venueType: input.venueType,
+      locationName: input.venueType === 'Piscina' ? '' : input.locationName ?? '',
       poolId: input.poolId ?? undefined,
     })
 
@@ -72,6 +74,8 @@ export class InMemoryTrainingsRepository implements TrainingsRepository {
       maxParticipants: input.maxParticipants,
       currentParticipants: input.currentParticipants,
       status: input.status,
+      venueType: input.venueType,
+      locationName: input.venueType === 'Piscina' ? '' : input.locationName ?? '',
       poolId: input.poolId ?? undefined,
     }
 

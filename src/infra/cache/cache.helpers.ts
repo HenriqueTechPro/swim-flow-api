@@ -21,3 +21,21 @@ export const rememberPaginatedResult = async <T>(
 
   return result
 }
+
+export const rememberCachedValue = async <T>(
+  cache: CacheRepository,
+  key: string,
+  ttlInSeconds: number,
+  loader: () => Promise<T>,
+) => {
+  const cached = await cache.get(key)
+
+  if (cached) {
+    return JSON.parse(cached) as T
+  }
+
+  const result = await loader()
+  await cache.set(key, JSON.stringify(result), ttlInSeconds)
+
+  return result
+}

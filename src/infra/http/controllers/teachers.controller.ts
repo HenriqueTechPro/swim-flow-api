@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger'
-import { createTeacherSchema, updateTeacherSchema, type CreateTeacherDto, type UpdateTeacherDto } from '@/shared/contracts/management'
+import { createTeacherSchema, updateTeacherSchema, type CreateTeacherDto, type UpdateTeacherDto } from '@/shared/contracts/teachers.contracts'
 import { CreateTeacherUseCase } from '@/domain/teachers/application/use-cases/create-teacher'
 import { DeleteTeacherUseCase } from '@/domain/teachers/application/use-cases/delete-teacher'
 import { ListTeachersUseCase } from '@/domain/teachers/application/use-cases/list-teachers'
@@ -9,6 +9,7 @@ import { normalizePaginationParams } from '@/domain/shared/pagination/pagination
 import { JwtAuthGuard } from '@/infra/auth/jwt-auth.guard'
 import { Roles } from '@/infra/auth/roles.decorator'
 import { RolesGuard } from '@/infra/auth/roles.guard'
+import { teachersListQuerySchema, type TeachersListQuery } from '../queries/list-query-schemas'
 import { ZodValidationPipe } from '../pipes/zod-validation-pipe'
 import { TeacherRequestMapper } from '../mappers/teacher-request.mapper'
 import { TeacherPresenter } from '../presenters/teacher.presenter'
@@ -27,17 +28,12 @@ export class TeachersController {
   ) {}
 
   @Get()
-  async index(
-    @Query('page') page?: string,
-    @Query('perPage') perPage?: string,
-    @Query('search') search?: string,
-    @Query('status') status?: string,
-  ) {
+  async index(@Query(new ZodValidationPipe(teachersListQuerySchema)) query: TeachersListQuery) {
     const { teachers, meta } = await this.listTeachers.execute(
       {
-        ...normalizePaginationParams({ page: Number(page), perPage: Number(perPage) }),
-        search,
-        status: status && status !== 'all' ? status : undefined,
+        ...normalizePaginationParams({ page: query.page, perPage: query.perPage }),
+        search: query.search,
+        status: query.status,
       },
     )
     return { data: teachers.map(TeacherPresenter.toHTTP), meta }

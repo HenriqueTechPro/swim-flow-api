@@ -13,6 +13,8 @@ export interface PrismaTrainingRecord {
   maxParticipants: number
   currentParticipants: number
   status: string
+  venueType: string
+  locationName: string
   poolId: string | null
   instructor: {
     name: string
@@ -37,11 +39,23 @@ const TRAINING_LEVEL_LABELS: Record<string, Training['level']> = {
   Todos: 'Todos',
 }
 
+const TRAINING_VENUE_LABELS: Record<string, Training['venueType']> = {
+  Piscina: 'Piscina',
+  Mar: 'Mar',
+  Rio: 'Rio',
+  Lago: 'Lago',
+  Represa: 'Represa',
+  Outro: 'Outro',
+}
+
 const formatTime = (value: Date) => value.toISOString().slice(11, 16)
 const formatPoolLabel = (pool: { name: string; lengthMeters: number }) => `${pool.name} (${pool.lengthMeters}m)`
 
 export class PrismaTrainingMapper {
   static toDomain(training: PrismaTrainingRecord): Training {
+    const venueType = TRAINING_VENUE_LABELS[training.venueType] ?? 'Outro'
+    const poolLabel = training.pool ? formatPoolLabel(training.pool) : ''
+
     return {
       id: training.id,
       title: training.title,
@@ -56,8 +70,10 @@ export class PrismaTrainingMapper {
       maxParticipants: training.maxParticipants,
       currentParticipants: training.currentParticipants,
       status: training.status as Training['status'],
+      venueType,
+      locationName: venueType === 'Piscina' ? poolLabel : training.locationName,
       poolId: training.poolId ?? undefined,
-      pool: training.pool ? formatPoolLabel(training.pool) : '',
+      pool: poolLabel,
     }
   }
 }

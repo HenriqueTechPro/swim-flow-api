@@ -29,6 +29,8 @@ describe('UpdateTrainingUseCase', () => {
       maxParticipants: 24,
       currentParticipants: 2,
       status: 'Ativo',
+      venueType: 'Piscina',
+      locationName: '',
       poolId: 'pool-1',
     })
 
@@ -50,6 +52,8 @@ describe('UpdateTrainingUseCase', () => {
         maxParticipants: 24,
         currentParticipants: 2,
         status: 'Ativo',
+        venueType: 'Piscina',
+        locationName: '',
         poolId: 'pool-1',
       }),
     ).rejects.toBeInstanceOf(AppError)

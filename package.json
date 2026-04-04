@@ -7,6 +7,8 @@
     "license":  "UNLICENSED",
     "scripts":  {
                     "prisma:generate":  "node ./node_modules/prisma/build/index.js generate --schema prisma/schema.prisma",
+                    "prisma:migrate:dev":  "node ./node_modules/prisma/build/index.js migrate dev --schema prisma/schema.prisma",
+                    "prisma:migrate:deploy":  "node ./node_modules/prisma/build/index.js migrate deploy --schema prisma/schema.prisma",
                     "build":  "npm run prisma:generate && nest build",
                     "format":  "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
                     "start":  "npm run prisma:generate && nest start",

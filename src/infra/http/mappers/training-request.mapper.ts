@@ -1,4 +1,4 @@
-import type { CreateTrainingDto, UpdateTrainingDto } from '@/shared/contracts/management'
+import type { CreateTrainingDto, UpdateTrainingDto } from '@/shared/contracts/trainings.contracts'
 import type { CreateTrainingRequest, UpdateTrainingRequest } from '@/domain/trainings/application/dtos/training-requests'
 
 export class TrainingRequestMapper {

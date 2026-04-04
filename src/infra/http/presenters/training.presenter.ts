@@ -16,6 +16,8 @@ export class TrainingPresenter {
       maxParticipants: training.maxParticipants,
       currentParticipants: training.currentParticipants,
       status: training.status,
+      venueType: training.venueType,
+      locationName: training.locationName,
       poolId: training.poolId,
       pool: training.pool,
     }

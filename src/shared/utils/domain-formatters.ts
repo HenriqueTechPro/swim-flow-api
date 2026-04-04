@@ -49,3 +49,9 @@ export const formatEntityStatus = (value: string) => {
   if (value === 'Inativo') return 'Inativo'
   return 'Ativo'
 }
+
+export const parseEntityStatus = (value: string) => {
+  if (value === 'Licença') return 'Licenca'
+  if (value === 'Inativo') return 'Inativo'
+  return 'Ativo'
+}

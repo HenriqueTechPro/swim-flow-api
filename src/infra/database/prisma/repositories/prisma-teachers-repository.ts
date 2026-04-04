@@ -6,7 +6,7 @@ import { expandTeacherCategorySelection } from '@/shared/lib/teacher-categories'
 import { createPaginatedResult, normalizePaginationParams } from '@/domain/shared/pagination/pagination-utils'
 import { TeachersRepository, type CreateTeacherRepositoryInput, type ListTeachersRepositoryParams, type UpdateTeacherRepositoryInput } from '@/domain/teachers/application/repositories/teachers-repository'
 import { AppError } from '@/shared/errors/app-error'
-import { parseCategoryValue } from '@/shared/utils/domain-formatters'
+import { parseCategoryValue, parseEntityStatus } from '@/shared/utils/domain-formatters'
 import { PrismaService } from '../prisma.service'
 import { PrismaTeacherMapper, type PrismaTeacherRecord } from '../mappers/prisma-teacher-mapper'
 
@@ -62,12 +62,13 @@ export class PrismaTeachersRepository implements TeachersRepository {
     const { page, perPage } = normalizePaginationParams(params)
     const normalizedSearch = params?.search?.trim().toLowerCase() || ''
     const normalizedStatus = params?.status?.trim() || ''
-    const cacheKey = `${buildPaginatedCacheKey('teachers', page, perPage)}:${normalizedSearch}:${normalizedStatus}`
+    const prismaStatus = normalizedStatus ? parseEntityStatus(normalizedStatus) : ''
+    const cacheKey = `${buildPaginatedCacheKey('teachers', page, perPage)}:${normalizedSearch}:${prismaStatus}`
 
     return rememberPaginatedResult(this.cache, cacheKey, this.env.cacheTtlSeconds, async () => {
       const skip = (page - 1) * perPage
       const where = {
-        ...(normalizedStatus ? { status: normalizedStatus as never } : {}),
+        ...(prismaStatus ? { status: prismaStatus as never } : {}),
         ...(normalizedSearch
           ? {
               OR: [
@@ -114,7 +115,7 @@ export class PrismaTeachersRepository implements TeachersRepository {
           photo: input.photo || null,
           speciality: input.specialities.join(', '),
           experience: parseInt(input.experience, 10) || 0,
-          status: input.status as never,
+          status: parseEntityStatus(input.status) as never,
           bio: input.bio?.trim() || null,
         },
       })
@@ -152,7 +153,7 @@ export class PrismaTeachersRepository implements TeachersRepository {
           photo: input.photo || null,
           speciality: input.specialities.join(', '),
           experience: parseInt(input.experience, 10) || 0,
-          status: input.status as never,
+          status: parseEntityStatus(input.status) as never,
           bio: input.bio?.trim() || null,
         },
       })

@@ -1,4 +1,4 @@
-﻿export interface CreateTrainingRequest {
+export interface CreateTrainingRequest {
   title: string
   description?: string
   type: 'Técnico' | 'Resistência' | 'Velocidade' | 'Misto'
@@ -10,6 +10,8 @@
   maxParticipants: number
   currentParticipants: number
   status: 'Ativo' | 'Pausado' | 'Encerrado'
+  venueType: 'Piscina' | 'Mar' | 'Rio' | 'Lago' | 'Represa' | 'Outro'
+  locationName?: string
   poolId?: string | null
 }
 

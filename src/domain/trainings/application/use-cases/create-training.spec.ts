@@ -24,6 +24,8 @@ describe('CreateTrainingUseCase', () => {
       maxParticipants: 20,
       currentParticipants: 0,
       status: 'Ativo',
+      venueType: 'Piscina',
+      locationName: '',
       poolId: 'pool-1',
     })
 

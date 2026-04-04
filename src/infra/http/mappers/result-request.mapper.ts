@@ -1,4 +1,4 @@
-﻿import type { CreateResultDto, UpdateResultDto } from '@/shared/contracts/management'
+import type { CreateResultDto, UpdateResultDto } from '@/shared/contracts/results.contracts'
 import type { CreateResultRequest, UpdateResultRequest } from '@/domain/results/application/dtos/result-requests'
 
 export class ResultRequestMapper {

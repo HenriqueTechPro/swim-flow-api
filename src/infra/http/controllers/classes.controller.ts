@@ -13,7 +13,7 @@ import {
   type TransferTeacherDto,
   type UpdateClassDto,
   type UpdateClassTeacherRoleDto,
-} from '@/shared/contracts/management'
+} from '@/shared/contracts/classes.contracts'
 import { AddClassTeacherUseCase } from '@/domain/classes/application/use-cases/add-class-teacher'
 import { CreateClassUseCase } from '@/domain/classes/application/use-cases/create-class'
 import { DeleteClassUseCase } from '@/domain/classes/application/use-cases/delete-class'
@@ -27,6 +27,7 @@ import { normalizePaginationParams } from '@/domain/shared/pagination/pagination
 import { JwtAuthGuard } from '@/infra/auth/jwt-auth.guard'
 import { Roles } from '@/infra/auth/roles.decorator'
 import { RolesGuard } from '@/infra/auth/roles.guard'
+import { classesListQuerySchema, type ClassesListQuery } from '../queries/list-query-schemas'
 import { ZodValidationPipe } from '../pipes/zod-validation-pipe'
 import { ClassRequestMapper } from '../mappers/class-request.mapper'
 import { ClassPresenter } from '../presenters/class.presenter'
@@ -50,22 +51,14 @@ export class ClassesController {
   ) {}
 
   @Get()
-  async index(
-    @Query('page') page?: string,
-    @Query('perPage') perPage?: string,
-    @Query('search') search?: string,
-    @Query('category') category?: string,
-    @Query('day') day?: string,
-    @Query('status') status?: string,
-    @Query('poolId') poolId?: string,
-  ) {
+  async index(@Query(new ZodValidationPipe(classesListQuerySchema)) query: ClassesListQuery) {
     const { classes, meta } = await this.listClasses.execute({
-      ...normalizePaginationParams({ page: Number(page), perPage: Number(perPage) }),
-      search,
-      category,
-      day,
-      status,
-      poolId,
+      ...normalizePaginationParams({ page: query.page, perPage: query.perPage }),
+      search: query.search,
+      category: query.category,
+      day: query.day,
+      status: query.status,
+      poolId: query.poolId,
     })
     return { data: classes.map(ClassPresenter.toHTTP), meta }
   }

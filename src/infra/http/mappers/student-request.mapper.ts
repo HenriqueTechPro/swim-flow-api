@@ -1,4 +1,4 @@
-import type { CreateStudentDto, UpdateStudentDto } from '@/shared/contracts/management'
+import type { CreateStudentDto, UpdateStudentDto } from '@/shared/contracts/students.contracts'
 import type { CreateStudentRequest, UpdateStudentRequest } from '@/domain/students/application/dtos/student-requests'
 
 export class StudentRequestMapper {

@@ -17,6 +17,8 @@ export function makeTraining(override: MakeTrainingOverride = {}): Training {
     maxParticipants: override.maxParticipants ?? 20,
     currentParticipants: override.currentParticipants ?? 0,
     status: override.status ?? 'Ativo',
+    venueType: override.venueType ?? 'Piscina',
+    locationName: override.locationName ?? '',
     poolId: override.poolId,
     pool: override.pool ?? '',
   }

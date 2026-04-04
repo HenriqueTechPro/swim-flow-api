@@ -1,4 +1,4 @@
-import type { CreateTeacherDto, UpdateTeacherDto } from '@/shared/contracts/management'
+import type { CreateTeacherDto, UpdateTeacherDto } from '@/shared/contracts/teachers.contracts'
 import type { CreateTeacherRequest, UpdateTeacherRequest } from '@/domain/teachers/application/dtos/teacher-requests'
 
 export class TeacherRequestMapper {

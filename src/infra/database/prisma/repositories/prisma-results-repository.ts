@@ -1,6 +1,6 @@
 ﻿import { Injectable } from '@nestjs/common'
 import { CacheRepository } from '@/infra/cache/cache-repository'
-import { buildPaginatedCacheKey, rememberPaginatedResult } from '@/infra/cache/cache.helpers'
+import { buildPaginatedCacheKey, rememberCachedValue, rememberPaginatedResult } from '@/infra/cache/cache.helpers'
 import { EnvService } from '@/infra/env/env.service'
 import { createPaginatedResult, normalizePaginationParams } from '@/domain/shared/pagination/pagination-utils'
 import {
@@ -22,6 +22,8 @@ const resultInclude = {
   },
 }
 
+const RESULT_FILTER_OPTIONS_CACHE_KEY = 'results:options'
+
 const timeToSeconds = (time: string) => {
   const parts = time.split(':')
   if (parts.length === 2) {
@@ -40,33 +42,35 @@ export class PrismaResultsRepository implements ResultsRepository {
   ) {}
 
   async getFilterOptions(): Promise<ResultFilterOptions> {
-    const [
-      disciplines,
-      styles,
-      distances,
-      competitions,
-      eventFormats,
-      categories,
-    ] = await this.prisma.$transaction([
-      this.prisma.result.findMany({ distinct: ['discipline'], select: { discipline: true } }),
-      this.prisma.result.findMany({ distinct: ['style'], select: { style: true } }),
-      this.prisma.result.findMany({ distinct: ['distance'], select: { distance: true } }),
-      this.prisma.result.findMany({ distinct: ['competition'], select: { competition: true } }),
-      this.prisma.result.findMany({ distinct: ['eventFormat'], select: { eventFormat: true } }),
-      this.prisma.result.findMany({ distinct: ['category'], select: { category: true } }),
-    ])
+    return rememberCachedValue(this.cache, RESULT_FILTER_OPTIONS_CACHE_KEY, this.env.cacheTtlSeconds, async () => {
+      const [
+        disciplines,
+        styles,
+        distances,
+        competitions,
+        eventFormats,
+        categories,
+      ] = await this.prisma.$transaction([
+        this.prisma.result.findMany({ distinct: ['discipline'], select: { discipline: true } }),
+        this.prisma.result.findMany({ distinct: ['style'], select: { style: true } }),
+        this.prisma.result.findMany({ distinct: ['distance'], select: { distance: true } }),
+        this.prisma.result.findMany({ distinct: ['competition'], select: { competition: true } }),
+        this.prisma.result.findMany({ distinct: ['eventFormat'], select: { eventFormat: true } }),
+        this.prisma.result.findMany({ distinct: ['category'], select: { category: true } }),
+      ])
 
-    const unique = (values: string[]) =>
-      [...new Set(values.filter(Boolean))].sort((left, right) => left.localeCompare(right, 'pt-BR'))
+      const unique = (values: string[]) =>
+        [...new Set(values.filter(Boolean))].sort((left, right) => left.localeCompare(right, 'pt-BR'))
 
-    return {
-      disciplines: unique(disciplines.map((item) => item.discipline || 'Piscina')),
-      styles: unique(styles.map((item) => item.style)),
-      distances: unique(distances.map((item) => item.distance)),
-      competitions: unique(competitions.map((item) => item.competition)),
-      eventFormats: unique(eventFormats.map((item) => item.eventFormat || 'Prova Individual')),
-      categories: unique(categories.map((item) => item.category)),
-    }
+      return {
+        disciplines: unique(disciplines.map((item) => item.discipline || 'Piscina')),
+        styles: unique(styles.map((item) => item.style)),
+        distances: unique(distances.map((item) => item.distance)),
+        competitions: unique(competitions.map((item) => item.competition)),
+        eventFormats: unique(eventFormats.map((item) => item.eventFormat || 'Prova Individual')),
+        categories: unique(categories.map((item) => item.category)),
+      }
+    })
   }
 
   async list(params?: ListResultsRepositoryParams) {
@@ -180,6 +184,7 @@ export class PrismaResultsRepository implements ResultsRepository {
     })
 
     await this.cache.deleteMatching('results:list:')
+    await this.cache.delete(RESULT_FILTER_OPTIONS_CACHE_KEY)
     return PrismaResultMapper.toDomain(result as unknown as PrismaResultRecord)
   }
 
@@ -219,6 +224,7 @@ export class PrismaResultsRepository implements ResultsRepository {
     })
 
     await this.cache.deleteMatching('results:list:')
+    await this.cache.delete(RESULT_FILTER_OPTIONS_CACHE_KEY)
     return PrismaResultMapper.toDomain(result as unknown as PrismaResultRecord)
   }
 
@@ -237,6 +243,7 @@ export class PrismaResultsRepository implements ResultsRepository {
     })
 
     await this.cache.deleteMatching('results:list:')
+    await this.cache.delete(RESULT_FILTER_OPTIONS_CACHE_KEY)
     return PrismaResultMapper.toDomain(existing as unknown as PrismaResultRecord)
   }
 }

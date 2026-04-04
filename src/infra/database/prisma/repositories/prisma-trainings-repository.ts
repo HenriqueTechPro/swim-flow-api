@@ -14,17 +14,26 @@ import { PrismaService } from '../prisma.service'
 import { PrismaTrainingMapper, type PrismaTrainingRecord } from '../mappers/prisma-training-mapper'
 
 const TRAINING_TYPE_TO_PRISMA = {
-  'Técnico': 'Tecnico',
-  'Resistência': 'Resistencia',
+  Técnico: 'Tecnico',
+  Resistência: 'Resistencia',
   Velocidade: 'Velocidade',
   Misto: 'Misto',
 } as const
 
 const TRAINING_LEVEL_TO_PRISMA = {
   Iniciante: 'Iniciante',
-  'Intermediário': 'Intermediario',
-  'Avançado': 'Avancado',
+  Intermediário: 'Intermediario',
+  Avançado: 'Avancado',
   Todos: 'Todos',
+} as const
+
+const TRAINING_VENUE_TO_PRISMA = {
+  Piscina: 'Piscina',
+  Mar: 'Mar',
+  Rio: 'Rio',
+  Lago: 'Lago',
+  Represa: 'Represa',
+  Outro: 'Outro',
 } as const
 
 const toTimeDate = (value: string) => new Date(`1970-01-01T${value}:00.000Z`)
@@ -65,6 +74,8 @@ export class PrismaTrainingsRepository implements TrainingsRepository {
               OR: [
                 { title: { contains: search, mode: 'insensitive' as const } },
                 { description: { contains: search, mode: 'insensitive' as const } },
+                { locationName: { contains: search, mode: 'insensitive' as const } },
+                { venueType: { contains: search, mode: 'insensitive' as const } },
                 { instructor: { name: { contains: search, mode: 'insensitive' as const } } },
                 { pool: { name: { contains: search, mode: 'insensitive' as const } } },
               ],
@@ -105,7 +116,9 @@ export class PrismaTrainingsRepository implements TrainingsRepository {
         maxParticipants: input.maxParticipants,
         currentParticipants: input.currentParticipants,
         status: input.status as never,
-        poolId: input.poolId || null,
+        venueType: TRAINING_VENUE_TO_PRISMA[input.venueType],
+        locationName: input.venueType === 'Piscina' ? '' : input.locationName?.trim() || '',
+        poolId: input.venueType === 'Piscina' ? input.poolId || null : null,
       },
       include: trainingInclude,
     })
@@ -138,7 +151,9 @@ export class PrismaTrainingsRepository implements TrainingsRepository {
         maxParticipants: input.maxParticipants,
         currentParticipants: input.currentParticipants,
         status: input.status as never,
-        poolId: input.poolId || null,
+        venueType: TRAINING_VENUE_TO_PRISMA[input.venueType],
+        locationName: input.venueType === 'Piscina' ? '' : input.locationName?.trim() || '',
+        poolId: input.venueType === 'Piscina' ? input.poolId || null : null,
       },
       include: trainingInclude,
     })

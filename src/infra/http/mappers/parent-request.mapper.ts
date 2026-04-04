@@ -1,4 +1,4 @@
-import type { CreateParentDto, UpdateParentDto } from '@/shared/contracts/management'
+import type { CreateParentDto, UpdateParentDto } from '@/shared/contracts/parents.contracts'
 import type { CreateParentRequest, UpdateParentRequest } from '@/domain/parents/application/dtos/parent-requests'
 
 export class ParentRequestMapper {
