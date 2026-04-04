@@ -59,16 +59,16 @@ describe('CreateResultUseCase', () => {
     expect(result.eventFormat).toBe('Prova Individual')
   })
 
-  it('creates an ultramarathon result with custom distance', async () => {
+  it('creates an open-water result with custom distance', async () => {
     const { result } = await sut.execute({
       studentId: 'student-3',
       discipline: 'Aguas Abertas',
       style: 'Livre',
-      distance: 'Ultramaratona',
+      distance: '12km',
       customDistance: '12km',
       competitionType: 'Travessia',
       courseType: 'Rio',
-      eventFormat: 'Ultramaratona',
+      eventFormat: 'Travessia',
       time: '155:10.00',
       date: '2026-04-08',
       competition: 'Desafio do Rio',
@@ -77,7 +77,7 @@ describe('CreateResultUseCase', () => {
     })
 
     expect(result.customDistance).toBe('12km')
-    expect(result.eventFormat).toBe('Ultramaratona')
+    expect(result.eventFormat).toBe('Travessia')
   })
 
   it('rejects invalid pool distance for medley', async () => {
@@ -100,17 +100,17 @@ describe('CreateResultUseCase', () => {
     ).rejects.toBeInstanceOf(AppError)
   })
 
-  it('rejects ultramarathon without custom distance', async () => {
+  it('rejects invalid open-water distance without custom distance', async () => {
     await expect(() =>
       sut.execute({
         studentId: 'student-5',
         discipline: 'Aguas Abertas',
         style: 'Livre',
-        distance: 'Ultramaratona',
+        distance: '12km',
         customDistance: '',
         competitionType: 'Travessia',
         courseType: 'Mar',
-        eventFormat: 'Ultramaratona',
+        eventFormat: 'Travessia',
         time: '155:10.00',
         date: '2026-04-08',
         competition: 'Desafio do Mar',

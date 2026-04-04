@@ -2,10 +2,16 @@
 import type { CreateResultRequest, UpdateResultRequest } from '../dtos/result-requests'
 
 const POOL_STYLES = new Set(['Livre', 'Costas', 'Peito', 'Borboleta', 'Medley'])
-const POOL_COURSE_TYPES = new Set(['Piscina Curta', 'Piscina Longa'])
+const POOL_COURSE_TYPES = new Set([
+  'Piscina Curta',
+  'Piscina Longa',
+  'Piscina Curta (25m)',
+  'Piscina Longa (50m)',
+])
 const OPEN_WATER_COURSE_TYPES = new Set(['Mar', 'Rio', 'Lago', 'Represa'])
 const OPEN_WATER_STYLES = new Set(['Livre', 'Crawl'])
-const OPEN_WATER_DISTANCES = new Set(['1km', '2.5km', '3km', '5km', '7.5km', '10km'])
+const OPEN_WATER_DISTANCES = new Set(['250m', '500m', '750m', '1km', '1.5km', '2.5km', '3km', '5km', '7.5km', '10km'])
+const CUSTOM_DISTANCE_PATTERN = /^\d+(?:[.,]\d+)?\s?(m|km)$/i
 
 const POOL_DISTANCES_BY_STYLE: Record<string, string[]> = {
   Livre: ['25m', '50m', '100m', '200m', '400m', '800m', '1500m'],
@@ -72,9 +78,9 @@ export const validateResultCompetitionContext = (input: ResultContextInput) => {
       throw new AppError(400, 'Aguas abertas devem usar tipo de competicao Aguas Abertas ou Travessia')
     }
 
-    if (eventFormat === 'Ultramaratona') {
-      if (!customDistance) {
-        throw new AppError(400, 'Ultramaratonas exigem distancia personalizada')
+    if (customDistance) {
+      if (!CUSTOM_DISTANCE_PATTERN.test(customDistance)) {
+        throw new AppError(400, 'Distancia personalizada invalida para aguas abertas')
       }
       return
     }

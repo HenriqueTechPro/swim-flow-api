@@ -40,8 +40,8 @@ describe('ListResultsUseCase', () => {
         discipline: 'Aguas Abertas',
         competitionType: 'Travessia',
         courseType: 'Rio',
-        eventFormat: 'Ultramaratona',
-        distance: 'Ultramaratona',
+        eventFormat: 'Travessia',
+        distance: '12km',
         customDistance: '12km',
       }),
     )

@@ -57,18 +57,30 @@ export class PrismaStudentsRepository implements StudentsRepository {
 
     return rememberPaginatedResult(this.cache, cacheKey, this.env.cacheTtlSeconds, async () => {
       const skip = (page - 1) * perPage
-      const where = {
-        ...(normalizedCategory ? { categoryLabel: normalizedCategory } : {}),
-        ...(prismaStatus ? { status: prismaStatus as never } : {}),
+      const filters = [
+        ...(normalizedCategory
+          ? [
+              {
+                OR: [
+                  { categoryLabel: normalizedCategory },
+                  { category: { name: parseCategoryValue(normalizedCategory) as never } },
+                ],
+              },
+            ]
+          : []),
+        ...(prismaStatus ? [{ status: prismaStatus as never }] : []),
         ...(normalizedSearch
-          ? {
-              OR: [
-                { name: { contains: normalizedSearch, mode: 'insensitive' as const } },
-                { parent: { name: { contains: normalizedSearch, mode: 'insensitive' as const } } },
-              ],
-            }
-          : {}),
-      }
+          ? [
+              {
+                OR: [
+                  { name: { contains: normalizedSearch, mode: 'insensitive' as const } },
+                  { parent: { name: { contains: normalizedSearch, mode: 'insensitive' as const } } },
+                ],
+              },
+            ]
+          : []),
+      ]
+      const where = filters.length ? { AND: filters } : undefined
       const [students, total] = await this.prisma.$transaction([
         this.prisma.student.findMany({
           include: studentInclude,
