@@ -104,14 +104,6 @@ enum TipoEvento {
   @@map("tipo_evento")
 }
 
-enum PoolStatus {
-  Ativa
-  Pausada
-  Encerrada
-
-  @@map("pool_status")
-}
-
 enum TipoTreino {
   Tecnico     @map("Técnico")
   Resistencia @map("Resistência")
@@ -427,7 +419,7 @@ model Pool {
   name            String
   lengthMeters    Int             @default(25) @map("length_meters")
   address         String          @default("")
-  status          PoolStatus      @default(Ativa)
+  status          String          @default("Ativa")
   maxCapacity     Int?            @map("max_capacity")
   createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime        @default(now()) @map("updated_at") @db.Timestamptz(6)

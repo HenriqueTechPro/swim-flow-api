@@ -2,7 +2,7 @@ export interface CreatePoolRequest {
   name: string
   lengthMeters: number
   address: string
-  status: 'Ativa' | 'Pausada' | 'Encerrada'
+  status: 'Ativa' | 'Inativa' | 'Manutenção'
   maxCapacity?: number | null
 }
 

@@ -3,7 +3,7 @@ export interface Pool {
   name: string
   lengthMeters: number
   address: string
-  status: 'Ativa' | 'Pausada' | 'Encerrada'
+  status: 'Ativa' | 'Inativa' | 'Manutenção'
   maxCapacity?: number | null
   createdAt: string
   updatedAt: string

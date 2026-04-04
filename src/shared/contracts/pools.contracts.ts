@@ -4,7 +4,7 @@ export const createPoolSchema = z.object({
   name: z.string().min(3),
   lengthMeters: z.number().int().positive(),
   address: z.string().min(1),
-  status: z.enum(['Ativa', 'Pausada', 'Encerrada']),
+  status: z.enum(['Ativa', 'Inativa', 'Manutenção']),
   maxCapacity: z.number().int().positive().nullable().optional(),
 })
 
