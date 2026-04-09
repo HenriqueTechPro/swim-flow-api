@@ -11,6 +11,7 @@ import {
   type UpdateResultRepositoryInput,
 } from '@/domain/results/application/repositories/results-repository'
 import { AppError } from '@/shared/errors/app-error'
+import { formatCategoryLabel } from '@/shared/utils/domain-formatters'
 import { PrismaService } from '../prisma.service'
 import { PrismaResultMapper, type PrismaResultRecord } from '../mappers/prisma-result-mapper'
 
@@ -23,6 +24,40 @@ const resultInclude = {
 }
 
 const RESULT_FILTER_OPTIONS_CACHE_KEY = 'results:options'
+
+const RESULT_DISCIPLINE_TO_PRISMA = {
+  Piscina: 'Piscina',
+  'Aguas Abertas': 'Aguas_Abertas',
+} as const
+
+const RESULT_COURSE_TYPE_TO_PRISMA = {
+  'Piscina Curta': 'Piscina_Curta',
+  'Piscina Longa': 'Piscina_Longa',
+  Mar: 'Mar',
+  Rio: 'Rio',
+  Lago: 'Lago',
+  Represa: 'Represa',
+} as const
+
+const RESULT_EVENT_FORMAT_TO_PRISMA = {
+  'Prova Individual': 'Prova_Individual',
+  Travessia: 'Travessia',
+  'Knockout Sprint': 'Knockout_Sprint',
+  Revezamento: 'Revezamento',
+} as const
+
+const RESULT_STATUS_TO_PRISMA = {
+  Classificado: 'Classificado',
+  Desclassificado: 'Desclassificado',
+} as const
+
+const RESULT_STYLE_TO_PRISMA = {
+  Livre: 'Livre',
+  Costas: 'Costas',
+  Peito: 'Peito',
+  Borboleta: 'Borboleta',
+  Medley: 'Medley',
+} as const
 
 const timeToSeconds = (time: string) => {
   const parts = time.split(':')
@@ -93,14 +128,28 @@ export class PrismaResultsRepository implements ResultsRepository {
     return rememberPaginatedResult(this.cache, cacheKey, this.env.cacheTtlSeconds, async () => {
       const skip = (page - 1) * perPage
       const where = {
-        ...(discipline ? { discipline } : {}),
-        ...(style ? { style } : {}),
+        ...(discipline
+          ? {
+              discipline:
+                RESULT_DISCIPLINE_TO_PRISMA[discipline as keyof typeof RESULT_DISCIPLINE_TO_PRISMA],
+            }
+          : {}),
+        ...(style ? { style: RESULT_STYLE_TO_PRISMA[style as keyof typeof RESULT_STYLE_TO_PRISMA] } : {}),
         ...(distance ? { distance } : {}),
         ...(competition ? { competition } : {}),
         ...(competitionType ? { competitionType } : {}),
-        ...(courseType ? { courseType } : {}),
-        ...(eventFormat ? { eventFormat } : {}),
-        ...(resultStatus ? { resultStatus } : {}),
+        ...(courseType
+          ? { courseType: RESULT_COURSE_TYPE_TO_PRISMA[courseType as keyof typeof RESULT_COURSE_TYPE_TO_PRISMA] }
+          : {}),
+        ...(eventFormat
+          ? {
+              eventFormat:
+                RESULT_EVENT_FORMAT_TO_PRISMA[eventFormat as keyof typeof RESULT_EVENT_FORMAT_TO_PRISMA],
+            }
+          : {}),
+        ...(resultStatus
+          ? { resultStatus: RESULT_STATUS_TO_PRISMA[resultStatus as keyof typeof RESULT_STATUS_TO_PRISMA] }
+          : {}),
         ...(category ? { category } : {}),
         ...(studentId ? { studentId } : {}),
         ...(startDate || endDate
@@ -116,15 +165,30 @@ export class PrismaResultsRepository implements ResultsRepository {
               OR: [
                 { student: { name: { contains: search, mode: 'insensitive' as const } } },
                 { competition: { contains: search, mode: 'insensitive' as const } },
-                { discipline: { contains: search, mode: 'insensitive' as const } },
                 { competitionType: { contains: search, mode: 'insensitive' as const } } ,
-                { courseType: { contains: search, mode: 'insensitive' as const } },
-                { eventFormat: { contains: search, mode: 'insensitive' as const } },
-                { resultStatus: { contains: search, mode: 'insensitive' as const } },
                 { category: { contains: search, mode: 'insensitive' as const } },
-                { style: { contains: search, mode: 'insensitive' as const } },
                 { distance: { contains: search, mode: 'insensitive' as const } },
                 { customDistance: { contains: search, mode: 'insensitive' as const } },
+                ...(RESULT_DISCIPLINE_TO_PRISMA[search as keyof typeof RESULT_DISCIPLINE_TO_PRISMA]
+                  ? [{ discipline: RESULT_DISCIPLINE_TO_PRISMA[search as keyof typeof RESULT_DISCIPLINE_TO_PRISMA] }]
+                  : []),
+                ...(RESULT_COURSE_TYPE_TO_PRISMA[search as keyof typeof RESULT_COURSE_TYPE_TO_PRISMA]
+                  ? [{ courseType: RESULT_COURSE_TYPE_TO_PRISMA[search as keyof typeof RESULT_COURSE_TYPE_TO_PRISMA] }]
+                  : []),
+                ...(RESULT_EVENT_FORMAT_TO_PRISMA[search as keyof typeof RESULT_EVENT_FORMAT_TO_PRISMA]
+                  ? [
+                      {
+                        eventFormat:
+                          RESULT_EVENT_FORMAT_TO_PRISMA[search as keyof typeof RESULT_EVENT_FORMAT_TO_PRISMA],
+                      },
+                    ]
+                  : []),
+                ...(RESULT_STATUS_TO_PRISMA[search as keyof typeof RESULT_STATUS_TO_PRISMA]
+                  ? [{ resultStatus: RESULT_STATUS_TO_PRISMA[search as keyof typeof RESULT_STATUS_TO_PRISMA] }]
+                  : []),
+                ...(RESULT_STYLE_TO_PRISMA[search as keyof typeof RESULT_STYLE_TO_PRISMA]
+                  ? [{ style: RESULT_STYLE_TO_PRISMA[search as keyof typeof RESULT_STYLE_TO_PRISMA] }]
+                  : []),
               ],
             }
           : {}),
@@ -152,7 +216,12 @@ export class PrismaResultsRepository implements ResultsRepository {
   async create(input: CreateResultRepositoryInput) {
     const student = await this.prisma.student.findUnique({
       where: { id: input.studentId },
-      select: { id: true, categoryLabel: true },
+      select: {
+        id: true,
+        category: {
+          select: { name: true },
+        },
+      },
     })
 
     if (!student) {
@@ -162,22 +231,28 @@ export class PrismaResultsRepository implements ResultsRepository {
     const result = await this.prisma.result.create({
       data: {
         studentId: input.studentId,
-        discipline: input.discipline || 'Piscina',
-        style: input.style,
+        discipline:
+          RESULT_DISCIPLINE_TO_PRISMA[(input.discipline || 'Piscina') as keyof typeof RESULT_DISCIPLINE_TO_PRISMA],
+        style: RESULT_STYLE_TO_PRISMA[input.style as keyof typeof RESULT_STYLE_TO_PRISMA],
         distance: input.distance,
         customDistance: input.customDistance || '',
         competitionType: input.competitionType || '',
-        courseType: input.courseType || '',
-        eventFormat: input.eventFormat || 'Prova Individual',
+        courseType:
+          RESULT_COURSE_TYPE_TO_PRISMA[(input.courseType || 'Piscina Curta') as keyof typeof RESULT_COURSE_TYPE_TO_PRISMA],
+        eventFormat:
+          RESULT_EVENT_FORMAT_TO_PRISMA[
+            (input.eventFormat || 'Prova Individual') as keyof typeof RESULT_EVENT_FORMAT_TO_PRISMA
+          ],
         time: input.time,
         timeInSeconds: timeToSeconds(input.time),
         date: new Date(input.date),
         competition: input.competition || '',
         position: input.position ?? 0,
-        resultStatus: input.resultStatus || 'Classificado',
+        resultStatus:
+          RESULT_STATUS_TO_PRISMA[(input.resultStatus || 'Classificado') as keyof typeof RESULT_STATUS_TO_PRISMA],
         personalBest: false,
         improvement: 0,
-        category: input.category || student.categoryLabel || '',
+        category: input.category || (student.category ? formatCategoryLabel(student.category.name) : ''),
         notes: input.notes || null,
       },
       include: resultInclude,
@@ -202,19 +277,25 @@ export class PrismaResultsRepository implements ResultsRepository {
       where: { id },
       data: {
         studentId: input.studentId,
-        discipline: input.discipline || 'Piscina',
-        style: input.style,
+        discipline:
+          RESULT_DISCIPLINE_TO_PRISMA[(input.discipline || 'Piscina') as keyof typeof RESULT_DISCIPLINE_TO_PRISMA],
+        style: RESULT_STYLE_TO_PRISMA[input.style as keyof typeof RESULT_STYLE_TO_PRISMA],
         distance: input.distance,
         customDistance: input.customDistance || '',
         competitionType: input.competitionType || '',
-        courseType: input.courseType || '',
-        eventFormat: input.eventFormat || 'Prova Individual',
+        courseType:
+          RESULT_COURSE_TYPE_TO_PRISMA[(input.courseType || 'Piscina Curta') as keyof typeof RESULT_COURSE_TYPE_TO_PRISMA],
+        eventFormat:
+          RESULT_EVENT_FORMAT_TO_PRISMA[
+            (input.eventFormat || 'Prova Individual') as keyof typeof RESULT_EVENT_FORMAT_TO_PRISMA
+          ],
         time: input.time,
         timeInSeconds: input.timeInSeconds,
         date: new Date(input.date),
         competition: input.competition || '',
         position: input.position ?? 0,
-        resultStatus: input.resultStatus || 'Classificado',
+        resultStatus:
+          RESULT_STATUS_TO_PRISMA[(input.resultStatus || 'Classificado') as keyof typeof RESULT_STATUS_TO_PRISMA],
         personalBest: input.personalBest,
         improvement: input.improvement,
         category: input.category || '',

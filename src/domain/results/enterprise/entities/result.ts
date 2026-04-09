@@ -1,20 +1,28 @@
-﻿export interface Result {
+import type {
+  ResultCourseType,
+  ResultDiscipline,
+  ResultEventFormat,
+  ResultStatus,
+  ResultStyle,
+} from '@/shared/contracts/results.contracts'
+
+export interface Result {
   id: string
   studentId: string
   studentName: string
-  discipline?: string
-  style: string
+  discipline?: ResultDiscipline
+  style: ResultStyle
   distance: string
   customDistance?: string
   competitionType?: string
-  courseType?: string
-  eventFormat?: string
+  courseType?: ResultCourseType
+  eventFormat?: ResultEventFormat
   time: string
   timeInSeconds: number
   date: string
   competition: string
   position: number
-  resultStatus?: 'Classificado' | 'Desclassificado'
+  resultStatus?: ResultStatus
   personalBest: boolean
   improvement: number
   category: string

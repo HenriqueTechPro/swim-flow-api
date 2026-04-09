@@ -61,10 +61,7 @@ export class PrismaStudentsRepository implements StudentsRepository {
         ...(normalizedCategory
           ? [
               {
-                OR: [
-                  { categoryLabel: normalizedCategory },
-                  { category: { name: parseCategoryValue(normalizedCategory) as never } },
-                ],
+                category: { name: parseCategoryValue(normalizedCategory) as never },
               },
             ]
           : []),
@@ -116,7 +113,7 @@ export class PrismaStudentsRepository implements StudentsRepository {
       const created = await tx.student.create({
         data: {
           name: input.name,
-          gender: input.gender,
+          gender: input.gender as never,
           birthDate: new Date(input.birthDate),
           categoryId: category.id,
           levelId: level.id,
@@ -167,7 +164,7 @@ export class PrismaStudentsRepository implements StudentsRepository {
         where: { id },
         data: {
           name: input.name,
-          gender: input.gender,
+          gender: input.gender as never,
           birthDate: new Date(input.birthDate),
           categoryId: category.id,
           levelId: level.id,

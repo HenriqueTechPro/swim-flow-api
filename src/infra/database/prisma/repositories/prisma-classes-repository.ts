@@ -45,10 +45,22 @@ type ClassRelationsTx = {
   classSchedule: {
     deleteMany(args: { where: { classId: string } }): Promise<unknown>
     createMany(args: {
-      data: Array<{ classId: string; dayOfWeek: string; startTime: Date; endTime: Date }>
+      data: Array<{ classId: string; dayOfWeek: ClassDayOfWeekPrismaValue; startTime: Date; endTime: Date }>
     }): Promise<unknown>
   }
 }
+
+const CLASS_DAY_OF_WEEK_TO_PRISMA = {
+  'Segunda-feira': 'Segunda_feira',
+  'Terça-feira': 'Terca_feira',
+  'Quarta-feira': 'Quarta_feira',
+  'Quinta-feira': 'Quinta_feira',
+  'Sexta-feira': 'Sexta_feira',
+  Sábado: 'Sabado',
+  Domingo: 'Domingo',
+} as const
+
+type ClassDayOfWeekPrismaValue = (typeof CLASS_DAY_OF_WEEK_TO_PRISMA)[keyof typeof CLASS_DAY_OF_WEEK_TO_PRISMA]
 
 const classInclude = {
   pool: {
@@ -141,7 +153,7 @@ export class PrismaClassesRepository implements ClassesRepository {
           ? {
               classSchedules: {
                 some: {
-                  dayOfWeek: day,
+                  dayOfWeek: CLASS_DAY_OF_WEEK_TO_PRISMA[day as keyof typeof CLASS_DAY_OF_WEEK_TO_PRISMA],
                 },
               },
             }
@@ -563,7 +575,7 @@ export class PrismaClassesRepository implements ClassesRepository {
       await tx.classSchedule.createMany({
         data: schedules.map((schedule) => ({
           classId,
-          dayOfWeek: schedule.dayOfWeek,
+          dayOfWeek: CLASS_DAY_OF_WEEK_TO_PRISMA[schedule.dayOfWeek],
           startTime: toTimeDate(schedule.startTime),
           endTime: toTimeDate(schedule.endTime),
         })),

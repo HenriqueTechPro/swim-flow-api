@@ -1,4 +1,10 @@
 import { z } from 'zod'
+import {
+  resultDisciplineSchema,
+  resultEventFormatSchema,
+  resultStatusSchema,
+  resultStyleSchema,
+} from '@/shared/contracts/results.contracts'
 
 const optionalQueryString = z.preprocess((value) => {
   if (typeof value !== 'string') {
@@ -91,12 +97,12 @@ export const attendanceListQuerySchema = paginationQuerySchema.extend({
 
 export const resultsListQuerySchema = paginationQuerySchema.extend({
   search: optionalQueryString,
-  discipline: optionalQueryString,
-  style: optionalQueryString,
+  discipline: optionalQueryString.pipe(resultDisciplineSchema.optional()),
+  style: optionalQueryString.pipe(resultStyleSchema.optional()),
   distance: optionalQueryString,
   competition: optionalQueryString,
-  eventFormat: optionalQueryString,
-  resultStatus: z.enum(['Classificado', 'Desclassificado']).optional(),
+  eventFormat: optionalQueryString.pipe(resultEventFormatSchema.optional()),
+  resultStatus: resultStatusSchema.optional(),
   category: optionalQueryString,
   startDate: optionalDateString,
   endDate: optionalDateString,

@@ -17,7 +17,7 @@ describe('CreateClassUseCase', () => {
       categories: ['Pre-Mirim', 'Mirim 1'],
       schedules: [
         {
-          dayOfWeek: 'Segunda',
+          dayOfWeek: 'Segunda-feira',
           startTime: '08:00',
           endTime: '09:00',
         },

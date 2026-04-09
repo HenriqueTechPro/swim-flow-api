@@ -11,6 +11,7 @@ import { makeTraining } from '../factories/make-training'
 
 export class InMemoryTrainingsRepository implements TrainingsRepository {
   public items: Training[] = []
+  public enrollments: Array<{ trainingId: string; studentId: string }> = []
 
   async list(params?: ListTrainingsRepositoryParams) {
     const search = params?.search?.trim().toLowerCase()
@@ -46,11 +47,12 @@ export class InMemoryTrainingsRepository implements TrainingsRepository {
       instructorId: input.instructorId ?? '',
       level: input.level,
       maxParticipants: input.maxParticipants,
-      currentParticipants: input.currentParticipants,
+      currentParticipants: input.currentParticipants ?? 0,
       status: input.status,
       venueType: input.venueType,
       locationName: input.venueType === 'Piscina' ? '' : input.locationName ?? '',
       poolId: input.poolId ?? undefined,
+      enrolledStudents: [],
     })
 
     this.items.push(training)
@@ -72,7 +74,7 @@ export class InMemoryTrainingsRepository implements TrainingsRepository {
       instructorId: input.instructorId ?? '',
       level: input.level,
       maxParticipants: input.maxParticipants,
-      currentParticipants: input.currentParticipants,
+      currentParticipants: input.currentParticipants ?? this.items[itemIndex].currentParticipants,
       status: input.status,
       venueType: input.venueType,
       locationName: input.venueType === 'Piscina' ? '' : input.locationName ?? '',
@@ -81,6 +83,44 @@ export class InMemoryTrainingsRepository implements TrainingsRepository {
 
     this.items[itemIndex] = updatedTraining
     return updatedTraining
+  }
+
+  async enroll(trainingId: string, studentId: string): Promise<Training> {
+    const training = this.items.find((item) => item.id === trainingId)
+    if (!training) throw new AppError(404, 'Training not found')
+
+    if (this.enrollments.some((item) => item.trainingId === trainingId && item.studentId === studentId)) {
+      throw new AppError(409, 'Student already enrolled in training')
+    }
+
+    const currentParticipants = this.enrollments.filter((item) => item.trainingId === trainingId).length
+    if (currentParticipants >= training.maxParticipants) {
+      throw new AppError(409, 'Training has reached max participants')
+    }
+
+    this.enrollments.push({ trainingId, studentId })
+    training.currentParticipants = currentParticipants + 1
+    training.enrolledStudents = [
+      ...training.enrolledStudents,
+      { id: studentId, name: `Aluno ${studentId}`, category: '', level: '' },
+    ]
+    return training
+  }
+
+  async unenroll(trainingId: string, studentId: string): Promise<Training> {
+    const training = this.items.find((item) => item.id === trainingId)
+    if (!training) throw new AppError(404, 'Training not found')
+
+    const enrollmentIndex = this.enrollments.findIndex(
+      (item) => item.trainingId === trainingId && item.studentId === studentId,
+    )
+
+    if (enrollmentIndex < 0) throw new AppError(404, 'Enrollment not found')
+
+    this.enrollments.splice(enrollmentIndex, 1)
+    training.currentParticipants = this.enrollments.filter((item) => item.trainingId === trainingId).length
+    training.enrolledStudents = training.enrolledStudents.filter((student) => student.id !== studentId)
+    return training
   }
 
   async remove(id: string): Promise<Training> {

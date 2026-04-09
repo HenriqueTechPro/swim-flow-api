@@ -4,12 +4,26 @@ export interface ClassEntity {
   category: string
   categories: string[]
   categoryIds: string[]
-  dayOfWeek: string
+  dayOfWeek:
+    | 'Segunda-feira'
+    | 'Terça-feira'
+    | 'Quarta-feira'
+    | 'Quinta-feira'
+    | 'Sexta-feira'
+    | 'Sábado'
+    | 'Domingo'
   startTime: string
   endTime: string
   schedules: Array<{
     id: string
-    dayOfWeek: string
+    dayOfWeek:
+      | 'Segunda-feira'
+      | 'Terça-feira'
+      | 'Quarta-feira'
+      | 'Quinta-feira'
+      | 'Sexta-feira'
+      | 'Sábado'
+      | 'Domingo'
     startTime: string
     endTime: string
   }>

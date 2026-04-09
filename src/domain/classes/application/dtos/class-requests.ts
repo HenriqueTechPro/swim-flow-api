@@ -1,5 +1,12 @@
 export interface ClassScheduleRequest {
-  dayOfWeek: string
+  dayOfWeek:
+    | 'Segunda-feira'
+    | 'Terça-feira'
+    | 'Quarta-feira'
+    | 'Quinta-feira'
+    | 'Sexta-feira'
+    | 'Sábado'
+    | 'Domingo'
   startTime: string
   endTime: string
 }

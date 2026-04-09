@@ -10,6 +10,7 @@ import {
   type UpdateExStudentRepositoryInput,
 } from '@/domain/ex-students/application/repositories/ex-students-repository'
 import { AppError } from '@/shared/errors/app-error'
+import { formatCategoryLabel } from '@/shared/utils/domain-formatters'
 import { PrismaService } from '../prisma.service'
 import { PrismaExStudentMapper, type PrismaExStudentRecord } from '../mappers/prisma-ex-student-mapper'
 
@@ -78,6 +79,12 @@ export class PrismaExStudentsRepository implements ExStudentsRepository {
     const student = await this.prisma.student.findUnique({
       where: { id: input.studentId },
       include: {
+        category: {
+          select: { name: true },
+        },
+        level: {
+          select: { name: true },
+        },
         parent: {
           select: { name: true },
         },
@@ -89,8 +96,8 @@ export class PrismaExStudentsRepository implements ExStudentsRepository {
     }
 
     const birthYear = getBirthYearFromDate(student.birthDate)
-    const categorySnapshot = student.categoryLabel || 'Nao Informada'
-    const levelSnapshot = student.levelLabel || 'Iniciante'
+    const categorySnapshot = student.category ? formatCategoryLabel(student.category.name) : 'Nao Informada'
+    const levelSnapshot = student.level?.name || 'Iniciante'
     const responsible = student.parent?.name || ''
 
     const exStudent = await this.prisma.$transaction(async (tx) => {

@@ -1,9 +1,18 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger'
-import { createTrainingSchema, updateTrainingSchema, type CreateTrainingDto, type UpdateTrainingDto } from '@/shared/contracts/trainings.contracts'
+import {
+  createTrainingSchema,
+  trainingEnrollmentSchema,
+  updateTrainingSchema,
+  type CreateTrainingDto,
+  type TrainingEnrollmentDto,
+  type UpdateTrainingDto,
+} from '@/shared/contracts/trainings.contracts'
 import { CreateTrainingUseCase } from '@/domain/trainings/application/use-cases/create-training'
 import { DeleteTrainingUseCase } from '@/domain/trainings/application/use-cases/delete-training'
+import { EnrollTrainingStudentUseCase } from '@/domain/trainings/application/use-cases/enroll-training-student'
 import { ListTrainingsUseCase } from '@/domain/trainings/application/use-cases/list-trainings'
+import { UnenrollTrainingStudentUseCase } from '@/domain/trainings/application/use-cases/unenroll-training-student'
 import { UpdateTrainingUseCase } from '@/domain/trainings/application/use-cases/update-training'
 import { normalizePaginationParams } from '@/domain/shared/pagination/pagination-utils'
 import { JwtAuthGuard } from '@/infra/auth/jwt-auth.guard'
@@ -24,6 +33,8 @@ export class TrainingsController {
     private readonly listTrainings: ListTrainingsUseCase,
     private readonly createTraining: CreateTrainingUseCase,
     private readonly updateTraining: UpdateTrainingUseCase,
+    private readonly enrollTrainingStudent: EnrollTrainingStudentUseCase,
+    private readonly unenrollTrainingStudent: UnenrollTrainingStudentUseCase,
     private readonly deleteTraining: DeleteTrainingUseCase,
   ) {}
 
@@ -50,6 +61,21 @@ export class TrainingsController {
   @Put(':id')
   async update(@Param('id') id: string, @Body(new ZodValidationPipe(updateTrainingSchema)) body: UpdateTrainingDto) {
     const { training } = await this.updateTraining.execute(id, TrainingRequestMapper.toUpdate(body))
+    return { data: TrainingPresenter.toHTTP(training) }
+  }
+
+  @Post(':id/enrollments')
+  async enroll(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(trainingEnrollmentSchema)) body: TrainingEnrollmentDto,
+  ) {
+    const { training } = await this.enrollTrainingStudent.execute(id, TrainingRequestMapper.toEnrollment(body))
+    return { data: TrainingPresenter.toHTTP(training) }
+  }
+
+  @Delete(':id/enrollments/:studentId')
+  async unenroll(@Param('id') id: string, @Param('studentId') studentId: string) {
+    const { training } = await this.unenrollTrainingStudent.execute(id, studentId)
     return { data: TrainingPresenter.toHTTP(training) }
   }
 

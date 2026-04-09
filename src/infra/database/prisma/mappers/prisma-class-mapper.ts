@@ -19,7 +19,7 @@ export interface PrismaClassRecord {
   }>
   classSchedules: Array<{
     id: string
-    dayOfWeek: string
+    dayOfWeek: ClassEntity['dayOfWeek']
     startTime: Date
     endTime: Date
   }>
@@ -56,6 +56,21 @@ const mapStatus = (status: string): ClassEntity['status'] => {
   return 'Ativa'
 }
 
+const mapDayOfWeek = (dayOfWeek: string): ClassEntity['dayOfWeek'] => {
+  switch (dayOfWeek) {
+    case 'Segunda-feira':
+    case 'Terça-feira':
+    case 'Quarta-feira':
+    case 'Quinta-feira':
+    case 'Sexta-feira':
+    case 'Sábado':
+    case 'Domingo':
+      return dayOfWeek
+    default:
+      return 'Segunda-feira'
+  }
+}
+
 export class PrismaClassMapper {
   static toDomain(classItem: PrismaClassRecord): ClassEntity {
     const sortedCategories = sortGroupedCategories(
@@ -77,7 +92,7 @@ export class PrismaClassMapper {
 
     const schedules = classItem.classSchedules.map((schedule) => ({
       id: schedule.id,
-      dayOfWeek: schedule.dayOfWeek,
+      dayOfWeek: mapDayOfWeek(schedule.dayOfWeek),
       startTime: formatTime(schedule.startTime),
       endTime: formatTime(schedule.endTime),
     }))

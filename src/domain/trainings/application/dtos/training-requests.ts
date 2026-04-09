@@ -1,14 +1,21 @@
-export interface CreateTrainingRequest {
+﻿export interface CreateTrainingRequest {
   title: string
   description?: string
   type: 'Técnico' | 'Resistência' | 'Velocidade' | 'Misto'
-  dayOfWeek: string
+  dayOfWeek:
+    | 'Segunda-feira'
+    | 'Terça-feira'
+    | 'Quarta-feira'
+    | 'Quinta-feira'
+    | 'Sexta-feira'
+    | 'Sábado'
+    | 'Domingo'
   startTime: string
   endTime: string
   instructorId?: string | null
   level: 'Iniciante' | 'Intermediário' | 'Avançado' | 'Todos'
   maxParticipants: number
-  currentParticipants: number
+  currentParticipants?: number
   status: 'Ativo' | 'Pausado' | 'Encerrado'
   venueType: 'Piscina' | 'Mar' | 'Rio' | 'Lago' | 'Represa' | 'Outro'
   locationName?: string

@@ -42,7 +42,9 @@ import { ListTeachersUseCase } from '@/domain/teachers/application/use-cases/lis
 import { UpdateTeacherUseCase } from '@/domain/teachers/application/use-cases/update-teacher'
 import { CreateTrainingUseCase } from '@/domain/trainings/application/use-cases/create-training'
 import { DeleteTrainingUseCase } from '@/domain/trainings/application/use-cases/delete-training'
+import { EnrollTrainingStudentUseCase } from '@/domain/trainings/application/use-cases/enroll-training-student'
 import { ListTrainingsUseCase } from '@/domain/trainings/application/use-cases/list-trainings'
+import { UnenrollTrainingStudentUseCase } from '@/domain/trainings/application/use-cases/unenroll-training-student'
 import { UpdateTrainingUseCase } from '@/domain/trainings/application/use-cases/update-training'
 import { AuthModule } from '@/infra/auth/auth.module'
 import { DatabaseModule } from '@/infra/database/database.module'
@@ -106,6 +108,8 @@ import { TrainingsController } from './controllers/trainings.controller'
     ListTrainingsUseCase,
     CreateTrainingUseCase,
     UpdateTrainingUseCase,
+    EnrollTrainingStudentUseCase,
+    UnenrollTrainingStudentUseCase,
     DeleteTrainingUseCase,
   ],
 })

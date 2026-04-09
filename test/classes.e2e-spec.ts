@@ -34,7 +34,7 @@ describe('ClassesController (e2e)', () => {
         categories: ['Pre-Mirim', 'Mirim 1'],
         schedules: [
           {
-            dayOfWeek: 'Segunda',
+            dayOfWeek: 'Segunda-feira',
             startTime: '08:00',
             endTime: '09:00',
           },
@@ -56,7 +56,7 @@ describe('ClassesController (e2e)', () => {
         categories: ['Mirim', 'Petiz'],
         schedules: [
           {
-            dayOfWeek: 'Quarta',
+            dayOfWeek: 'Quarta-feira',
             startTime: '08:00',
             endTime: '09:00',
           },
@@ -149,8 +149,8 @@ describe('ClassesController (e2e)', () => {
         name: 'Turma Mirim Manha',
         categories: ['Mirim 1'],
         category: 'Mirim 1',
-        schedules: [{ id: crypto.randomUUID(), dayOfWeek: 'Segunda', startTime: '08:00', endTime: '09:00' }],
-        dayOfWeek: 'Segunda',
+        schedules: [{ id: crypto.randomUUID(), dayOfWeek: 'Segunda-feira', startTime: '08:00', endTime: '09:00' }],
+        dayOfWeek: 'Segunda-feira',
         status: 'Ativa',
         poolId: 'pool-a',
         pool: 'Piscina A',
@@ -168,8 +168,8 @@ describe('ClassesController (e2e)', () => {
         name: 'Turma Petiz Tarde',
         categories: ['Petiz 2'],
         category: 'Petiz 2',
-        schedules: [{ id: crypto.randomUUID(), dayOfWeek: 'Quarta', startTime: '14:00', endTime: '15:00' }],
-        dayOfWeek: 'Quarta',
+        schedules: [{ id: crypto.randomUUID(), dayOfWeek: 'Quarta-feira', startTime: '14:00', endTime: '15:00' }],
+        dayOfWeek: 'Quarta-feira',
         status: 'Pausada',
         poolId: 'pool-b',
         pool: 'Piscina B',
@@ -186,7 +186,7 @@ describe('ClassesController (e2e)', () => {
     )
 
     const response = await request(app.getHttpServer())
-      .get('/api/classes?page=1&perPage=1&search=ana&category=Mirim%201&day=Segunda&status=Ativa&poolId=pool-a')
+      .get('/api/classes?page=1&perPage=1&search=ana&category=Mirim%201&day=Segunda-feira&status=Ativa&poolId=pool-a')
       .expect(200)
 
     expect(response.body.data).toHaveLength(1)

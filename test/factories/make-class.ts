@@ -9,14 +9,14 @@ export function makeClassEntity(override: MakeClassOverride = {}): ClassEntity {
     category: override.category ?? 'Mirim 1',
     categories: override.categories ?? ['Mirim 1'],
     categoryIds: override.categoryIds ?? [crypto.randomUUID()],
-    dayOfWeek: override.dayOfWeek ?? 'Segunda',
+    dayOfWeek: override.dayOfWeek ?? 'Segunda-feira',
     startTime: override.startTime ?? '08:00',
     endTime: override.endTime ?? '09:00',
     schedules:
       override.schedules ?? [
         {
           id: crypto.randomUUID(),
-          dayOfWeek: 'Segunda',
+          dayOfWeek: 'Segunda-feira',
           startTime: '08:00',
           endTime: '09:00',
         },

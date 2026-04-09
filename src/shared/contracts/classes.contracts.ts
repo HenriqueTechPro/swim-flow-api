@@ -1,7 +1,17 @@
 import { z } from 'zod'
 
+export const classDayOfWeekSchema = z.enum([
+  'Segunda-feira',
+  'Terça-feira',
+  'Quarta-feira',
+  'Quinta-feira',
+  'Sexta-feira',
+  'Sábado',
+  'Domingo',
+])
+
 export const classScheduleSchema = z.object({
-  dayOfWeek: z.string().min(1),
+  dayOfWeek: classDayOfWeekSchema,
   startTime: z.string().min(1),
   endTime: z.string().min(1),
 })

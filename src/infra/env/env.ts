@@ -29,6 +29,7 @@ loadEnvFile(resolve(appRoot, '.env.local'))
 
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
+  DIRECT_URL: z.string().min(1),
   VITE_SUPABASE_URL: z.string().url(),
   VITE_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
   API_CORS_ORIGIN: z.string().default('http://localhost:8080'),
@@ -43,6 +44,7 @@ const corsOrigins = parsedEnv.API_CORS_ORIGIN.split(',').map((origin) => origin.
 
 export const env = {
   databaseUrl: parsedEnv.DATABASE_URL,
+  directUrl: parsedEnv.DIRECT_URL,
   supabaseUrl: parsedEnv.VITE_SUPABASE_URL,
   supabasePublishableKey: parsedEnv.VITE_SUPABASE_PUBLISHABLE_KEY,
   corsOrigin: parsedEnv.API_CORS_ORIGIN,

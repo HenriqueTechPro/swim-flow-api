@@ -8,7 +8,7 @@ export function makeTraining(override: MakeTrainingOverride = {}): Training {
     title: override.title ?? 'Treino Teste',
     description: override.description ?? '',
     type: override.type ?? 'Misto',
-    dayOfWeek: override.dayOfWeek ?? 'Segunda',
+    dayOfWeek: override.dayOfWeek ?? 'Segunda-feira',
     startTime: override.startTime ?? '18:00',
     endTime: override.endTime ?? '19:00',
     instructorId: override.instructorId ?? crypto.randomUUID(),
@@ -21,5 +21,6 @@ export function makeTraining(override: MakeTrainingOverride = {}): Training {
     locationName: override.locationName ?? '',
     poolId: override.poolId,
     pool: override.pool ?? '',
+    enrolledStudents: override.enrolledStudents ?? [],
   }
 }

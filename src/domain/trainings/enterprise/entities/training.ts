@@ -3,7 +3,14 @@ export interface Training {
   title: string
   description: string
   type: 'Técnico' | 'Resistência' | 'Velocidade' | 'Misto'
-  dayOfWeek: string
+  dayOfWeek:
+    | 'Segunda-feira'
+    | 'Terça-feira'
+    | 'Quarta-feira'
+    | 'Quinta-feira'
+    | 'Sexta-feira'
+    | 'Sábado'
+    | 'Domingo'
   startTime: string
   endTime: string
   instructorId: string
@@ -16,4 +23,10 @@ export interface Training {
   locationName: string
   poolId?: string
   pool: string
+  enrolledStudents: Array<{
+    id: string
+    name: string
+    category: string
+    level: string
+  }>
 }

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals'
+import { afterEach, beforeEach, describe, expect, it } from '@jest/globals'
 import type { INestApplication } from '@nestjs/common'
 import request from 'supertest'
 import { App } from 'supertest/types'
@@ -32,13 +32,12 @@ describe('TrainingsController (e2e)', () => {
         title: 'Treino E2E',
         description: 'Treino criado no e2e',
         type: 'Misto',
-        dayOfWeek: 'Segunda',
+        dayOfWeek: 'Segunda-feira',
         startTime: '18:00',
         endTime: '19:00',
         instructorId: '99999999-9999-4999-8999-999999999999',
         level: 'Todos',
         maxParticipants: 20,
-        currentParticipants: 0,
         status: 'Ativo',
         poolId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       })
@@ -53,7 +52,7 @@ describe('TrainingsController (e2e)', () => {
         title: 'Treino E2E Atualizado',
         description: 'Treino atualizado no e2e',
         type: 'Misto',
-        dayOfWeek: 'Quarta',
+        dayOfWeek: 'Quarta-feira',
         startTime: '18:30',
         endTime: '19:30',
         instructorId: '99999999-9999-4999-8999-999999999999',
@@ -86,13 +85,12 @@ describe('TrainingsController (e2e)', () => {
       title: 'Treino Tecnico A',
       description: 'Foco em tecnica',
       type: 'Técnico',
-      dayOfWeek: 'Segunda',
+      dayOfWeek: 'Segunda-feira',
       startTime: '18:00',
       endTime: '19:00',
       instructorId: 'teacher-1',
       level: 'Todos',
       maxParticipants: 20,
-      currentParticipants: 8,
       status: 'Ativo',
       poolId: 'pool-a',
     })
@@ -101,13 +99,12 @@ describe('TrainingsController (e2e)', () => {
       title: 'Treino Velocidade B',
       description: 'Tiros curtos',
       type: 'Velocidade',
-      dayOfWeek: 'Quarta',
+      dayOfWeek: 'Quarta-feira',
       startTime: '19:00',
       endTime: '20:00',
       instructorId: 'teacher-2',
       level: 'Todos',
       maxParticipants: 16,
-      currentParticipants: 10,
       status: 'Pausado',
       poolId: 'pool-b',
     })

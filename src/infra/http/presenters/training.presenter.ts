@@ -1,4 +1,4 @@
-import type { Training } from '@/domain/trainings/enterprise/entities/training'
+﻿import type { Training } from '@/domain/trainings/enterprise/entities/training'
 
 export class TrainingPresenter {
   static toHTTP(training: Training) {
@@ -14,12 +14,13 @@ export class TrainingPresenter {
       instructor: training.instructor,
       level: training.level,
       maxParticipants: training.maxParticipants,
-      currentParticipants: training.currentParticipants,
+      currentParticipants: training.currentParticipants ?? 0,
       status: training.status,
       venueType: training.venueType,
       locationName: training.locationName,
       poolId: training.poolId,
       pool: training.pool,
+      enrolledStudents: training.enrolledStudents,
     }
   }
 }
