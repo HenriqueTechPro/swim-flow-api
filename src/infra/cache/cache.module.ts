@@ -1,6 +1,6 @@
-import { Module } from '@nestjs/common'
-import { CacheRepository } from './cache-repository'
-import { MemoryCacheRepository } from './memory/memory-cache-repository'
+import { Module } from '@nestjs/common';
+import { CacheRepository } from './cache-repository';
+import { MemoryCacheRepository } from './memory/memory-cache-repository';
 
 @Module({
   providers: [

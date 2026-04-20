@@ -1,9 +1,11 @@
+import type { PoolStatus } from '../../enterprise/entities/pool';
+
 export interface CreatePoolRequest {
-  name: string
-  lengthMeters: number
-  address: string
-  status: 'Ativa' | 'Pausada' | 'Encerrada'
-  maxCapacity?: number | null
+  name: string;
+  lengthMeters: number;
+  address: string;
+  status: PoolStatus;
+  maxCapacity?: number | null;
 }
 
-export interface UpdatePoolRequest extends CreatePoolRequest {}
+export type UpdatePoolRequest = CreatePoolRequest;

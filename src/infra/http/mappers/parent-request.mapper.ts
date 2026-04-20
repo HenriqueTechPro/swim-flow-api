@@ -1,5 +1,11 @@
-import type { CreateParentDto, UpdateParentDto } from '@/shared/contracts/management'
-import type { CreateParentRequest, UpdateParentRequest } from '@/domain/parents/application/dtos/parent-requests'
+import type {
+  CreateParentDto,
+  UpdateParentDto,
+} from '@/shared/contracts/management';
+import type {
+  CreateParentRequest,
+  UpdateParentRequest,
+} from '@/domain/parents/application/dtos/parent-requests';
 
 export class ParentRequestMapper {
   static toCreate(body: CreateParentDto): CreateParentRequest {
@@ -16,7 +22,7 @@ export class ParentRequestMapper {
       emergencyContact: body.emergencyContact,
       emergencyPhone: body.emergencyPhone,
       status: body.status,
-    }
+    };
   }
 
   static toUpdate(body: UpdateParentDto): UpdateParentRequest {
@@ -33,6 +39,6 @@ export class ParentRequestMapper {
       emergencyContact: body.emergencyContact,
       emergencyPhone: body.emergencyPhone,
       status: body.status,
-    }
+    };
   }
 }

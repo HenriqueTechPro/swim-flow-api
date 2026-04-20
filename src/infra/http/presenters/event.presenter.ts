@@ -1,7 +1,7 @@
-import type { Event } from '@/domain/events/enterprise/entities/event'
+import type { Event } from '@/domain/events/enterprise/entities/event';
 
 export class EventPresenter {
-  static toHTTP(event: Event) {
+  static toHTTP(this: void, event: Event) {
     return {
       id: event.id,
       title: event.title,
@@ -12,6 +12,6 @@ export class EventPresenter {
       endTime: event.endTime,
       location: event.location,
       status: event.status,
-    }
+    };
   }
 }

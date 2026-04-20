@@ -1,26 +1,30 @@
-import type { Training } from '@/domain/trainings/enterprise/entities/training'
+import type { Training } from '@/domain/trainings/enterprise/entities/training';
+import type { TrainingVenueType as PrismaTrainingVenueType } from '@prisma/client';
+import { normalizeWeekday } from '@/shared/contracts/weekdays';
 
 export interface PrismaTrainingRecord {
-  id: string
-  title: string
-  description: string
-  type: string
-  dayOfWeek: string
-  startTime: Date
-  endTime: Date
-  instructorId: string | null
-  level: string
-  maxParticipants: number
-  currentParticipants: number
-  status: string
-  poolId: string | null
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  venueType: PrismaTrainingVenueType;
+  locationName: string;
+  dayOfWeek: string;
+  startTime: Date;
+  endTime: Date;
+  instructorId: string | null;
+  level: string;
+  maxParticipants: number;
+  currentParticipants: number;
+  status: string;
+  poolId: string | null;
   instructor: {
-    name: string
-  } | null
+    name: string;
+  } | null;
   pool: {
-    name: string
-    lengthMeters: number
-  } | null
+    name: string;
+    lengthMeters: number;
+  } | null;
 }
 
 const TRAINING_TYPE_LABELS: Record<string, Training['type']> = {
@@ -28,26 +32,29 @@ const TRAINING_TYPE_LABELS: Record<string, Training['type']> = {
   Resistencia: 'Resistência',
   Velocidade: 'Velocidade',
   Misto: 'Misto',
-}
+};
 
 const TRAINING_LEVEL_LABELS: Record<string, Training['level']> = {
   Iniciante: 'Iniciante',
   Intermediario: 'Intermediário',
   Avancado: 'Avançado',
   Todos: 'Todos',
-}
+};
 
-const formatTime = (value: Date) => value.toISOString().slice(11, 16)
-const formatPoolLabel = (pool: { name: string; lengthMeters: number }) => `${pool.name} (${pool.lengthMeters}m)`
+const formatTime = (value: Date) => value.toISOString().slice(11, 16);
+const formatPoolLabel = (pool: { name: string; lengthMeters: number }) =>
+  `${pool.name} (${pool.lengthMeters}m)`;
 
 export class PrismaTrainingMapper {
-  static toDomain(training: PrismaTrainingRecord): Training {
+  static toDomain(this: void, training: PrismaTrainingRecord): Training {
     return {
       id: training.id,
       title: training.title,
       description: training.description,
       type: TRAINING_TYPE_LABELS[training.type] ?? 'Misto',
-      dayOfWeek: training.dayOfWeek,
+      venueType: training.venueType as Training['venueType'],
+      locationName: training.locationName,
+      dayOfWeek: normalizeWeekday(training.dayOfWeek) ?? training.dayOfWeek,
       startTime: formatTime(training.startTime),
       endTime: formatTime(training.endTime),
       instructorId: training.instructorId ?? '',
@@ -57,7 +64,7 @@ export class PrismaTrainingMapper {
       currentParticipants: training.currentParticipants,
       status: training.status as Training['status'],
       poolId: training.poolId ?? undefined,
-      pool: training.pool ? formatPoolLabel(training.pool) : '',
-    }
+      pool: training.pool ? formatPoolLabel(training.pool) : training.locationName,
+    };
   }
 }

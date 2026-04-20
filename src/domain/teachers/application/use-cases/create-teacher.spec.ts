@@ -1,15 +1,15 @@
-import { beforeEach, describe, expect, it } from '@jest/globals'
-import { CreateTeacherUseCase } from './create-teacher'
-import { InMemoryTeachersRepository } from '../../../../../test/repositories/in-memory-teachers-repository'
+import { beforeEach, describe, expect, it } from '@jest/globals';
+import { CreateTeacherUseCase } from './create-teacher';
+import { InMemoryTeachersRepository } from '../../../../../test/repositories/in-memory-teachers-repository';
 
 describe('CreateTeacherUseCase', () => {
-  let teachersRepository: InMemoryTeachersRepository
-  let sut: CreateTeacherUseCase
+  let teachersRepository: InMemoryTeachersRepository;
+  let sut: CreateTeacherUseCase;
 
   beforeEach(() => {
-    teachersRepository = new InMemoryTeachersRepository()
-    sut = new CreateTeacherUseCase(teachersRepository)
-  })
+    teachersRepository = new InMemoryTeachersRepository();
+    sut = new CreateTeacherUseCase(teachersRepository);
+  });
 
   it('creates a teacher', async () => {
     const { teacher } = await sut.execute({
@@ -25,11 +25,11 @@ describe('CreateTeacherUseCase', () => {
       certifications: 'CBDA Nivel 1, Primeiros Socorros',
       status: 'Ativo',
       bio: 'Professor de teste',
-    })
+    });
 
-    expect(teacher.id).toEqual(expect.any(String))
-    expect(teacher.experience).toBe(6)
-    expect(teacher.categories).toEqual(['Pre-Mirim', 'Mirim'])
-    expect(teachersRepository.items).toHaveLength(1)
-  })
-})
+    expect(teacher.id).toEqual(expect.any(String));
+    expect(teacher.experience).toBe(6);
+    expect(teacher.categories).toEqual(['Pre-Mirim', 'Mirim']);
+    expect(teachersRepository.items).toHaveLength(1);
+  });
+});

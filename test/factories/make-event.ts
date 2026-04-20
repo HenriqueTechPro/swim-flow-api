@@ -1,4 +1,4 @@
-import type { Event } from '@/domain/events/enterprise/entities/event'
+import type { Event } from '@/domain/events/enterprise/entities/event';
 
 interface MakeEventOverride extends Partial<Event> {}
 
@@ -13,5 +13,5 @@ export function makeEvent(override: MakeEventOverride = {}): Event {
     endTime: override.endTime ?? '12:00',
     location: override.location ?? 'Piscina Principal',
     status: override.status ?? 'Agendado',
-  }
+  };
 }

@@ -1,33 +1,49 @@
-import { AppError } from '@/shared/errors/app-error'
+import { AppError } from '@/shared/errors/app-error';
 import type {
   CreateExStudentRepositoryInput,
   ListExStudentsRepositoryParams,
   UpdateExStudentRepositoryInput,
-} from '@/domain/ex-students/application/repositories/ex-students-repository'
-import { ExStudentsRepository } from '@/domain/ex-students/application/repositories/ex-students-repository'
-import type { ExStudent } from '@/domain/ex-students/enterprise/entities/ex-student'
-import { paginateItems } from '@/domain/shared/pagination/pagination-utils'
-import { makeExStudent } from '../factories/make-ex-student'
+} from '@/domain/ex-students/application/repositories/ex-students-repository';
+import { ExStudentsRepository } from '@/domain/ex-students/application/repositories/ex-students-repository';
+import type { ExStudent } from '@/domain/ex-students/enterprise/entities/ex-student';
+import { paginateItems } from '@/domain/shared/pagination/pagination-utils';
+import { makeExStudent } from '../factories/make-ex-student';
 
 export class InMemoryExStudentsRepository implements ExStudentsRepository {
-  public items: ExStudent[] = []
+  public items: ExStudent[] = [];
 
   async list(params?: ListExStudentsRepositoryParams) {
-    const search = params?.search?.trim().toLowerCase()
-    const category = params?.category?.trim()
+    const search = params?.search?.trim().toLowerCase();
+    const category = params?.category?.trim();
 
     const filtered = this.items.filter((student) => {
       const matchesSearch =
         !search ||
         student.name.toLowerCase().includes(search) ||
         student.exitReason.toLowerCase().includes(search) ||
-        student.lastCompetition.toLowerCase().includes(search)
-      const matchesCategory = !category || student.category === category
+        student.lastCompetition.toLowerCase().includes(search);
+      const matchesCategory = !category || student.category === category;
 
-      return matchesSearch && matchesCategory
-    })
+      return matchesSearch && matchesCategory;
+    });
 
-    return paginateItems([...filtered], params)
+    return paginateItems([...filtered], params);
+  }
+
+  async summary() {
+    return {
+      total: this.items.length,
+      categoriesCount: new Set(
+        this.items.map((student) => student.category).filter(Boolean),
+      ).size,
+      totalAchievements: this.items.reduce(
+        (sum, student) => sum + student.achievements,
+        0,
+      ),
+      archivedStudentIds: this.items
+        .map((student) => student.studentId)
+        .filter((value): value is string => Boolean(value)),
+    };
   }
 
   async create(input: CreateExStudentRepositoryInput): Promise<ExStudent> {
@@ -37,15 +53,18 @@ export class InMemoryExStudentsRepository implements ExStudentsRepository {
       exitReason: input.exitReason,
       exitNotes: input.exitNotes ?? '',
       lastCompetition: input.lastCompetition ?? '',
-    })
+    });
 
-    this.items.push(exStudent)
-    return exStudent
+    this.items.push(exStudent);
+    return exStudent;
   }
 
-  async update(id: string, input: UpdateExStudentRepositoryInput): Promise<ExStudent> {
-    const itemIndex = this.items.findIndex((item) => item.id === id)
-    if (itemIndex < 0) throw new AppError(404, 'Ex-student not found')
+  async update(
+    id: string,
+    input: UpdateExStudentRepositoryInput,
+  ): Promise<ExStudent> {
+    const itemIndex = this.items.findIndex((item) => item.id === id);
+    if (itemIndex < 0) throw new AppError(404, 'Ex-student not found');
 
     const updatedExStudent: ExStudent = {
       ...this.items[itemIndex],
@@ -54,25 +73,25 @@ export class InMemoryExStudentsRepository implements ExStudentsRepository {
       exitNotes: input.exitNotes ?? '',
       achievements: input.achievements,
       lastCompetition: input.lastCompetition,
-    }
+    };
 
-    this.items[itemIndex] = updatedExStudent
-    return updatedExStudent
+    this.items[itemIndex] = updatedExStudent;
+    return updatedExStudent;
   }
 
   async remove(id: string): Promise<ExStudent> {
-    const itemIndex = this.items.findIndex((item) => item.id === id)
-    if (itemIndex < 0) throw new AppError(404, 'Ex-student not found')
+    const itemIndex = this.items.findIndex((item) => item.id === id);
+    if (itemIndex < 0) throw new AppError(404, 'Ex-student not found');
 
-    const [removedExStudent] = this.items.splice(itemIndex, 1)
-    return removedExStudent
+    const [removedExStudent] = this.items.splice(itemIndex, 1);
+    return removedExStudent;
   }
 
   async reactivate(id: string): Promise<ExStudent> {
-    const itemIndex = this.items.findIndex((item) => item.id === id)
-    if (itemIndex < 0) throw new AppError(404, 'Ex-student not found')
+    const itemIndex = this.items.findIndex((item) => item.id === id);
+    if (itemIndex < 0) throw new AppError(404, 'Ex-student not found');
 
-    const [reactivatedExStudent] = this.items.splice(itemIndex, 1)
-    return reactivatedExStudent
+    const [reactivatedExStudent] = this.items.splice(itemIndex, 1);
+    return reactivatedExStudent;
   }
 }

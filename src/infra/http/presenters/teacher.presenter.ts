@@ -1,7 +1,7 @@
-import type { Teacher } from '@/domain/teachers/enterprise/entities/teacher'
+import type { Teacher } from '@/domain/teachers/enterprise/entities/teacher';
 
 export class TeacherPresenter {
-  static toHTTP(teacher: Teacher) {
+  static toHTTP(this: void, teacher: Teacher) {
     return {
       id: teacher.id,
       name: teacher.name,
@@ -18,6 +18,6 @@ export class TeacherPresenter {
       address: teacher.address,
       bio: teacher.bio,
       certifications: teacher.certifications ?? [],
-    }
+    };
   }
 }

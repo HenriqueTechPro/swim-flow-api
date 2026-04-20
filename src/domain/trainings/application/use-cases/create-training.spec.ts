@@ -1,15 +1,15 @@
-import { beforeEach, describe, expect, it } from '@jest/globals'
-import { CreateTrainingUseCase } from './create-training'
-import { InMemoryTrainingsRepository } from '../../../../../test/repositories/in-memory-trainings-repository'
+import { beforeEach, describe, expect, it } from '@jest/globals';
+import { CreateTrainingUseCase } from './create-training';
+import { InMemoryTrainingsRepository } from '../../../../../test/repositories/in-memory-trainings-repository';
 
 describe('CreateTrainingUseCase', () => {
-  let trainingsRepository: InMemoryTrainingsRepository
-  let sut: CreateTrainingUseCase
+  let trainingsRepository: InMemoryTrainingsRepository;
+  let sut: CreateTrainingUseCase;
 
   beforeEach(() => {
-    trainingsRepository = new InMemoryTrainingsRepository()
-    sut = new CreateTrainingUseCase(trainingsRepository)
-  })
+    trainingsRepository = new InMemoryTrainingsRepository();
+    sut = new CreateTrainingUseCase(trainingsRepository);
+  });
 
   it('creates a training', async () => {
     const { training } = await sut.execute({
@@ -25,9 +25,9 @@ describe('CreateTrainingUseCase', () => {
       currentParticipants: 0,
       status: 'Ativo',
       poolId: 'pool-1',
-    })
+    });
 
-    expect(training.id).toEqual(expect.any(String))
-    expect(trainingsRepository.items).toHaveLength(1)
-  })
-})
+    expect(training.id).toEqual(expect.any(String));
+    expect(trainingsRepository.items).toHaveLength(1);
+  });
+});

@@ -5,6 +5,8 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  
 }
 
 enum AppRole {
@@ -18,7 +20,6 @@ enum AppRole {
 enum Gender {
   Masculino
   Feminino
-  Outro
 
   @@map("gender")
 }
@@ -99,15 +100,14 @@ enum TipoEvento {
   Competicao @map("Competição")
   Reuniao @map("Reunião")
   Festival
-  Outro
 
   @@map("tipo_evento")
 }
 
 enum PoolStatus {
   Ativa
-  Pausada
-  Encerrada
+  Inativa
+  Manutencao @map("Manutenção")
 
   @@map("pool_status")
 }
@@ -138,6 +138,26 @@ enum TrainingStatus {
   @@map("training_status")
 }
 
+enum TrainingVenueType {
+  Piscina
+  Mar
+  Represa
+
+  @@map("training_venue_type")
+}
+
+enum ExStudentExitReason {
+  Mudanca_de_cidade @map("Mudança de cidade")
+  Falta_de_tempo @map("Falta de tempo")
+  Interesse_por_outro_esporte @map("Interesse por outro esporte")
+  Idade_limite_da_categoria @map("Idade limite da categoria")
+  Motivos_financeiros @map("Motivos financeiros")
+  Motivos_de_saude @map("Motivos de saúde")
+  Outro
+
+  @@map("ex_student_exit_reason")
+}
+
 enum AttendanceStatus {
   present
   absent
@@ -152,17 +172,9 @@ enum SwimmingStyle {
   Costas
   Peito
   Borboleta
+  Medley
 
   @@map("swimming_style")
-}
-
-enum SwimmingDistance {
-  D25m @map("25m")
-  D50m @map("50m")
-  D100m @map("100m")
-  D200m @map("200m")
-
-  @@map("swimming_distance")
 }
 
 model Profile {
@@ -172,8 +184,31 @@ model Profile {
   role      AppRole  @default(user)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  authSessions AuthSession[]
 
   @@map("profiles")
+}
+
+model AuthSession {
+  id                  String       @id @default(uuid()) @db.Uuid
+  userId              String       @map("user_id") @db.Uuid
+  email               String
+  refreshTokenHash    String       @map("refresh_token_hash")
+  expiresAt           DateTime     @map("expires_at") @db.Timestamptz(6)
+  revokedAt           DateTime?    @map("revoked_at") @db.Timestamptz(6)
+  replacedBySessionId String?      @map("replaced_by_session_id") @db.Uuid
+  userAgent           String?      @map("user_agent")
+  ipAddress           String?      @map("ip_address")
+  createdAt           DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime     @default(now()) @map("updated_at") @db.Timestamptz(6)
+  profile             Profile      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  replacedBySession   AuthSession? @relation("AuthSessionReplacement", fields: [replacedBySessionId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  previousSessions    AuthSession[] @relation("AuthSessionReplacement")
+
+  @@map("auth_sessions")
+  @@index([userId, revokedAt])
+  @@index([expiresAt])
+  @@index([refreshTokenHash])
 }
 
 model Category {
@@ -227,12 +262,18 @@ model Result {
   id           String           @id @default(uuid()) @db.Uuid
   studentId    String           @map("student_id") @db.Uuid
   style        SwimmingStyle
-  distance     SwimmingDistance
+  distance     String
+  customDistance String         @default("") @map("custom_distance")
+  competitionType String        @default("") @map("competition_type")
+  courseType   String           @default("") @map("course_type")
+  discipline   String           @default("Piscina")
+  eventFormat  String           @default("Prova Individual") @map("event_format")
   time         String
   timeInSeconds Decimal         @map("time_in_seconds") @db.Decimal
   date         DateTime?        @db.Date
   competition  String           @default("")
   position     Int              @default(0)
+  resultStatus String           @default("Classificado") @map("result_status")
   personalBest Boolean          @default(false) @map("personal_best")
   improvement  Decimal          @default(0) @db.Decimal
   category     String           @default("")
@@ -252,10 +293,8 @@ model ExStudent {
   name                String
   category            String
   categorySnapshot    String?   @map("category_snapshot")
-  exitDate            String    @map("exit_date")
-  exitDateAt          DateTime? @map("exit_date_at") @db.Date
-  exitReason          String    @map("exit_reason")
-  exitReasonCode      String?   @map("exit_reason_code")
+  exitDateAt          DateTime  @map("exit_date_at") @db.Date
+  exitReason          ExStudentExitReason @map("exit_reason")
   exitNotes           String?   @map("exit_notes")
   phone               String    @default("")
   responsible         String    @default("")
@@ -424,6 +463,8 @@ model Training {
   description         String         @default("")
   type                TipoTreino
   dayOfWeek           String         @map("day_of_week")
+  venueType           TrainingVenueType @default(Piscina) @map("venue_type")
+  locationName        String         @default("") @map("location_name")
   startTime           DateTime       @map("start_time") @db.Time(6)
   endTime             DateTime       @map("end_time") @db.Time(6)
   instructorId        String?        @map("instructor_id") @db.Uuid

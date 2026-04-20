@@ -1,45 +1,49 @@
-import { CATEGORY_GROUPS } from './categories'
+import { CATEGORY_GROUPS } from './categories';
 
 const categoryGroupMap = new Map<string, readonly string[]>(
   CATEGORY_GROUPS.map((group) => [group.label, group.categories]),
-)
+);
 
-const categoryNameToGroup = new Map<string, string>()
+const categoryNameToGroup = new Map<string, string>();
 
 for (const group of CATEGORY_GROUPS) {
   for (const category of group.categories) {
-    categoryNameToGroup.set(category, group.label)
+    categoryNameToGroup.set(category, group.label);
   }
 }
 
-export function expandTeacherCategorySelection(selectedLabels: string[]): string[] {
-  const expanded = new Set<string>()
+export function expandTeacherCategorySelection(
+  selectedLabels: string[],
+): string[] {
+  const expanded = new Set<string>();
 
   for (const label of selectedLabels) {
-    const grouped = categoryGroupMap.get(label)
+    const grouped = categoryGroupMap.get(label);
     if (grouped) {
-      grouped.forEach((category) => expanded.add(category))
-      continue
+      grouped.forEach((category) => expanded.add(category));
+      continue;
     }
 
-    expanded.add(label)
+    expanded.add(label);
   }
 
-  return Array.from(expanded)
+  return Array.from(expanded);
 }
 
-export function compressTeacherCategoryNames(categoryNames: string[]): string[] {
-  const grouped = new Set<string>()
+export function compressTeacherCategoryNames(
+  categoryNames: string[],
+): string[] {
+  const grouped = new Set<string>();
 
   for (const categoryName of categoryNames) {
-    const label = categoryNameToGroup.get(categoryName)
+    const label = categoryNameToGroup.get(categoryName);
     if (label) {
-      grouped.add(label)
-      continue
+      grouped.add(label);
+      continue;
     }
 
-    grouped.add(categoryName)
+    grouped.add(categoryName);
   }
 
-  return Array.from(grouped)
+  return Array.from(grouped);
 }

@@ -1,56 +1,61 @@
-import { ForbiddenException, Injectable, type CanActivate, type ExecutionContext } from '@nestjs/common'
-import { Reflector } from '@nestjs/core'
-import type { Request } from 'express'
-import { PrismaService } from '@/infra/database/prisma/prisma.service'
-import { ROLES_KEY } from './roles.decorator'
-import type { AuthUser } from './auth.types'
+﻿import {
+  ForbiddenException,
+  Injectable,
+  type CanActivate,
+  type ExecutionContext,
+} from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import type { Request } from 'express';
+import { AuthProfilesRepository } from '@/domain/auth/application/repositories/auth-profiles-repository';
+import { ROLES_KEY } from './roles.decorator';
+import type { AuthUser } from './auth.types';
 
 interface AuthenticatedRequest extends Request {
-  user?: Partial<AuthUser>
+  user?: AuthUser;
 }
 
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
-    private readonly prisma: PrismaService,
+    private readonly authProfilesRepository: AuthProfilesRepository,
   ) {}
 
   async canActivate(context: ExecutionContext) {
     const roles = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
-    ])
+    ]);
 
     if (!roles || roles.length === 0) {
-      return true
+      return true;
     }
 
-    const request = context.switchToHttp().getRequest<AuthenticatedRequest>()
-    const authUser = request.user
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const authUser = request.user;
 
     if (!authUser?.id) {
-      throw new ForbiddenException('User not authenticated')
+      throw new ForbiddenException('User not authenticated');
     }
 
-    const profile = await this.prisma.profile.findUnique({
-      where: { id: authUser.id },
-      select: { role: true },
-    })
+    const profile = await this.authProfilesRepository.findByUserId(authUser.id);
 
     if (!profile?.role) {
-      throw new ForbiddenException('Profile not found for authenticated user')
+      throw new ForbiddenException('Profile not found for authenticated user');
     }
 
     request.user = {
       ...authUser,
-      role: profile.role as AuthUser['role'],
+      role: profile.role,
+      permissions: profile.permissions,
+    };
+
+    if (!roles.includes(profile.role)) {
+      throw new ForbiddenException(
+        'User does not have permission for this resource',
+      );
     }
 
-    if (!roles.includes(request.user.role!)) {
-      throw new ForbiddenException('User does not have permission for this resource')
-    }
-
-    return true
+    return true;
   }
 }

@@ -1,7 +1,7 @@
-import type { AttendanceRecord } from '@/domain/attendance/enterprise/entities/attendance-record'
+import type { AttendanceRecord } from '@/domain/attendance/enterprise/entities/attendance-record';
 
 export class AttendanceRecordPresenter {
-  static toHTTP(record: AttendanceRecord) {
+  static toHTTP(this: void, record: AttendanceRecord) {
     return {
       id: record.id,
       studentId: record.studentId,
@@ -10,6 +10,6 @@ export class AttendanceRecordPresenter {
       status: record.status,
       observations: record.observations ?? '',
       savedAt: record.savedAt,
-    }
+    };
   }
 }

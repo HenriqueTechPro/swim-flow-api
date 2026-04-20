@@ -1,7 +1,7 @@
-import type { Student } from '@/domain/students/enterprise/entities/student'
+import type { Student } from '@/domain/students/enterprise/entities/student';
 
 export class StudentPresenter {
-  static toHTTP(student: Student) {
+  static toHTTP(this: void, student: Student) {
     return {
       id: student.id,
       name: student.name,
@@ -17,6 +17,6 @@ export class StudentPresenter {
       phone: student.phone,
       status: student.status,
       achievements: student.achievements,
-    }
+    };
   }
 }

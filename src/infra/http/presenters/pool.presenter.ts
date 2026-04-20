@@ -1,7 +1,7 @@
-import type { Pool } from '@/domain/pools/enterprise/entities/pool'
+import type { Pool } from '@/domain/pools/enterprise/entities/pool';
 
 export class PoolPresenter {
-  static toHTTP(pool: Pool) {
+  static toHTTP(this: void, pool: Pool) {
     return {
       id: pool.id,
       name: pool.name,
@@ -11,6 +11,6 @@ export class PoolPresenter {
       max_capacity: pool.maxCapacity ?? null,
       created_at: pool.createdAt,
       updated_at: pool.updatedAt,
-    }
+    };
   }
 }

@@ -1,4 +1,4 @@
-import type { Parent } from '@/domain/parents/enterprise/entities/parent'
+import type { Parent } from '@/domain/parents/enterprise/entities/parent';
 
 interface MakeParentOverride extends Partial<Parent> {}
 
@@ -18,5 +18,5 @@ export function makeParent(override: MakeParentOverride = {}): Parent {
     emergencyContact: override.emergencyContact ?? 'Contato Emergencial',
     emergencyPhone: override.emergencyPhone ?? '(71) 97777-1111',
     status: override.status ?? 'Ativo',
-  }
+  };
 }

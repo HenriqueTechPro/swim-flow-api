@@ -1,15 +1,15 @@
-import { beforeEach, describe, expect, it } from '@jest/globals'
-import { CreateParentUseCase } from './create-parent'
-import { InMemoryParentsRepository } from '../../../../../test/repositories/in-memory-parents-repository'
+import { beforeEach, describe, expect, it } from '@jest/globals';
+import { CreateParentUseCase } from './create-parent';
+import { InMemoryParentsRepository } from '../../../../../test/repositories/in-memory-parents-repository';
 
 describe('CreateParentUseCase', () => {
-  let parentsRepository: InMemoryParentsRepository
-  let sut: CreateParentUseCase
+  let parentsRepository: InMemoryParentsRepository;
+  let sut: CreateParentUseCase;
 
   beforeEach(() => {
-    parentsRepository = new InMemoryParentsRepository()
-    sut = new CreateParentUseCase(parentsRepository)
-  })
+    parentsRepository = new InMemoryParentsRepository();
+    sut = new CreateParentUseCase(parentsRepository);
+  });
 
   it('creates a parent', async () => {
     const { parent } = await sut.execute({
@@ -25,9 +25,9 @@ describe('CreateParentUseCase', () => {
       emergencyContact: 'Contato Emergencial',
       emergencyPhone: '(71) 97777-1111',
       status: 'Ativo',
-    })
+    });
 
-    expect(parent.id).toEqual(expect.any(String))
-    expect(parentsRepository.items).toHaveLength(1)
-  })
-})
+    expect(parent.id).toEqual(expect.any(String));
+    expect(parentsRepository.items).toHaveLength(1);
+  });
+});

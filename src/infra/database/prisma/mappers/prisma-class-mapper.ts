@@ -1,90 +1,124 @@
-import type { ClassEntity } from '@/domain/classes/enterprise/entities/class'
-import { formatMixedCategoryLabel, sortGroupedCategories } from '@/shared/lib/categories'
-import { formatCategoryLabel, formatEntityStatus } from '@/shared/utils/domain-formatters'
-
-const REFERENCE_YEAR = 2026
+import type { ClassEntity } from '@/domain/classes/enterprise/entities/class';
+import {
+  REFERENCE_YEAR,
+  formatMixedCategoryLabel,
+  sortGroupedCategories,
+} from '@/shared/lib/categories';
+import {
+  formatCategoryLabel,
+  formatEntityStatus,
+} from '@/shared/utils/domain-formatters';
+import {
+  getWeekdaySortIndex,
+  normalizeWeekday,
+} from '@/shared/contracts/weekdays';
 
 export interface PrismaClassRecord {
-  id: string
-  name: string
-  maxStudents: number
-  poolId: string | null
-  status: string
-  pool: { id: string; name: string; lengthMeters: number } | null
+  id: string;
+  name: string;
+  maxStudents: number;
+  poolId: string | null;
+  status: string;
+  pool: { id: string; name: string; lengthMeters: number } | null;
   classTeachers: Array<{
-    id: string
-    teacherId: string
-    role: 'head_coach' | 'assistant_coach'
-    teacher: { id: string; name: string; photo: string | null }
-  }>
+    id: string;
+    teacherId: string;
+    role: 'head_coach' | 'assistant_coach';
+    teacher: { id: string; name: string; photo: string | null };
+  }>;
   classSchedules: Array<{
-    id: string
-    dayOfWeek: string
-    startTime: Date
-    endTime: Date
-  }>
+    id: string;
+    dayOfWeek: string;
+    startTime: Date;
+    endTime: Date;
+  }>;
   studentClasses: Array<{
     student: {
-      id: string
-      name: string
-      birthDate: Date | null
-      status: string
-      category: { name: string }
-      level: { name: string }
-    }
-  }>
+      id: string;
+      name: string;
+      birthDate: Date | null;
+      status: string;
+      category: { name: string };
+      level: { name: string };
+    };
+  }>;
   classCategories: Array<{
-    category: { id: string; name: string }
-    isPrimary: boolean
-  }>
+    category: { id: string; name: string };
+    isPrimary: boolean;
+  }>;
 }
 
 const normalizeStudentStatus = (status: string): 'Ativo' | 'Inativo' =>
-  formatEntityStatus(status) === 'Ativo' ? 'Ativo' : 'Inativo'
+  formatEntityStatus(status) === 'Ativo' ? 'Ativo' : 'Inativo';
 
 const getBirthYearFromDate = (birthDate?: Date | null) =>
-  birthDate ? birthDate.getUTCFullYear() : REFERENCE_YEAR
+  birthDate ? birthDate.getUTCFullYear() : REFERENCE_YEAR;
 
-const formatTime = (value: Date) => value.toISOString().slice(11, 16)
+const formatTime = (value: Date) => value.toISOString().slice(11, 16);
 
-const mapRole = (role: 'head_coach' | 'assistant_coach'): 'head_coach' | 'assistant_coach' =>
-  role === 'head_coach' ? 'head_coach' : 'assistant_coach'
+const mapRole = (
+  role: 'head_coach' | 'assistant_coach',
+): 'head_coach' | 'assistant_coach' =>
+  role === 'head_coach' ? 'head_coach' : 'assistant_coach';
 
 const mapStatus = (status: string): ClassEntity['status'] => {
-  if (status === 'Pausada') return 'Pausada'
-  if (status === 'Encerrada') return 'Encerrada'
-  return 'Ativa'
-}
+  if (status === 'Pausada') return 'Pausada';
+  if (status === 'Encerrada') return 'Encerrada';
+  return 'Ativa';
+};
 
 export class PrismaClassMapper {
-  static toDomain(classItem: PrismaClassRecord): ClassEntity {
+  static toDomain(this: void, classItem: PrismaClassRecord): ClassEntity {
     const sortedCategories = sortGroupedCategories(
-      classItem.classCategories.map((item) => formatCategoryLabel(item.category.name)),
-    )
-    const primaryCategory = classItem.classCategories.find((item) => item.isPrimary)?.category
-    const primaryCategoryName = primaryCategory ? formatCategoryLabel(primaryCategory.name) : undefined
-    const orderedCategories = sortGroupedCategories([
-      primaryCategoryName ?? sortedCategories[0] ?? '',
-      ...sortedCategories.filter((category) => category !== primaryCategoryName),
-    ].filter(Boolean))
+      classItem.classCategories.map((item) =>
+        formatCategoryLabel(item.category.name),
+      ),
+    );
+    const primaryCategory = classItem.classCategories.find(
+      (item) => item.isPrimary,
+    )?.category;
+    const primaryCategoryName = primaryCategory
+      ? formatCategoryLabel(primaryCategory.name)
+      : undefined;
+    const orderedCategories = sortGroupedCategories(
+      [
+        primaryCategoryName ?? sortedCategories[0] ?? '',
+        ...sortedCategories.filter(
+          (category) => category !== primaryCategoryName,
+        ),
+      ].filter(Boolean),
+    );
 
     const orderedCategoryIds = [
       ...(primaryCategory ? [primaryCategory.id] : []),
       ...classItem.classCategories
         .map((item) => item.category.id)
         .filter((id) => !primaryCategory || id !== primaryCategory.id),
-    ]
+    ];
 
-    const schedules = classItem.classSchedules.map((schedule) => ({
-      id: schedule.id,
-      dayOfWeek: schedule.dayOfWeek,
-      startTime: formatTime(schedule.startTime),
-      endTime: formatTime(schedule.endTime),
-    }))
+    const schedules = classItem.classSchedules
+      .map((schedule) => ({
+        id: schedule.id,
+        dayOfWeek: normalizeWeekday(schedule.dayOfWeek) ?? schedule.dayOfWeek,
+        startTime: formatTime(schedule.startTime),
+        endTime: formatTime(schedule.endTime),
+      }))
+      .sort((left, right) => {
+        const weekdayOrder =
+          getWeekdaySortIndex(left.dayOfWeek) -
+          getWeekdaySortIndex(right.dayOfWeek);
+
+        if (weekdayOrder !== 0) return weekdayOrder;
+        return left.startTime.localeCompare(right.startTime);
+      });
 
     const students = classItem.studentClasses
       .map((item) => {
-        if (item.student.status !== 'Ativo' && item.student.status !== 'Licenca') return null
+        if (
+          item.student.status !== 'Ativo' &&
+          item.student.status !== 'Licenca'
+        )
+          return null;
         return {
           id: item.student.id,
           name: item.student.name,
@@ -92,9 +126,11 @@ export class PrismaClassMapper {
           category: formatCategoryLabel(item.student.category.name),
           level: item.student.level.name,
           status: normalizeStudentStatus(item.student.status),
-        }
+        };
       })
-      .filter((student): student is NonNullable<typeof student> => Boolean(student))
+      .filter((student): student is NonNullable<typeof student> =>
+        Boolean(student),
+      );
 
     return {
       id: classItem.id,
@@ -117,9 +153,11 @@ export class PrismaClassMapper {
       maxStudents: classItem.maxStudents,
       enrolledStudents: students.length,
       poolId: classItem.poolId ?? undefined,
-      pool: classItem.pool ? `${classItem.pool.name} (${classItem.pool.lengthMeters}m)` : '',
+      pool: classItem.pool
+        ? `${classItem.pool.name} (${classItem.pool.lengthMeters}m)`
+        : '',
       status: mapStatus(classItem.status),
       students,
-    }
+    };
   }
 }

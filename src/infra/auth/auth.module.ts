@@ -1,12 +1,41 @@
-import { Module } from '@nestjs/common'
-import { DatabaseModule } from '@/infra/database/database.module'
-import { EnvModule } from '@/infra/env/env.module'
-import { JwtAuthGuard } from './jwt-auth.guard'
-import { RolesGuard } from './roles.guard'
+import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
+import { AuthSessionManager } from '@/domain/auth/application/repositories/auth-session-manager';
+import { DatabaseModule } from '@/infra/database/database.module';
+import { EnvModule } from '@/infra/env/env.module';
+import { ApiAuthService } from './api-auth.service';
+import { JwtAuthGuard } from './jwt-auth.guard';
+import { PermissionsGuard } from './permissions.guard';
+import { PublicAuthRateLimitGuard } from './public-auth-rate-limit.guard';
+import { RolesGuard } from './roles.guard';
+import { SupabaseAuthService } from './supabase-auth.service';
+import { TrustedOriginGuard } from './trusted-origin.guard';
 
 @Module({
-  imports: [DatabaseModule, EnvModule],
-  providers: [JwtAuthGuard, RolesGuard],
-  exports: [JwtAuthGuard, RolesGuard],
+  imports: [DatabaseModule, EnvModule, JwtModule.register({})],
+  providers: [
+    ApiAuthService,
+    {
+      provide: AuthSessionManager,
+      useExisting: ApiAuthService,
+    },
+    JwtAuthGuard,
+    RolesGuard,
+    PermissionsGuard,
+    PublicAuthRateLimitGuard,
+    TrustedOriginGuard,
+    SupabaseAuthService,
+  ],
+  exports: [
+    AuthSessionManager,
+    ApiAuthService,
+    JwtAuthGuard,
+    RolesGuard,
+    PermissionsGuard,
+    PublicAuthRateLimitGuard,
+    TrustedOriginGuard,
+    SupabaseAuthService,
+    JwtModule,
+  ],
 })
 export class AuthModule {}

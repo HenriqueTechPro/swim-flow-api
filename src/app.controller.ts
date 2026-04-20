@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common'
+import { Controller, Get } from '@nestjs/common';
 
 @Controller('health')
 export class AppController {
@@ -8,6 +8,6 @@ export class AppController {
       status: 'ok',
       service: 'swim-flow-nest-api',
       timestamp: new Date().toISOString(),
-    }
+    };
   }
 }

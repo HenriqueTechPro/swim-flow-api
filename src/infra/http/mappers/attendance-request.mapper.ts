@@ -1,5 +1,5 @@
-import type { SaveAttendanceBatchRequest } from '@/domain/attendance/application/dtos/attendance-requests'
-import type { SaveAttendanceBatchDto } from '@/shared/contracts/management'
+import type { SaveAttendanceBatchRequest } from '@/domain/attendance/application/dtos/attendance-requests';
+import type { SaveAttendanceBatchDto } from '@/shared/contracts/management';
 
 export class AttendanceRequestMapper {
   static toSaveBatch(body: SaveAttendanceBatchDto): SaveAttendanceBatchRequest {
@@ -12,6 +12,6 @@ export class AttendanceRequestMapper {
         observations: record.observations ?? '',
         savedAt: record.savedAt,
       })),
-    }
+    };
   }
 }

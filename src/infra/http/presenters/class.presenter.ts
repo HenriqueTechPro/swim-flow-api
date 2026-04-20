@@ -1,7 +1,7 @@
-import type { ClassEntity } from '@/domain/classes/enterprise/entities/class'
+import type { ClassEntity } from '@/domain/classes/enterprise/entities/class';
 
 export class ClassPresenter {
-  static toHTTP(classItem: ClassEntity) {
+  static toHTTP(this: void, classItem: ClassEntity) {
     return {
       id: classItem.id,
       name: classItem.name,
@@ -20,6 +20,6 @@ export class ClassPresenter {
       pool: classItem.pool,
       status: classItem.status,
       students: classItem.students,
-    }
+    };
   }
 }

@@ -1,4 +1,4 @@
-import type { Training } from '@/domain/trainings/enterprise/entities/training'
+import type { Training } from '@/domain/trainings/enterprise/entities/training';
 
 interface MakeTrainingOverride extends Partial<Training> {}
 
@@ -8,6 +8,8 @@ export function makeTraining(override: MakeTrainingOverride = {}): Training {
     title: override.title ?? 'Treino Teste',
     description: override.description ?? '',
     type: override.type ?? 'Misto',
+    venueType: override.venueType ?? 'Piscina',
+    locationName: override.locationName ?? '',
     dayOfWeek: override.dayOfWeek ?? 'Segunda',
     startTime: override.startTime ?? '18:00',
     endTime: override.endTime ?? '19:00',
@@ -19,5 +21,5 @@ export function makeTraining(override: MakeTrainingOverride = {}): Training {
     status: override.status ?? 'Ativo',
     poolId: override.poolId,
     pool: override.pool ?? '',
-  }
+  };
 }

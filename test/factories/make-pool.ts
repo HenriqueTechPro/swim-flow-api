@@ -1,4 +1,4 @@
-import type { Pool } from '@/domain/pools/enterprise/entities/pool'
+import type { Pool } from '@/domain/pools/enterprise/entities/pool';
 
 interface MakePoolOverride extends Partial<Pool> {}
 
@@ -12,5 +12,5 @@ export function makePool(override: MakePoolOverride = {}): Pool {
     maxCapacity: override.maxCapacity ?? 40,
     createdAt: override.createdAt ?? '2026-03-31T00:00:00.000Z',
     updatedAt: override.updatedAt ?? '2026-03-31T00:00:00.000Z',
-  }
+  };
 }

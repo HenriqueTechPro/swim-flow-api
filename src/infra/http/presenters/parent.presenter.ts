@@ -1,7 +1,7 @@
-import type { Parent } from '@/domain/parents/enterprise/entities/parent'
+import type { Parent } from '@/domain/parents/enterprise/entities/parent';
 
 export class ParentPresenter {
-  static toHTTP(parent: Parent) {
+  static toHTTP(this: void, parent: Parent) {
     return {
       id: parent.id,
       name: parent.name,
@@ -17,6 +17,6 @@ export class ParentPresenter {
       emergencyContact: parent.emergencyContact,
       emergencyPhone: parent.emergencyPhone,
       status: parent.status,
-    }
+    };
   }
 }

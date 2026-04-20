@@ -1,21 +1,21 @@
-import { beforeEach, describe, expect, it } from '@jest/globals'
-import { AppError } from '@/shared/errors/app-error'
-import { UpdateTeacherUseCase } from './update-teacher'
-import { InMemoryTeachersRepository } from '../../../../../test/repositories/in-memory-teachers-repository'
-import { makeTeacher } from '../../../../../test/factories/make-teacher'
+import { beforeEach, describe, expect, it } from '@jest/globals';
+import { AppError } from '@/shared/errors/app-error';
+import { UpdateTeacherUseCase } from './update-teacher';
+import { InMemoryTeachersRepository } from '../../../../../test/repositories/in-memory-teachers-repository';
+import { makeTeacher } from '../../../../../test/factories/make-teacher';
 
 describe('UpdateTeacherUseCase', () => {
-  let teachersRepository: InMemoryTeachersRepository
-  let sut: UpdateTeacherUseCase
+  let teachersRepository: InMemoryTeachersRepository;
+  let sut: UpdateTeacherUseCase;
 
   beforeEach(() => {
-    teachersRepository = new InMemoryTeachersRepository()
-    sut = new UpdateTeacherUseCase(teachersRepository)
-  })
+    teachersRepository = new InMemoryTeachersRepository();
+    sut = new UpdateTeacherUseCase(teachersRepository);
+  });
 
   it('updates an existing teacher', async () => {
-    const existingTeacher = makeTeacher()
-    teachersRepository.items.push(existingTeacher)
+    const existingTeacher = makeTeacher();
+    teachersRepository.items.push(existingTeacher);
 
     const { teacher } = await sut.execute(existingTeacher.id, {
       name: 'Professor Atualizado',
@@ -30,12 +30,12 @@ describe('UpdateTeacherUseCase', () => {
       certifications: 'CBDA Nivel 2',
       status: 'Ativo',
       bio: 'Atualizacao do professor',
-    })
+    });
 
-    expect(teacher.name).toBe('Professor Atualizado')
-    expect(teacher.experience).toBe(8)
-    expect(teacher.speciality).toBe('Treinamento tecnico infantil')
-  })
+    expect(teacher.name).toBe('Professor Atualizado');
+    expect(teacher.experience).toBe(8);
+    expect(teacher.speciality).toBe('Treinamento tecnico infantil');
+  });
 
   it('throws when teacher does not exist', async () => {
     await expect(() =>
@@ -53,6 +53,6 @@ describe('UpdateTeacherUseCase', () => {
         status: 'Ativo',
         bio: 'Atualizacao do professor',
       }),
-    ).rejects.toBeInstanceOf(AppError)
-  })
-})
+    ).rejects.toBeInstanceOf(AppError);
+  });
+});

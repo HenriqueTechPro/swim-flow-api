@@ -9,3 +9,8 @@ coverage
 npm-debug.log*
 .DS_Store
 .vscode
+
+# Local AI / workspace artifacts
+.agents/
+skills-lock.json
+supabase/.temp/

@@ -1,5 +1,11 @@
-import type { CreateStudentDto, UpdateStudentDto } from '@/shared/contracts/management'
-import type { CreateStudentRequest, UpdateStudentRequest } from '@/domain/students/application/dtos/student-requests'
+import type {
+  CreateStudentDto,
+  UpdateStudentDto,
+} from '@/shared/contracts/management';
+import type {
+  CreateStudentRequest,
+  UpdateStudentRequest,
+} from '@/domain/students/application/dtos/student-requests';
 
 export class StudentRequestMapper {
   static toCreate(body: CreateStudentDto): CreateStudentRequest {
@@ -13,10 +19,10 @@ export class StudentRequestMapper {
       phone: body.phone,
       status: body.status,
       photo: body.photo ?? null,
-    }
+    };
   }
 
   static toUpdate(body: UpdateStudentDto): UpdateStudentRequest {
-    return StudentRequestMapper.toCreate(body)
+    return StudentRequestMapper.toCreate(body);
   }
 }

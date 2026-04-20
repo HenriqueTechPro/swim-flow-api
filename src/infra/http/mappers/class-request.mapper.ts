@@ -5,7 +5,7 @@ import type {
   TransferStudentDto,
   UpdateClassDto,
   UpdateClassTeacherRoleDto,
-} from '@/shared/contracts/management'
+} from '@/shared/contracts/management';
 import type {
   AssignClassTeacherRequest,
   CreateClassRequest,
@@ -13,7 +13,7 @@ import type {
   TransferTeacherRequest,
   UpdateClassRequest,
   UpdateClassTeacherRoleRequest,
-} from '@/domain/classes/application/dtos/class-requests'
+} from '@/domain/classes/application/dtos/class-requests';
 
 export class ClassRequestMapper {
   static toCreate(body: CreateClassDto): CreateClassRequest {
@@ -32,27 +32,31 @@ export class ClassRequestMapper {
       maxStudents: body.maxStudents,
       poolId: body.poolId ?? null,
       status: body.status,
-    }
+    };
   }
 
   static toUpdate(body: UpdateClassDto): UpdateClassRequest {
     return {
       ...ClassRequestMapper.toCreate(body),
       categoryIds: body.categoryIds,
-    }
+    };
   }
 
-  static toAssignTeacher(body: AssignClassTeacherDto): AssignClassTeacherRequest {
+  static toAssignTeacher(
+    body: AssignClassTeacherDto,
+  ): AssignClassTeacherRequest {
     return {
       teacherId: body.teacherId,
       role: body.role,
-    }
+    };
   }
 
-  static toUpdateTeacherRole(body: UpdateClassTeacherRoleDto): UpdateClassTeacherRoleRequest {
+  static toUpdateTeacherRole(
+    body: UpdateClassTeacherRoleDto,
+  ): UpdateClassTeacherRoleRequest {
     return {
       role: body.role,
-    }
+    };
   }
 
   static toTransferTeacher(body: TransferTeacherDto): TransferTeacherRequest {
@@ -60,7 +64,7 @@ export class ClassRequestMapper {
       teacherId: body.teacherId,
       fromClassId: body.fromClassId,
       toClassId: body.toClassId,
-    }
+    };
   }
 
   static toTransferStudent(body: TransferStudentDto): TransferStudentRequest {
@@ -68,6 +72,6 @@ export class ClassRequestMapper {
       studentId: body.studentId,
       fromClassId: body.fromClassId,
       toClassId: body.toClassId,
-    }
+    };
   }
 }

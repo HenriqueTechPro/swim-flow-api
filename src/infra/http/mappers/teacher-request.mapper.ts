@@ -1,5 +1,11 @@
-import type { CreateTeacherDto, UpdateTeacherDto } from '@/shared/contracts/management'
-import type { CreateTeacherRequest, UpdateTeacherRequest } from '@/domain/teachers/application/dtos/teacher-requests'
+import type {
+  CreateTeacherDto,
+  UpdateTeacherDto,
+} from '@/shared/contracts/management';
+import type {
+  CreateTeacherRequest,
+  UpdateTeacherRequest,
+} from '@/domain/teachers/application/dtos/teacher-requests';
 
 export class TeacherRequestMapper {
   static toCreate(body: CreateTeacherDto): CreateTeacherRequest {
@@ -16,7 +22,7 @@ export class TeacherRequestMapper {
       certifications: body.certifications ?? '',
       status: body.status,
       bio: body.bio ?? null,
-    }
+    };
   }
 
   static toUpdate(body: UpdateTeacherDto): UpdateTeacherRequest {
@@ -33,6 +39,6 @@ export class TeacherRequestMapper {
       certifications: body.certifications ?? '',
       status: body.status,
       bio: body.bio ?? null,
-    }
+    };
   }
 }

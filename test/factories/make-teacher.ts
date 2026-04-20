@@ -1,4 +1,4 @@
-import type { Teacher } from '@/domain/teachers/enterprise/entities/teacher'
+import type { Teacher } from '@/domain/teachers/enterprise/entities/teacher';
 
 interface MakeTeacherOverride extends Partial<Teacher> {}
 
@@ -19,5 +19,5 @@ export function makeTeacher(override: MakeTeacherOverride = {}): Teacher {
     address: override.address,
     bio: override.bio ?? '',
     certifications: override.certifications ?? [],
-  }
+  };
 }

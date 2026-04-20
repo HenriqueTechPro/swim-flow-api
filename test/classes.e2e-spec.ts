@@ -1,31 +1,40 @@
-import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals'
-import type { INestApplication } from '@nestjs/common'
-import request from 'supertest'
-import { App } from 'supertest/types'
-import { ClassesRepository } from '@/domain/classes/application/repositories/classes-repository'
-import { makeClassEntity } from './factories/make-class'
-import { InMemoryClassesRepository } from './repositories/in-memory-classes-repository'
-import { createAuthenticatedE2EApp } from './utils/create-e2e-app'
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  jest,
+} from '@jest/globals';
+import type { INestApplication } from '@nestjs/common';
+import request from 'supertest';
+import { App } from 'supertest/types';
+import { ClassesRepository } from '@/domain/classes/application/repositories/classes-repository';
+import { makeClassEntity } from './factories/make-class';
+import { InMemoryClassesRepository } from './repositories/in-memory-classes-repository';
+import { createAuthenticatedE2EApp } from './utils/create-e2e-app';
 
 describe('ClassesController (e2e)', () => {
-  let app: INestApplication<App>
-  let classesRepository: InMemoryClassesRepository
+  let app: INestApplication<App>;
+  let classesRepository: InMemoryClassesRepository;
 
   beforeEach(async () => {
-    classesRepository = new InMemoryClassesRepository()
+    classesRepository = new InMemoryClassesRepository();
 
     app = await createAuthenticatedE2EApp((builder) =>
       builder.overrideProvider(ClassesRepository).useValue(classesRepository),
-    )
-  })
+    );
+  });
 
   afterEach(async () => {
-    await app.close()
-  })
+    await app.close();
+  });
 
   it('creates, updates, manages teachers and deletes a class', async () => {
-    const listBefore = await request(app.getHttpServer()).get('/api/classes').expect(200)
-    expect(listBefore.body.data).toEqual([])
+    const listBefore = await request(app.getHttpServer())
+      .get('/api/classes')
+      .expect(200);
+    expect(listBefore.body.data).toEqual([]);
 
     const createResponse = await request(app.getHttpServer())
       .post('/api/classes')
@@ -44,10 +53,10 @@ describe('ClassesController (e2e)', () => {
         poolId: null,
         status: 'Ativa',
       })
-      .expect(201)
+      .expect(201);
 
-    const classId = createResponse.body.data.id as string
-    expect(createResponse.body.data.name).toBe('Turma E2E')
+    const classId = createResponse.body.data.id as string;
+    expect(createResponse.body.data.name).toBe('Turma E2E');
 
     const updateResponse = await request(app.getHttpServer())
       .put(`/api/classes/${classId}`)
@@ -66,11 +75,11 @@ describe('ClassesController (e2e)', () => {
         poolId: null,
         status: 'Ativa',
       })
-      .expect(200)
+      .expect(200);
 
-    expect(updateResponse.body.data.name).toBe('Turma E2E Atualizada')
+    expect(updateResponse.body.data.name).toBe('Turma E2E Atualizada');
 
-    const teacherId = '33333333-3333-4333-8333-333333333333'
+    const teacherId = '33333333-3333-4333-8333-333333333333';
 
     const addTeacherResponse = await request(app.getHttpServer())
       .post(`/api/classes/${classId}/teachers`)
@@ -78,32 +87,36 @@ describe('ClassesController (e2e)', () => {
         teacherId,
         role: 'head_coach',
       })
-      .expect(201)
+      .expect(201);
 
-    expect(addTeacherResponse.body.data.classTeachers).toHaveLength(1)
-    expect(addTeacherResponse.body.data.classTeachers[0].teacherId).toBe(teacherId)
+    expect(addTeacherResponse.body.data.classTeachers).toHaveLength(1);
+    expect(addTeacherResponse.body.data.classTeachers[0].teacherId).toBe(
+      teacherId,
+    );
 
     const updateRoleResponse = await request(app.getHttpServer())
       .patch(`/api/classes/${classId}/teachers/${teacherId}/role`)
       .send({
         role: 'assistant_coach',
       })
-      .expect(200)
+      .expect(200);
 
-    expect(updateRoleResponse.body.data.classTeachers[0].role).toBe('assistant_coach')
+    expect(updateRoleResponse.body.data.classTeachers[0].role).toBe(
+      'assistant_coach',
+    );
 
     const removeTeacherResponse = await request(app.getHttpServer())
       .delete(`/api/classes/${classId}/teachers/${teacherId}`)
-      .expect(200)
+      .expect(200);
 
-    expect(removeTeacherResponse.body.data.classTeachers).toHaveLength(0)
+    expect(removeTeacherResponse.body.data.classTeachers).toHaveLength(0);
 
     const deleteResponse = await request(app.getHttpServer())
       .delete(`/api/classes/${classId}`)
-      .expect(200)
+      .expect(200);
 
-    expect(deleteResponse.body.data.id).toBe(classId)
-  })
+    expect(deleteResponse.body.data.id).toBe(classId);
+  });
 
   it('transfers a student between classes', async () => {
     const sourceClass = makeClassEntity({
@@ -119,15 +132,15 @@ describe('ClassesController (e2e)', () => {
         },
       ],
       enrolledStudents: 1,
-    })
+    });
 
     const targetClass = makeClassEntity({
       id: '66666666-6666-4666-8666-666666666666',
       students: [],
       enrolledStudents: 0,
-    })
+    });
 
-    classesRepository.items.push(sourceClass, targetClass)
+    classesRepository.items.push(sourceClass, targetClass);
 
     const transferResponse = await request(app.getHttpServer())
       .post('/api/classes/students/transfer')
@@ -136,12 +149,14 @@ describe('ClassesController (e2e)', () => {
         fromClassId: sourceClass.id,
         toClassId: targetClass.id,
       })
-      .expect(201)
+      .expect(201);
 
-    expect(transferResponse.body.data.id).toBe(targetClass.id)
-    expect(transferResponse.body.data.students).toHaveLength(1)
-    expect(transferResponse.body.data.students[0].id).toBe('55555555-5555-4555-8555-555555555555')
-  })
+    expect(transferResponse.body.data.id).toBe(targetClass.id);
+    expect(transferResponse.body.data.students).toHaveLength(1);
+    expect(transferResponse.body.data.students[0].id).toBe(
+      '55555555-5555-4555-8555-555555555555',
+    );
+  });
 
   it('filters and paginates classes list', async () => {
     classesRepository.items.push(
@@ -149,7 +164,14 @@ describe('ClassesController (e2e)', () => {
         name: 'Turma Mirim Manha',
         categories: ['Mirim 1'],
         category: 'Mirim 1',
-        schedules: [{ id: crypto.randomUUID(), dayOfWeek: 'Segunda', startTime: '08:00', endTime: '09:00' }],
+        schedules: [
+          {
+            id: crypto.randomUUID(),
+            dayOfWeek: 'Segunda',
+            startTime: '08:00',
+            endTime: '09:00',
+          },
+        ],
         dayOfWeek: 'Segunda',
         status: 'Ativa',
         poolId: 'pool-a',
@@ -168,7 +190,14 @@ describe('ClassesController (e2e)', () => {
         name: 'Turma Petiz Tarde',
         categories: ['Petiz 2'],
         category: 'Petiz 2',
-        schedules: [{ id: crypto.randomUUID(), dayOfWeek: 'Quarta', startTime: '14:00', endTime: '15:00' }],
+        schedules: [
+          {
+            id: crypto.randomUUID(),
+            dayOfWeek: 'Quarta',
+            startTime: '14:00',
+            endTime: '15:00',
+          },
+        ],
         dayOfWeek: 'Quarta',
         status: 'Pausada',
         poolId: 'pool-b',
@@ -183,14 +212,16 @@ describe('ClassesController (e2e)', () => {
           },
         ],
       }),
-    )
+    );
 
     const response = await request(app.getHttpServer())
-      .get('/api/classes?page=1&perPage=1&search=ana&category=Mirim%201&day=Segunda&status=Ativa&poolId=pool-a')
-      .expect(200)
+      .get(
+        '/api/classes?page=1&perPage=1&search=ana&category=Mirim%201&day=Segunda&status=Ativa&poolId=pool-a',
+      )
+      .expect(200);
 
-    expect(response.body.data).toHaveLength(1)
-    expect(response.body.data[0].name).toBe('Turma Mirim Manha')
-    expect(response.body.meta.total).toBe(1)
-  })
-})
+    expect(response.body.data).toHaveLength(1);
+    expect(response.body.data[0].name).toBe('Turma Mirim Manha');
+    expect(response.body.meta.total).toBe(1);
+  });
+});

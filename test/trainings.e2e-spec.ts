@@ -1,30 +1,41 @@
-import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals'
-import type { INestApplication } from '@nestjs/common'
-import request from 'supertest'
-import { App } from 'supertest/types'
-import { TrainingsRepository } from '@/domain/trainings/application/repositories/trainings-repository'
-import { InMemoryTrainingsRepository } from './repositories/in-memory-trainings-repository'
-import { createAuthenticatedE2EApp } from './utils/create-e2e-app'
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  jest,
+} from '@jest/globals';
+import type { INestApplication } from '@nestjs/common';
+import request from 'supertest';
+import { App } from 'supertest/types';
+import { TrainingsRepository } from '@/domain/trainings/application/repositories/trainings-repository';
+import { InMemoryTrainingsRepository } from './repositories/in-memory-trainings-repository';
+import { createAuthenticatedE2EApp } from './utils/create-e2e-app';
 
 describe('TrainingsController (e2e)', () => {
-  let app: INestApplication<App>
-  let trainingsRepository: InMemoryTrainingsRepository
+  let app: INestApplication<App>;
+  let trainingsRepository: InMemoryTrainingsRepository;
 
   beforeEach(async () => {
-    trainingsRepository = new InMemoryTrainingsRepository()
+    trainingsRepository = new InMemoryTrainingsRepository();
 
     app = await createAuthenticatedE2EApp((builder) =>
-      builder.overrideProvider(TrainingsRepository).useValue(trainingsRepository),
-    )
-  })
+      builder
+        .overrideProvider(TrainingsRepository)
+        .useValue(trainingsRepository),
+    );
+  });
 
   afterEach(async () => {
-    await app.close()
-  })
+    await app.close();
+  });
 
   it('lists, creates, updates and deletes trainings', async () => {
-    const listBefore = await request(app.getHttpServer()).get('/api/trainings').expect(200)
-    expect(listBefore.body.data).toEqual([])
+    const listBefore = await request(app.getHttpServer())
+      .get('/api/trainings')
+      .expect(200);
+    expect(listBefore.body.data).toEqual([]);
 
     const createResponse = await request(app.getHttpServer())
       .post('/api/trainings')
@@ -32,6 +43,8 @@ describe('TrainingsController (e2e)', () => {
         title: 'Treino E2E',
         description: 'Treino criado no e2e',
         type: 'Misto',
+        venueType: 'Piscina',
+        locationName: '',
         dayOfWeek: 'Segunda',
         startTime: '18:00',
         endTime: '19:00',
@@ -42,10 +55,10 @@ describe('TrainingsController (e2e)', () => {
         status: 'Ativo',
         poolId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       })
-      .expect(201)
+      .expect(201);
 
-    const trainingId = createResponse.body.data.id as string
-    expect(createResponse.body.data.title).toBe('Treino E2E')
+    const trainingId = createResponse.body.data.id as string;
+    expect(createResponse.body.data.title).toBe('Treino E2E');
 
     const updateResponse = await request(app.getHttpServer())
       .put(`/api/trainings/${trainingId}`)
@@ -53,6 +66,8 @@ describe('TrainingsController (e2e)', () => {
         title: 'Treino E2E Atualizado',
         description: 'Treino atualizado no e2e',
         type: 'Misto',
+        venueType: 'Piscina',
+        locationName: '',
         dayOfWeek: 'Quarta',
         startTime: '18:30',
         endTime: '19:30',
@@ -63,29 +78,35 @@ describe('TrainingsController (e2e)', () => {
         status: 'Ativo',
         poolId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       })
-      .expect(200)
+      .expect(200);
 
-    expect(updateResponse.body.data.title).toBe('Treino E2E Atualizado')
-    expect(updateResponse.body.data.currentParticipants).toBe(2)
+    expect(updateResponse.body.data.title).toBe('Treino E2E Atualizado');
+    expect(updateResponse.body.data.currentParticipants).toBe(2);
 
-    const listAfter = await request(app.getHttpServer()).get('/api/trainings').expect(200)
-    expect(listAfter.body.data).toHaveLength(1)
+    const listAfter = await request(app.getHttpServer())
+      .get('/api/trainings')
+      .expect(200);
+    expect(listAfter.body.data).toHaveLength(1);
 
     const deleteResponse = await request(app.getHttpServer())
       .delete(`/api/trainings/${trainingId}`)
-      .expect(200)
+      .expect(200);
 
-    expect(deleteResponse.body.data.id).toBe(trainingId)
+    expect(deleteResponse.body.data.id).toBe(trainingId);
 
-    const listFinal = await request(app.getHttpServer()).get('/api/trainings').expect(200)
-    expect(listFinal.body.data).toEqual([])
-  })
+    const listFinal = await request(app.getHttpServer())
+      .get('/api/trainings')
+      .expect(200);
+    expect(listFinal.body.data).toEqual([]);
+  });
 
   it('filters and paginates trainings list', async () => {
     await trainingsRepository.create({
       title: 'Treino Tecnico A',
       description: 'Foco em tecnica',
-      type: 'Técnico',
+      type: 'Tecnico',
+      venueType: 'Piscina',
+      locationName: '',
       dayOfWeek: 'Segunda',
       startTime: '18:00',
       endTime: '19:00',
@@ -95,12 +116,14 @@ describe('TrainingsController (e2e)', () => {
       currentParticipants: 8,
       status: 'Ativo',
       poolId: 'pool-a',
-    })
+    });
 
     await trainingsRepository.create({
       title: 'Treino Velocidade B',
       description: 'Tiros curtos',
       type: 'Velocidade',
+      venueType: 'Piscina',
+      locationName: '',
       dayOfWeek: 'Quarta',
       startTime: '19:00',
       endTime: '20:00',
@@ -110,18 +133,20 @@ describe('TrainingsController (e2e)', () => {
       currentParticipants: 10,
       status: 'Pausado',
       poolId: 'pool-b',
-    })
+    });
 
     const response = await request(app.getHttpServer())
-      .get('/api/trainings?page=1&perPage=1&search=tecnico&type=Técnico&status=Ativo&poolId=pool-a')
-      .expect(200)
+      .get(
+        '/api/trainings?page=1&perPage=1&search=tecnico&type=Tecnico&status=Ativo&poolId=pool-a',
+      )
+      .expect(200);
 
-    expect(response.body.data).toHaveLength(1)
-    expect(response.body.data[0].title).toBe('Treino Tecnico A')
+    expect(response.body.data).toHaveLength(1);
+    expect(response.body.data[0].title).toBe('Treino Tecnico A');
     expect(response.body.meta).toEqual({
       page: 1,
       perPage: 1,
       total: 1,
-    })
-  })
-})
+    });
+  });
+});

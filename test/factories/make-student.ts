@@ -1,4 +1,4 @@
-import type { Student } from '@/domain/students/enterprise/entities/student'
+import type { Student } from '@/domain/students/enterprise/entities/student';
 
 interface MakeStudentOverride extends Partial<Student> {}
 
@@ -18,5 +18,5 @@ export function makeStudent(override: MakeStudentOverride = {}): Student {
     phone: override.phone ?? '(71) 99999-0000',
     status: override.status ?? 'Ativo',
     achievements: override.achievements ?? 0,
-  }
+  };
 }

@@ -1,12 +1,14 @@
-import type { Training } from '@/domain/trainings/enterprise/entities/training'
+import type { Training } from '@/domain/trainings/enterprise/entities/training';
 
 export class TrainingPresenter {
-  static toHTTP(training: Training) {
+  static toHTTP(this: void, training: Training) {
     return {
       id: training.id,
       title: training.title,
       description: training.description,
       type: training.type,
+      venueType: training.venueType,
+      locationName: training.locationName,
       dayOfWeek: training.dayOfWeek,
       startTime: training.startTime,
       endTime: training.endTime,
@@ -18,6 +20,6 @@ export class TrainingPresenter {
       status: training.status,
       poolId: training.poolId,
       pool: training.pool,
-    }
+    };
   }
 }

@@ -1,17 +1,32 @@
+import type {
+  ResultCompetitionType,
+  ResultCourseType,
+  ResultDistance,
+  ResultDiscipline,
+  ResultEventFormat,
+  ResultStatus,
+  ResultStyle,
+} from '../../enterprise/entities/result';
+
 export interface CreateResultRequest {
-  studentId: string
-  style: 'Livre' | 'Costas' | 'Peito' | 'Borboleta'
-  distance: '25m' | '50m' | '100m' | '200m'
-  time: string
-  date: string
-  competition?: string
-  position?: number
-  category?: string
-  notes?: string
+  studentId: string;
+  discipline: ResultDiscipline;
+  style: ResultStyle;
+  distance: ResultDistance;
+  customDistance?: string;
+  competitionType: ResultCompetitionType;
+  courseType?: ResultCourseType;
+  eventFormat: ResultEventFormat;
+  time: string;
+  date: string;
+  competition?: string;
+  position?: number;
+  resultStatus: ResultStatus;
+  category?: string;
+  notes?: string;
 }
 
 export interface UpdateResultRequest extends CreateResultRequest {
-  timeInSeconds: number
-  personalBest: boolean
-  improvement: number
+  personalBest: boolean;
+  improvement: number;
 }

@@ -1,21 +1,21 @@
-import { beforeEach, describe, expect, it } from '@jest/globals'
-import { AppError } from '@/shared/errors/app-error'
-import { UpdateParentUseCase } from './update-parent'
-import { InMemoryParentsRepository } from '../../../../../test/repositories/in-memory-parents-repository'
-import { makeParent } from '../../../../../test/factories/make-parent'
+import { beforeEach, describe, expect, it } from '@jest/globals';
+import { AppError } from '@/shared/errors/app-error';
+import { UpdateParentUseCase } from './update-parent';
+import { InMemoryParentsRepository } from '../../../../../test/repositories/in-memory-parents-repository';
+import { makeParent } from '../../../../../test/factories/make-parent';
 
 describe('UpdateParentUseCase', () => {
-  let parentsRepository: InMemoryParentsRepository
-  let sut: UpdateParentUseCase
+  let parentsRepository: InMemoryParentsRepository;
+  let sut: UpdateParentUseCase;
 
   beforeEach(() => {
-    parentsRepository = new InMemoryParentsRepository()
-    sut = new UpdateParentUseCase(parentsRepository)
-  })
+    parentsRepository = new InMemoryParentsRepository();
+    sut = new UpdateParentUseCase(parentsRepository);
+  });
 
   it('updates an existing parent', async () => {
-    const existingParent = makeParent()
-    parentsRepository.items.push(existingParent)
+    const existingParent = makeParent();
+    parentsRepository.items.push(existingParent);
 
     const { parent } = await sut.execute(existingParent.id, {
       name: 'Responsavel Atualizado',
@@ -30,11 +30,11 @@ describe('UpdateParentUseCase', () => {
       emergencyContact: 'Novo Contato',
       emergencyPhone: '(71) 97777-2222',
       status: 'Ativo',
-    })
+    });
 
-    expect(parent.name).toBe('Responsavel Atualizado')
-    expect(parent.email).toBe('responsavel.updated@example.com')
-  })
+    expect(parent.name).toBe('Responsavel Atualizado');
+    expect(parent.email).toBe('responsavel.updated@example.com');
+  });
 
   it('throws when parent does not exist', async () => {
     await expect(() =>
@@ -52,6 +52,6 @@ describe('UpdateParentUseCase', () => {
         emergencyPhone: '(71) 97777-2222',
         status: 'Ativo',
       }),
-    ).rejects.toBeInstanceOf(AppError)
-  })
-})
+    ).rejects.toBeInstanceOf(AppError);
+  });
+});

@@ -1,7 +1,7 @@
-import type { ExStudent } from '@/domain/ex-students/enterprise/entities/ex-student'
+import type { ExStudent } from '@/domain/ex-students/enterprise/entities/ex-student';
 
 export class ExStudentPresenter {
-  static toHTTP(exStudent: ExStudent) {
+  static toHTTP(this: void, exStudent: ExStudent) {
     return {
       id: exStudent.id,
       studentId: exStudent.studentId,
@@ -17,6 +17,6 @@ export class ExStudentPresenter {
       lastCompetition: exStudent.lastCompetition,
       birthYear: exStudent.birthYear,
       level: exStudent.level,
-    }
+    };
   }
 }

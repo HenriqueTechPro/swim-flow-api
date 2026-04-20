@@ -1,32 +1,46 @@
-import { Module } from '@nestjs/common'
-import { CacheModule } from '@/infra/cache/cache.module'
-import { EnvModule } from '@/infra/env/env.module'
-import { AttendanceRepository } from '@/domain/attendance/application/repositories/attendance-repository'
-import { ClassesRepository } from '@/domain/classes/application/repositories/classes-repository'
-import { ExStudentsRepository } from '@/domain/ex-students/application/repositories/ex-students-repository'
-import { EventsRepository } from '@/domain/events/application/repositories/events-repository'
-import { ParentsRepository } from '@/domain/parents/application/repositories/parents-repository'
-import { PoolsRepository } from '@/domain/pools/application/repositories/pools-repository'
-import { ResultsRepository } from '@/domain/results/application/repositories/results-repository'
-import { StudentsRepository } from '@/domain/students/application/repositories/students-repository'
-import { TeachersRepository } from '@/domain/teachers/application/repositories/teachers-repository'
-import { TrainingsRepository } from '@/domain/trainings/application/repositories/trainings-repository'
-import { PrismaAttendanceRepository } from './prisma/repositories/prisma-attendance-repository'
-import { PrismaExStudentsRepository } from './prisma/repositories/prisma-ex-students-repository'
-import { PrismaEventsRepository } from './prisma/repositories/prisma-events-repository'
-import { PrismaParentsRepository } from './prisma/repositories/prisma-parents-repository'
-import { PrismaPoolsRepository } from './prisma/repositories/prisma-pools-repository'
-import { PrismaResultsRepository } from './prisma/repositories/prisma-results-repository'
-import { PrismaService } from './prisma/prisma.service'
-import { PrismaClassesRepository } from './prisma/repositories/prisma-classes-repository'
-import { PrismaStudentsRepository } from './prisma/repositories/prisma-students-repository'
-import { PrismaTeachersRepository } from './prisma/repositories/prisma-teachers-repository'
-import { PrismaTrainingsRepository } from './prisma/repositories/prisma-trainings-repository'
+import { Module } from '@nestjs/common';
+import { CacheModule } from '@/infra/cache/cache.module';
+import { AuthProfilesRepository } from '@/domain/auth/application/repositories/auth-profiles-repository';
+import { AuthSessionsRepository } from '@/domain/auth/application/repositories/auth-sessions-repository';
+import { EnvModule } from '@/infra/env/env.module';
+import { AttendanceRepository } from '@/domain/attendance/application/repositories/attendance-repository';
+import { ClassesRepository } from '@/domain/classes/application/repositories/classes-repository';
+import { ExStudentsRepository } from '@/domain/ex-students/application/repositories/ex-students-repository';
+import { EventsRepository } from '@/domain/events/application/repositories/events-repository';
+import { ParentsRepository } from '@/domain/parents/application/repositories/parents-repository';
+import { PoolsRepository } from '@/domain/pools/application/repositories/pools-repository';
+import { ResultsRepository } from '@/domain/results/application/repositories/results-repository';
+import { StudentsRepository } from '@/domain/students/application/repositories/students-repository';
+import { TeachersRepository } from '@/domain/teachers/application/repositories/teachers-repository';
+import { TrainingsRepository } from '@/domain/trainings/application/repositories/trainings-repository';
+import { ManagedUploadResourcesRepository } from '@/domain/uploads/application/repositories/managed-upload-resources-repository';
+import { PrismaAttendanceRepository } from './prisma/repositories/prisma-attendance-repository';
+import { PrismaExStudentsRepository } from './prisma/repositories/prisma-ex-students-repository';
+import { PrismaEventsRepository } from './prisma/repositories/prisma-events-repository';
+import { PrismaManagedUploadResourcesRepository } from './prisma/repositories/prisma-managed-upload-resources-repository';
+import { PrismaParentsRepository } from './prisma/repositories/prisma-parents-repository';
+import { PrismaPoolsRepository } from './prisma/repositories/prisma-pools-repository';
+import { PrismaResultsRepository } from './prisma/repositories/prisma-results-repository';
+import { PrismaService } from './prisma/prisma.service';
+import { PrismaClassesRepository } from './prisma/repositories/prisma-classes-repository';
+import { PrismaAuthProfilesRepository } from './prisma/repositories/prisma-auth-profiles-repository';
+import { PrismaAuthSessionsRepository } from './prisma/repositories/prisma-auth-sessions-repository';
+import { PrismaStudentsRepository } from './prisma/repositories/prisma-students-repository';
+import { PrismaTeachersRepository } from './prisma/repositories/prisma-teachers-repository';
+import { PrismaTrainingsRepository } from './prisma/repositories/prisma-trainings-repository';
 
 @Module({
   imports: [CacheModule, EnvModule],
   providers: [
     PrismaService,
+    {
+      provide: AuthProfilesRepository,
+      useClass: PrismaAuthProfilesRepository,
+    },
+    {
+      provide: AuthSessionsRepository,
+      useClass: PrismaAuthSessionsRepository,
+    },
     {
       provide: AttendanceRepository,
       useClass: PrismaAttendanceRepository,
@@ -46,6 +60,10 @@ import { PrismaTrainingsRepository } from './prisma/repositories/prisma-training
     {
       provide: ExStudentsRepository,
       useClass: PrismaExStudentsRepository,
+    },
+    {
+      provide: ManagedUploadResourcesRepository,
+      useClass: PrismaManagedUploadResourcesRepository,
     },
     {
       provide: PoolsRepository,
@@ -68,6 +86,20 @@ import { PrismaTrainingsRepository } from './prisma/repositories/prisma-training
       useClass: PrismaTrainingsRepository,
     },
   ],
-  exports: [PrismaService, AttendanceRepository, ClassesRepository, ExStudentsRepository, EventsRepository, ParentsRepository, PoolsRepository, ResultsRepository, StudentsRepository, TeachersRepository, TrainingsRepository],
+  exports: [
+    AuthProfilesRepository,
+    AuthSessionsRepository,
+    AttendanceRepository,
+    ClassesRepository,
+    ExStudentsRepository,
+    EventsRepository,
+    ManagedUploadResourcesRepository,
+    ParentsRepository,
+    PoolsRepository,
+    ResultsRepository,
+    StudentsRepository,
+    TeachersRepository,
+    TrainingsRepository,
+  ],
 })
 export class DatabaseModule {}

@@ -1,15 +1,15 @@
-import { beforeEach, describe, expect, it } from '@jest/globals'
-import { CreateEventUseCase } from './create-event'
-import { InMemoryEventsRepository } from '../../../../../test/repositories/in-memory-events-repository'
+import { beforeEach, describe, expect, it } from '@jest/globals';
+import { CreateEventUseCase } from './create-event';
+import { InMemoryEventsRepository } from '../../../../../test/repositories/in-memory-events-repository';
 
 describe('CreateEventUseCase', () => {
-  let eventsRepository: InMemoryEventsRepository
-  let sut: CreateEventUseCase
+  let eventsRepository: InMemoryEventsRepository;
+  let sut: CreateEventUseCase;
 
   beforeEach(() => {
-    eventsRepository = new InMemoryEventsRepository()
-    sut = new CreateEventUseCase(eventsRepository)
-  })
+    eventsRepository = new InMemoryEventsRepository();
+    sut = new CreateEventUseCase(eventsRepository);
+  });
 
   it('creates an event', async () => {
     const { event } = await sut.execute({
@@ -21,9 +21,9 @@ describe('CreateEventUseCase', () => {
       endTime: '12:00',
       location: 'Piscina Principal',
       status: 'Agendado',
-    })
+    });
 
-    expect(event.id).toEqual(expect.any(String))
-    expect(eventsRepository.items).toHaveLength(1)
-  })
-})
+    expect(event.id).toEqual(expect.any(String));
+    expect(eventsRepository.items).toHaveLength(1);
+  });
+});
