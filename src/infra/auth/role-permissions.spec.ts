@@ -9,6 +9,7 @@ describe('getPermissionsForRole', () => {
       'attendance:read',
       'attendance:write',
       'auth:invite',
+      'auth:manage-users',
       'classes:read',
       'classes:write',
       'events:read',

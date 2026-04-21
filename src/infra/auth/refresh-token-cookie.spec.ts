@@ -60,4 +60,22 @@ describe('refresh-token-cookie', () => {
       }),
     );
   });
+
+  it('omits the cookie domain when the configured value is a localhost URL', () => {
+    const response = makeResponse();
+    const envService = {
+      ...makeEnvService(),
+      authCookieDomain: 'http://localhost:8080',
+    } as EnvService;
+
+    setRefreshTokenCookie(response, envService, 'refresh-token-value');
+
+    expect(response.cookie).toHaveBeenCalledWith(
+      'swim_flow_refresh_token',
+      'refresh-token-value',
+      expect.not.objectContaining({
+        domain: expect.anything(),
+      }),
+    );
+  });
 });

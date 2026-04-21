@@ -28,6 +28,9 @@ describe('ApiAuthService', () => {
     authProfilesRepository = {
       findByUserId: jest.fn(),
       getOrCreate: jest.fn(),
+      list: jest.fn(),
+      countByRole: jest.fn(),
+      updateRole: jest.fn(),
       update: jest.fn(),
     } as jest.Mocked<AuthProfilesRepository>;
 
@@ -37,6 +40,8 @@ describe('ApiAuthService', () => {
       sendPasswordResetEmail: jest.fn(),
       confirmPasswordReset: jest.fn(),
       inviteUserByEmail: jest.fn(),
+      listUsers: jest.fn(),
+      deleteUser: jest.fn(),
     } as unknown as jest.Mocked<SupabaseAuthService>;
 
     jwtService = {
@@ -169,5 +174,64 @@ describe('ApiAuthService', () => {
 
     expect(authSessionsRepository.revokeAllForUser).toHaveBeenCalledWith('user-1');
     expect(authSessionsRepository.create).not.toHaveBeenCalled();
+  });
+
+  it('stores the invited role when provisioning an invited user', async () => {
+    supabaseAuthService.inviteUserByEmail.mockResolvedValue({
+      id: 'user-2',
+      email: 'invitee@example.com',
+      fullName: 'Invitee User',
+    });
+    authProfilesRepository.getOrCreate.mockResolvedValue({
+      id: 'user-2',
+      email: 'invitee@example.com',
+      role: 'teacher',
+      permissions: ['teachers:read', 'teachers:write'],
+      fullName: 'Invitee User',
+      avatarUrl: null,
+    });
+
+    await sut.inviteUser({
+      email: 'invitee@example.com',
+      fullName: 'Invitee User',
+      redirectTo: 'http://localhost:8080/reset-password',
+      role: 'teacher',
+    });
+
+    expect(supabaseAuthService.inviteUserByEmail).toHaveBeenCalledWith({
+      email: 'invitee@example.com',
+      fullName: 'Invitee User',
+      redirectTo: 'http://localhost:8080/reset-password',
+      role: 'teacher',
+    });
+    expect(authProfilesRepository.getOrCreate).toHaveBeenCalledWith({
+      userId: 'user-2',
+      email: 'invitee@example.com',
+      fullName: 'Invitee User',
+      role: 'teacher',
+    });
+  });
+
+  it('cleans up unauthorized Google sign-ins that are not invited', async () => {
+    supabaseAuthService.getIdentityFromAccessToken.mockResolvedValue({
+      id: 'user-3',
+      email: 'oauth-user@example.com',
+      fullName: 'OAuth User',
+    });
+    authProfilesRepository.findByUserId.mockResolvedValue(null);
+    supabaseAuthService.deleteUser.mockResolvedValue();
+
+    await expect(
+      sut.loginWithAccessToken({
+        accessToken: 'google-access-token',
+        userAgent: 'Chrome',
+        ipAddress: '127.0.0.1',
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+
+    expect(authSessionsRepository.revokeAllForUser).toHaveBeenCalledWith(
+      'user-3',
+    );
+    expect(supabaseAuthService.deleteUser).toHaveBeenCalledWith('user-3');
   });
 });

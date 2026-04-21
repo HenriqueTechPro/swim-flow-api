@@ -1,7 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  Param,
+  Patch,
   Post,
   Req,
   Res,
@@ -11,24 +14,29 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import { ConfirmPasswordResetUseCase } from '@/domain/auth/application/use-cases/confirm-password-reset';
+import { DeleteAccessProfileUseCase } from '@/domain/auth/application/use-cases/delete-access-profile';
 import { GetProfileUseCase } from '@/domain/auth/application/use-cases/get-profile';
 import { InviteUserUseCase } from '@/domain/auth/application/use-cases/invite-user';
+import { ListAccessProfilesUseCase } from '@/domain/auth/application/use-cases/list-access-profiles';
 import { LoginWithGoogleUseCase } from '@/domain/auth/application/use-cases/login-with-google';
 import { LoginUseCase } from '@/domain/auth/application/use-cases/login';
 import { LogoutUseCase } from '@/domain/auth/application/use-cases/logout';
 import { RefreshSessionUseCase } from '@/domain/auth/application/use-cases/refresh-session';
 import { RequestPasswordResetUseCase } from '@/domain/auth/application/use-cases/request-password-reset';
+import { UpdateAccessProfileRoleUseCase } from '@/domain/auth/application/use-cases/update-access-profile-role';
 import {
   confirmPasswordResetSchema,
   inviteUserSchema,
   loginSchema,
   oauthLoginSchema,
   requestPasswordResetSchema,
+  updateAccessProfileRoleSchema,
   type ConfirmPasswordResetDto,
   type InviteUserDto,
   type LoginDto,
   type OAuthLoginDto,
   type RequestPasswordResetDto,
+  type UpdateAccessProfileRoleDto,
 } from '@/shared/contracts/auth';
 import { CurrentUser } from '@/infra/auth/current-user.decorator';
 import type { AuthUser } from '@/infra/auth/auth.types';
@@ -45,8 +53,10 @@ import { Roles } from '@/infra/auth/roles.decorator';
 import { RolesGuard } from '@/infra/auth/roles.guard';
 import { TrustedOriginGuard } from '@/infra/auth/trusted-origin.guard';
 import { EnvService } from '@/infra/env/env.service';
+import { AccessProfilePresenter } from '../presenters/access-profile.presenter';
 import { ZodValidationPipe } from '../pipes/zod-validation-pipe';
 import { AuthenticatedUserPresenter } from '../presenters/authenticated-user.presenter';
+import { ProfilePresenter } from '../presenters/profile.presenter';
 
 function getRequestContext(request: Request) {
   return {
@@ -54,6 +64,9 @@ function getRequestContext(request: Request) {
     ipAddress: request.ip ?? request.socket.remoteAddress ?? null,
   };
 }
+
+const unauthorizedAppAccessMessage =
+  'User is not authorized for this application';
 
 @ApiTags('auth')
 @Controller('/api/auth')
@@ -65,7 +78,10 @@ export class AuthController {
     private readonly logoutUseCase: LogoutUseCase,
     private readonly requestPasswordResetUseCase: RequestPasswordResetUseCase,
     private readonly confirmPasswordResetUseCase: ConfirmPasswordResetUseCase,
+    private readonly deleteAccessProfileUseCase: DeleteAccessProfileUseCase,
     private readonly inviteUserUseCase: InviteUserUseCase,
+    private readonly listAccessProfilesUseCase: ListAccessProfilesUseCase,
+    private readonly updateAccessProfileRoleUseCase: UpdateAccessProfileRoleUseCase,
     private readonly getProfile: GetProfileUseCase,
     private readonly envService: EnvService,
   ) {}
@@ -101,20 +117,39 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
     @Body(new ZodValidationPipe(oauthLoginSchema)) body: OAuthLoginDto,
   ) {
-    const result = await this.loginWithGoogleUseCase.execute({
-      accessToken: body.accessToken,
-      ...getRequestContext(request),
-    });
+    try {
+      const result = await this.loginWithGoogleUseCase.execute({
+        accessToken: body.accessToken,
+        ...getRequestContext(request),
+      });
 
-    setRefreshTokenCookie(response, this.envService, result.refreshToken);
+      setRefreshTokenCookie(response, this.envService, result.refreshToken);
 
-    return {
-      data: {
-        accessToken: result.accessToken,
-        accessTokenExpiresAt: result.accessTokenExpiresAt,
-        user: result.user,
-      },
-    };
+      return {
+        data: {
+          authorized: true,
+          accessToken: result.accessToken,
+          accessTokenExpiresAt: result.accessTokenExpiresAt,
+          user: result.user,
+        },
+      };
+    } catch (error) {
+      if (
+        error instanceof UnauthorizedException &&
+        error.message === unauthorizedAppAccessMessage
+      ) {
+        clearRefreshTokenCookie(response, this.envService);
+
+        return {
+          data: {
+            authorized: false,
+            reason: 'invitation_required',
+          },
+        };
+      }
+
+      throw error;
+    }
   }
 
   @Post('refresh')
@@ -227,6 +262,64 @@ export class AuthController {
     body: InviteUserDto,
   ) {
     const result = await this.inviteUserUseCase.execute(body);
+
+    return {
+      data: result,
+    };
+  }
+
+  @Get('access-profiles')
+  @ApiBearerAuth('api-bearer')
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+  @Roles('admin')
+  @Permissions('auth:manage-users')
+  async listAccessProfiles() {
+    const { profiles } = await this.listAccessProfilesUseCase.execute();
+
+    return {
+      data: {
+        profiles: profiles.map((profile) => AccessProfilePresenter.toHTTP(profile)),
+      },
+    };
+  }
+
+  @Patch('access-profiles/:id/role')
+  @ApiBearerAuth('api-bearer')
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+  @Roles('admin')
+  @Permissions('auth:manage-users')
+  async updateAccessProfileRole(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateAccessProfileRoleSchema))
+    body: UpdateAccessProfileRoleDto,
+  ) {
+    const { profile } = await this.updateAccessProfileRoleUseCase.execute({
+      actorUserId: user.id,
+      targetUserId: id,
+      role: body.role,
+    });
+
+    return {
+      data: {
+        profile: ProfilePresenter.toHTTP(profile),
+      },
+    };
+  }
+
+  @Delete('access-profiles/:id')
+  @ApiBearerAuth('api-bearer')
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+  @Roles('admin')
+  @Permissions('auth:manage-users')
+  async deleteAccessProfile(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+  ) {
+    const result = await this.deleteAccessProfileUseCase.execute({
+      actorUserId: user.id,
+      targetUserId: id,
+    });
 
     return {
       data: result,

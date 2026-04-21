@@ -6,6 +6,11 @@ import { parseCorsOrigins } from '@/infra/http/cors/cors.config';
 const appRoot = process.cwd();
 const defaultDevelopmentJwtAccessSecret =
   'development-jwt-access-secret-change-me';
+const optionalNonEmptyString = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value) => (value && value.length > 0 ? value : undefined));
 
 const loadEnvFile = (filepath: string) => {
   if (!existsSync(filepath)) return;
@@ -37,7 +42,8 @@ const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   VITE_SUPABASE_URL: z.string().url(),
   VITE_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+  SUPABASE_SECRET_KEY: optionalNonEmptyString,
+  SUPABASE_SERVICE_ROLE_KEY: optionalNonEmptyString,
   JWT_ACCESS_SECRET: z
     .string()
     .min(32)
@@ -90,7 +96,10 @@ export const env = {
   databaseUrl: parsedEnv.DATABASE_URL,
   supabaseUrl: parsedEnv.VITE_SUPABASE_URL,
   supabasePublishableKey: parsedEnv.VITE_SUPABASE_PUBLISHABLE_KEY,
-  supabaseServiceRoleKey: parsedEnv.SUPABASE_SERVICE_ROLE_KEY ?? null,
+  supabaseServiceRoleKey:
+    parsedEnv.SUPABASE_SECRET_KEY ??
+    parsedEnv.SUPABASE_SERVICE_ROLE_KEY ??
+    null,
   jwtAccessSecret: parsedEnv.JWT_ACCESS_SECRET,
   jwtAccessTtlSeconds: parsedEnv.JWT_ACCESS_TTL_SECONDS,
   refreshTokenTtlDays: parsedEnv.REFRESH_TOKEN_TTL_DAYS,

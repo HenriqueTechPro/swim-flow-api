@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AuthDirectoryRepository } from '@/domain/auth/application/repositories/auth-directory-repository';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthSessionManager } from '@/domain/auth/application/repositories/auth-session-manager';
 import { DatabaseModule } from '@/infra/database/database.module';
@@ -19,6 +20,10 @@ import { TrustedOriginGuard } from './trusted-origin.guard';
       provide: AuthSessionManager,
       useExisting: ApiAuthService,
     },
+    {
+      provide: AuthDirectoryRepository,
+      useExisting: SupabaseAuthService,
+    },
     JwtAuthGuard,
     RolesGuard,
     PermissionsGuard,
@@ -28,6 +33,7 @@ import { TrustedOriginGuard } from './trusted-origin.guard';
   ],
   exports: [
     AuthSessionManager,
+    AuthDirectoryRepository,
     ApiAuthService,
     JwtAuthGuard,
     RolesGuard,

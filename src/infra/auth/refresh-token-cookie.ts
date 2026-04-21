@@ -4,13 +4,52 @@ import type { EnvService } from '@/infra/env/env.service';
 function buildRefreshTokenCookieScope(
   envService: EnvService,
 ): Pick<CookieOptions, 'domain' | 'httpOnly' | 'path' | 'sameSite' | 'secure'> {
-  return {
-    domain: envService.authCookieDomain ?? undefined,
+  const cookieScope: Pick<
+    CookieOptions,
+    'domain' | 'httpOnly' | 'path' | 'sameSite' | 'secure'
+  > = {
     httpOnly: true,
     sameSite: envService.authCookieSameSite,
     secure: envService.authSecureCookies,
     path: envService.authCookiePath,
   };
+
+  const normalizedDomain = normalizeCookieDomain(envService.authCookieDomain);
+  if (normalizedDomain) {
+    cookieScope.domain = normalizedDomain;
+  }
+
+  return cookieScope;
+}
+
+function normalizeCookieDomain(domain: string | null) {
+  if (!domain) {
+    return undefined;
+  }
+
+  let normalizedDomain = domain.trim();
+  if (normalizedDomain.length === 0) {
+    return undefined;
+  }
+
+  if (normalizedDomain.includes('://')) {
+    try {
+      normalizedDomain = new URL(normalizedDomain).hostname;
+    } catch {
+      return undefined;
+    }
+  }
+
+  normalizedDomain = normalizedDomain.replace(/:\d+$/, '').trim();
+
+  if (
+    normalizedDomain.length === 0 ||
+    normalizedDomain.toLowerCase() === 'localhost'
+  ) {
+    return undefined;
+  }
+
+  return normalizedDomain;
 }
 
 export function setRefreshTokenCookie(

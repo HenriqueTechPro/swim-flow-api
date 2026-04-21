@@ -1,7 +1,9 @@
 import type { Provider } from '@nestjs/common';
 import { AttendanceRepository } from '@/domain/attendance/application/repositories/attendance-repository';
+import { AuthDirectoryRepository } from '@/domain/auth/application/repositories/auth-directory-repository';
 import { AuthProfilesRepository } from '@/domain/auth/application/repositories/auth-profiles-repository';
 import { AuthSessionManager } from '@/domain/auth/application/repositories/auth-session-manager';
+import { AuthSessionsRepository } from '@/domain/auth/application/repositories/auth-sessions-repository';
 import { ClassesRepository } from '@/domain/classes/application/repositories/classes-repository';
 import { EventsRepository } from '@/domain/events/application/repositories/events-repository';
 import { ExStudentsRepository } from '@/domain/ex-students/application/repositories/ex-students-repository';
@@ -17,13 +19,16 @@ import { ListAttendanceRecordsUseCase } from '@/domain/attendance/application/us
 import { GetAttendanceSummaryUseCase } from '@/domain/attendance/application/use-cases/get-attendance-summary';
 import { SaveAttendanceBatchUseCase } from '@/domain/attendance/application/use-cases/save-attendance-batch';
 import { ConfirmPasswordResetUseCase } from '@/domain/auth/application/use-cases/confirm-password-reset';
+import { DeleteAccessProfileUseCase } from '@/domain/auth/application/use-cases/delete-access-profile';
 import { GetProfileUseCase } from '@/domain/auth/application/use-cases/get-profile';
 import { InviteUserUseCase } from '@/domain/auth/application/use-cases/invite-user';
+import { ListAccessProfilesUseCase } from '@/domain/auth/application/use-cases/list-access-profiles';
 import { LoginWithGoogleUseCase } from '@/domain/auth/application/use-cases/login-with-google';
 import { LoginUseCase } from '@/domain/auth/application/use-cases/login';
 import { LogoutUseCase } from '@/domain/auth/application/use-cases/logout';
 import { RefreshSessionUseCase } from '@/domain/auth/application/use-cases/refresh-session';
 import { RequestPasswordResetUseCase } from '@/domain/auth/application/use-cases/request-password-reset';
+import { UpdateAccessProfileRoleUseCase } from '@/domain/auth/application/use-cases/update-access-profile-role';
 import { UpdateProfileUseCase } from '@/domain/auth/application/use-cases/update-profile';
 import { AddClassTeacherUseCase } from '@/domain/classes/application/use-cases/add-class-teacher';
 import { CreateClassUseCase } from '@/domain/classes/application/use-cases/create-class';
@@ -98,13 +103,44 @@ export const useCaseProviders: Provider[] = [
   provideUseCase(GetAttendanceSummaryUseCase, AttendanceRepository),
   provideUseCase(SaveAttendanceBatchUseCase, AttendanceRepository),
   provideUseCase(ConfirmPasswordResetUseCase, AuthSessionManager),
+  {
+    provide: DeleteAccessProfileUseCase,
+    inject: [
+      AuthProfilesRepository,
+      AuthDirectoryRepository,
+      AuthSessionsRepository,
+    ],
+    useFactory: (
+      authProfilesRepository: AuthProfilesRepository,
+      authDirectoryRepository: AuthDirectoryRepository,
+      authSessionsRepository: AuthSessionsRepository,
+    ) =>
+      new DeleteAccessProfileUseCase(
+        authProfilesRepository,
+        authDirectoryRepository,
+        authSessionsRepository,
+      ),
+  },
   provideUseCase(GetProfileUseCase, AuthProfilesRepository),
   provideUseCase(InviteUserUseCase, AuthSessionManager),
+  {
+    provide: ListAccessProfilesUseCase,
+    inject: [AuthProfilesRepository, AuthDirectoryRepository],
+    useFactory: (
+      authProfilesRepository: AuthProfilesRepository,
+      authDirectoryRepository: AuthDirectoryRepository,
+    ) =>
+      new ListAccessProfilesUseCase(
+        authProfilesRepository,
+        authDirectoryRepository,
+      ),
+  },
   provideUseCase(LoginUseCase, AuthSessionManager),
   provideUseCase(LoginWithGoogleUseCase, AuthSessionManager),
   provideUseCase(LogoutUseCase, AuthSessionManager),
   provideUseCase(RefreshSessionUseCase, AuthSessionManager),
   provideUseCase(RequestPasswordResetUseCase, AuthSessionManager),
+  provideUseCase(UpdateAccessProfileRoleUseCase, AuthProfilesRepository),
   provideUseCase(UpdateProfileUseCase, AuthProfilesRepository),
   provideUseCase(AddClassTeacherUseCase, ClassesRepository),
   provideUseCase(CreateClassUseCase, ClassesRepository),

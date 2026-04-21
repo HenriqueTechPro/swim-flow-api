@@ -20,6 +20,9 @@ import {
 } from './refresh-token.helpers';
 import { SupabaseAuthService } from './supabase-auth.service';
 
+const unauthorizedAppAccessMessage =
+  'User is not authorized for this application';
+
 @Injectable()
 export class ApiAuthService extends AuthSessionManager {
   constructor(
@@ -51,10 +54,21 @@ export class ApiAuthService extends AuthSessionManager {
       input.accessToken,
     );
 
-    return this.createAuthResultForIdentity(identity, {
-      userAgent: input.userAgent,
-      ipAddress: input.ipAddress,
-    });
+    try {
+      return await this.createAuthResultForIdentity(identity, {
+        userAgent: input.userAgent,
+        ipAddress: input.ipAddress,
+      });
+    } catch (error) {
+      if (this.isUnauthorizedAppAccessError(error)) {
+        await Promise.allSettled([
+          this.authSessionsRepository.revokeAllForUser(identity.id),
+          this.supabaseAuthService.deleteUser(identity.id),
+        ]);
+      }
+
+      throw error;
+    }
   }
 
   async refresh(
@@ -165,6 +179,7 @@ export class ApiAuthService extends AuthSessionManager {
       userId: invitedIdentity.id,
       email: invitedIdentity.email,
       fullName: invitedIdentity.fullName,
+      role: input.role,
     });
   }
 
@@ -206,7 +221,7 @@ export class ApiAuthService extends AuthSessionManager {
         await this.authSessionsRepository.revokeAllForUser(userId);
       }
 
-      throw new UnauthorizedException('User is not authorized for this application');
+      throw new UnauthorizedException(unauthorizedAppAccessMessage);
     }
 
     return {
@@ -248,6 +263,13 @@ export class ApiAuthService extends AuthSessionManager {
   private getRefreshTokenExpiresAt() {
     return new Date(
       Date.now() + this.envService.refreshTokenTtlDays * 24 * 60 * 60 * 1000,
+    );
+  }
+
+  private isUnauthorizedAppAccessError(error: unknown) {
+    return (
+      error instanceof UnauthorizedException &&
+      error.message === unauthorizedAppAccessMessage
     );
   }
 }

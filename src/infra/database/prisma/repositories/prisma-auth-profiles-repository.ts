@@ -4,6 +4,7 @@ import type {
   AuthProfile,
   AuthenticatedProfile,
 } from '@/domain/auth/application/repositories/auth-profiles-repository';
+import type { AppRole } from '@/domain/auth/application/auth.types';
 import type { UpdateProfileRequest } from '@/domain/auth/application/dtos/profile-requests';
 import { getPermissionsForRole } from '@/infra/auth/role-permissions';
 import { PrismaService } from '../prisma.service';
@@ -40,17 +41,21 @@ export class PrismaAuthProfilesRepository implements AuthProfilesRepository {
     userId: string;
     email: string;
     fullName?: string | null;
+    role?: AppRole;
   }): Promise<AuthenticatedProfile> {
     const profile = (await this.prisma.profile.upsert({
       where: { id: input.userId },
       create: {
         id: input.userId,
         fullName: input.fullName?.trim() || '',
+        ...(input.role ? { role: input.role } : {}),
       },
-      update:
-        input.fullName && input.fullName.trim().length > 0
+      update: {
+        ...(input.fullName && input.fullName.trim().length > 0
           ? { fullName: input.fullName.trim() }
-          : {},
+          : {}),
+        ...(input.role ? { role: input.role } : {}),
+      },
       select: authProfileSelect,
     })) as PrismaAuthProfileRecord;
 
@@ -67,6 +72,40 @@ export class PrismaAuthProfilesRepository implements AuthProfilesRepository {
     })) as PrismaAuthProfileRecord | null;
 
     return profile ? toAuthProfile(profile) : null;
+  }
+
+  async list(): Promise<AuthProfile[]> {
+    const profiles = (await this.prisma.profile.findMany({
+      select: authProfileSelect,
+      orderBy: [{ fullName: 'asc' }, { createdAt: 'asc' }],
+    })) as PrismaAuthProfileRecord[];
+
+    return profiles.map(toAuthProfile);
+  }
+
+  async countByRole(role: AppRole): Promise<number> {
+    return this.prisma.profile.count({
+      where: { role },
+    });
+  }
+
+  async updateRole(userId: string, role: AppRole): Promise<AuthProfile> {
+    const profile = (await this.prisma.profile.update({
+      where: { id: userId },
+      data: {
+        role,
+        updatedAt: new Date(),
+      },
+      select: authProfileSelect,
+    })) as PrismaAuthProfileRecord;
+
+    return toAuthProfile(profile);
+  }
+
+  async deleteByUserId(userId: string): Promise<void> {
+    await this.prisma.profile.deleteMany({
+      where: { id: userId },
+    });
   }
 
   async update(userId: string, input: UpdateProfileRequest): Promise<AuthProfile> {

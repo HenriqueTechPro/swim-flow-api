@@ -3,6 +3,7 @@ import { z } from 'zod';
 const emailSchema = z.string().trim().email();
 const passwordSchema = z.string().min(6).max(72);
 const redirectToSchema = z.string().trim().url();
+const appRoleSchema = z.enum(['admin', 'teacher', 'user']);
 
 export const loginSchema = z.object({
   email: emailSchema,
@@ -28,6 +29,11 @@ export const inviteUserSchema = z.object({
   email: emailSchema,
   fullName: z.string().trim().min(1).max(120).optional(),
   redirectTo: redirectToSchema,
+  role: appRoleSchema.default('user'),
+});
+
+export const updateAccessProfileRoleSchema = z.object({
+  role: appRoleSchema,
 });
 
 export type LoginDto = z.infer<typeof loginSchema>;
@@ -39,3 +45,6 @@ export type ConfirmPasswordResetDto = z.infer<
 >;
 export type OAuthLoginDto = z.infer<typeof oauthLoginSchema>;
 export type InviteUserDto = z.infer<typeof inviteUserSchema>;
+export type UpdateAccessProfileRoleDto = z.infer<
+  typeof updateAccessProfileRoleSchema
+>;

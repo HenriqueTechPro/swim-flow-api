@@ -45,4 +45,5 @@ export interface InviteUserRequest {
   email: string;
   redirectTo: string;
   fullName?: string;
+  role: AppRole;
 }

@@ -15,6 +15,8 @@ Copie `.env.example` para `.env` e preencha:
 DATABASE_URL=
 VITE_SUPABASE_URL=
 VITE_SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_SECRET_KEY=
+# Legacy fallback if you still use the old JWT-based admin key:
 SUPABASE_SERVICE_ROLE_KEY=
 JWT_ACCESS_SECRET=
 REFRESH_TOKEN_TTL_DAYS=7
@@ -33,6 +35,7 @@ SWAGGER_PATH=docs
 Notas importantes de auth e CORS:
 
 - `API_CORS_ORIGIN` aceita multiplas origens separadas por virgula.
+- Para operacoes administrativas do Supabase, como convites e listagem de acessos, prefira `SUPABASE_SECRET_KEY`. A API ainda aceita `SUPABASE_SERVICE_ROLE_KEY` como fallback legado.
 - Em `localhost`, o padrao `AUTH_COOKIE_SAME_SITE=lax` e `AUTH_SECURE_COOKIES=false` funciona bem para front e API em portas diferentes.
 - Se frontend e API ficarem em dominios diferentes em producao, use `AUTH_COOKIE_SAME_SITE=none` junto com `AUTH_SECURE_COOKIES=true`.
 - So configure `AUTH_COOKIE_DOMAIN` em producao quando voce realmente precisar compartilhar o cookie entre subdominios.
