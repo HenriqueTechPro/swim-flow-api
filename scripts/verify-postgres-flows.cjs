@@ -109,7 +109,7 @@ async function run() {
   const poolResult = await db.poolResult.create({
     data: {
       studentId, seasonId: season.id, heldOn: new Date('2026-10-20'),
-      distanceMeters: 100, poolLengthMeters: 25, style: 'FREE',
+      distanceMeters: 100, poolLengthMeters: 25, style: 'Livre',
       status: 'CLASSIFIED', durationMs: 82100,
     },
   });
@@ -129,7 +129,7 @@ async function run() {
   );
   await rejectsConstraint(
     () => db.poolResult.create({
-      data: { studentId, heldOn: new Date('2026-10-20'), distanceMeters: 50, style: 'FREE', status: 'CLASSIFIED' },
+      data: { studentId, heldOn: new Date('2026-10-20'), distanceMeters: 50, style: 'Livre', status: 'CLASSIFIED' },
     }),
     'classified pool result missing time',
   );
