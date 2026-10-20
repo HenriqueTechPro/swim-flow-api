@@ -177,6 +177,44 @@ enum SwimmingStyle {
   @@map("swimming_style")
 }
 
+// New, strongly typed competitive-result domain. Legacy Result remains until
+// its HTTP/repository consumers migrate in the next PR, before the Neon baseline.
+enum RaceResultStatus {
+  PENDING
+  CLASSIFIED
+  DISQUALIFIED
+  DID_NOT_START
+  DID_NOT_FINISH
+
+  @@map("race_result_status")
+}
+
+enum PoolResultFormat {
+  INDIVIDUAL
+  RELAY
+
+  @@map("pool_result_format")
+}
+
+enum OpenWaterResultFormat {
+  INDIVIDUAL
+  RELAY
+  TRAVESSIA
+  KNOCKOUT_SPRINT
+  ULTRAMARATHON
+
+  @@map("open_water_result_format")
+}
+
+enum OpenWaterBodyType {
+  SEA
+  RIVER
+  LAKE
+  RESERVOIR
+
+  @@map("open_water_body_type")
+}
+
 model Profile {
   id        String   @id @db.Uuid
   fullName  String   @default("") @map("full_name")
@@ -328,6 +366,8 @@ model Event {
   status      EventStatus @default(Agendado)
   createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime    @default(now()) @map("updated_at") @db.Timestamptz(6)
+  poolResults PoolResult[]
+  openWaterResults OpenWaterResult[]
 
   @@map("events")
   @@index([date, status])
@@ -381,6 +421,8 @@ model Student {
   parent          Parent?      @relation(fields: [parentId], references: [id])
   exStudents      ExStudent[]
   results         Result[]
+  poolResults     PoolResult[]
+  openWaterResults OpenWaterResult[]
   studentClasses  StudentClass[]
   attendanceRecords        AttendanceRecord[]
   anthropometricAssessments AnthropometricAssessment[]
@@ -680,4 +722,62 @@ model StudentLevelHistory {
   @@index([nextLevelId])
   @@index([assessorTeacherId])
   @@map("student_level_history")
+}
+
+// Canonical pool performances. Pool lengths (20/25/50m etc.) are numeric and
+// comparable ONLY for the same distance, stroke, pool length and individual format.
+model PoolResult {
+  id                  String           @id @default(uuid()) @db.Uuid
+  studentId           String           @map("student_id") @db.Uuid
+  eventId             String?          @map("event_id") @db.Uuid
+  heldOn              DateTime         @map("held_on") @db.Date
+  distanceMeters      Int              @map("distance_meters")
+  poolLengthMeters    Decimal?         @map("pool_length_meters") @db.Decimal(6, 2)
+  style               SwimmingStyle
+  format              PoolResultFormat @default(INDIVIDUAL)
+  status              RaceResultStatus @default(PENDING)
+  durationMs          Int?             @map("duration_ms")
+  position            Int?
+  categorySnapshot    String?          @map("category_snapshot")
+  competitionSnapshot String?          @map("competition_snapshot")
+  notes               String?
+  createdAt           DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  student             Student          @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  event               Event?           @relation(fields: [eventId], references: [id], onDelete: SetNull)
+
+  @@map("pool_results")
+  @@index([studentId, heldOn])
+  @@index([studentId, style, distanceMeters, poolLengthMeters])
+  @@index([style, distanceMeters, poolLengthMeters, status, durationMs])
+  @@index([eventId])
+}
+
+// Open-water course and environmental conditions are not equivalent to a pool.
+// Race durations across different courses/tides must never become automatic PBs.
+model OpenWaterResult {
+  id                  String                @id @default(uuid()) @db.Uuid
+  studentId           String                @map("student_id") @db.Uuid
+  eventId             String?               @map("event_id") @db.Uuid
+  heldOn              DateTime              @map("held_on") @db.Date
+  distanceMeters      Int                   @map("distance_meters")
+  bodyType            OpenWaterBodyType?    @map("body_type")
+  routeKey            String?               @map("route_key")
+  style               SwimmingStyle?
+  format              OpenWaterResultFormat @default(TRAVESSIA)
+  status              RaceResultStatus      @default(PENDING)
+  durationMs          Int?                  @map("duration_ms")
+  position            Int?
+  categorySnapshot    String?               @map("category_snapshot")
+  competitionSnapshot String?               @map("competition_snapshot")
+  notes               String?
+  createdAt           DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  student             Student               @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  event               Event?                @relation(fields: [eventId], references: [id], onDelete: SetNull)
+
+  @@map("open_water_results")
+  @@index([studentId, heldOn])
+  @@index([studentId, distanceMeters, bodyType])
+  @@index([eventId, status])
 }
