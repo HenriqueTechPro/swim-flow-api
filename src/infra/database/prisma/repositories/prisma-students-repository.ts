@@ -188,6 +188,7 @@ export class PrismaStudentsRepository implements StudentsRepository {
     });
 
     await this.cache.deleteMatching('students:list:');
+    await this.cache.deleteMatching('parents:list:');
     return PrismaStudentMapper.toDomain(student as PrismaStudentRecord);
   }
 
@@ -219,7 +220,6 @@ export class PrismaStudentsRepository implements StudentsRepository {
           birthDate: new Date(input.birthDate),
           categoryId: input.categoryId,
           levelId: input.levelId,
-          parentId: input.parentId || null,
           phone: input.phone,
           photo: input.photo || null,
           status: input.status as never,
@@ -298,6 +298,7 @@ export class PrismaStudentsRepository implements StudentsRepository {
     });
 
     await this.cache.deleteMatching('students:list:');
+    await this.cache.deleteMatching('parents:list:');
     return PrismaStudentMapper.toDomain(student as PrismaStudentRecord);
   }
 
@@ -314,6 +315,7 @@ export class PrismaStudentsRepository implements StudentsRepository {
     });
 
     await this.cache.deleteMatching('students:list:');
+    await this.cache.deleteMatching('parents:list:');
     return PrismaStudentMapper.toDomain(existing as PrismaStudentRecord);
   }
 }
