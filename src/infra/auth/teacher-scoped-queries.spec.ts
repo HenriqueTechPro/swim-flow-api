@@ -55,11 +55,8 @@ describe('Teacher-scoped collection queries', () => {
     expect(prisma.student.count).toHaveBeenCalledWith(expect.objectContaining({
       where: expect.objectContaining({ studentClasses: expect.any(Object) }),
     }));
-    expect(cache.set).toHaveBeenCalledWith(
-      expect.stringContaining(`teacher:${profileId}`),
-      expect.any(String),
-      45,
-    );
+    expect(cache.get).not.toHaveBeenCalled();
+    expect(cache.set).not.toHaveBeenCalled();
   });
 
   it('limits class listings to explicit assignments and partitions teacher cache', async () => {
@@ -77,11 +74,8 @@ describe('Teacher-scoped collection queries', () => {
         },
       }),
     }));
-    expect(cache.set).toHaveBeenCalledWith(
-      expect.stringContaining(`teacher:${profileId}`),
-      expect.any(String),
-      45,
-    );
+    expect(cache.get).not.toHaveBeenCalled();
+    expect(cache.set).not.toHaveBeenCalled();
   });
 
   it('does not accidentally constrain administrator queries to a teacher', async () => {
