@@ -1,5 +1,3 @@
-export const REFERENCE_YEAR = 2026;
-
 export type SwimmingCategory =
   | 'Pre-Mirim'
   | 'Mirim 1'
@@ -88,9 +86,16 @@ const CATEGORY_GROUP_ORDER = TEACHER_CATEGORY_OPTIONS.reduce<
   return acc;
 }, {});
 
-export function getCategoryByBirthYear(birthYear: number): SwimmingCategory {
-  const age = REFERENCE_YEAR - birthYear;
-  return getCategoryByAge(age);
+export function getCategoryByBirthYear(
+  birthYear: number,
+  referenceYear: number = new Date().getUTCFullYear(),
+): SwimmingCategory {
+  if (!Number.isInteger(birthYear) || !Number.isInteger(referenceYear) ||
+      birthYear < 1900 || referenceYear < birthYear || referenceYear > 2100) {
+    throw new RangeError('Birth year and reference year must be valid calendar years');
+  }
+
+  return getCategoryByAge(referenceYear - birthYear);
 }
 
 export function getCategoryByAge(age: number): SwimmingCategory {
