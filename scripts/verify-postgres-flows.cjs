@@ -20,8 +20,9 @@ const students = new PrismaStudentsRepository(db, cache, { cacheTtlSeconds: 0 })
 
 async function rejectsConstraint(action, context) {
   await assert.rejects(action, (error) => {
-    if (!error) return false;
-    return true;
+    // Prisma constraint errors: unique, FK, CHECK and required relation.
+    // A syntax bug, missing table or connection failure must FAIL the test.
+    return Boolean(error && ['P2002', 'P2003', 'P2004', 'P2014'].includes(error.code));
   }, context);
 }
 
