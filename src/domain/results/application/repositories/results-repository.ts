@@ -55,6 +55,7 @@ export interface ResultCompetitionContext {
   competitionType: string;
   courseType: string;
   courseTypeValue: string;
+  poolLengthMeters?: number;
   eventFormat: string;
   style: string;
   distance: string;
