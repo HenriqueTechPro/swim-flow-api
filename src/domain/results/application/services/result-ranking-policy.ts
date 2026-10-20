@@ -6,7 +6,7 @@ export class ResultRankingPolicy {
     const bestResultsByStudent = new Map<string, Result>();
 
     const sortedResults = [...results]
-      .filter((result) => result.resultStatus === 'Classificado')
+      .filter((result) => result.resultStatus === 'Classificado' && result.timeInSeconds > 0 && result.discipline === 'Piscina' && result.eventFormat === 'Prova Individual' && Boolean(result.courseType))
       .sort((left, right) => {
         if (left.timeInSeconds !== right.timeInSeconds) {
           return left.timeInSeconds - right.timeInSeconds;
