@@ -46,6 +46,7 @@ Antes de iniciar a conexão, o teste exige simultaneamente:
 - `SWIM_FLOW_TEST_DB=true`
 - `DATABASE_URL` apontando para localhost/127.0.0.1, **banco `swimflow`**
 - `NODE_ENV` diferente de production
+- banco de domínio **vazio** (contagens de Profile, Student, Season e Pool iguais a zero)
 
 Não há TRUNCATE de bancos externos, chamadas ao Neon nem operações
 destrutivas no Supabase. O serviço PostgreSQL do GitHub Actions é destruído
