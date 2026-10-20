@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { EntityStatus, Prisma, SwimmingCategory } from '@prisma/client';
 import { CacheRepository } from '@/infra/cache/cache-repository';
 import {
   buildPaginatedCacheKey,
@@ -18,6 +19,7 @@ import {
 } from '@/domain/students/application/repositories/students-repository';
 import { StudentClassAssignmentPolicy } from '@/domain/students/application/services/student-class-assignment-policy';
 import { AppError } from '@/shared/errors/app-error';
+import { parseCategoryValue } from '@/shared/utils/domain-formatters';
 import { PrismaService } from '../prisma.service';
 import {
   PrismaStudentMapper,
@@ -48,6 +50,17 @@ export class PrismaStudentsRepository implements StudentsRepository {
     const normalizedSearch = params?.search?.trim().toLowerCase() || '';
     const normalizedCategory = params?.category?.trim() || '';
     const normalizedStatus = params?.status?.trim() || '';
+    const categoryName = normalizedCategory
+      ? Object.values(SwimmingCategory).find((name) => name === parseCategoryValue(normalizedCategory))
+      : undefined;
+    const statusName = normalizedStatus
+      ? Object.values(EntityStatus).find((name) =>
+          name === (normalizedStatus === 'Licença' ? 'Licenca' : normalizedStatus),
+        )
+      : undefined;
+    if ((normalizedCategory && !categoryName) || (normalizedStatus && !statusName)) {
+      return createPaginatedResult([], 0, { page, perPage });
+    }
     const cacheKey = `${buildPaginatedCacheKey('students', page, perPage)}:${normalizedSearch}:${normalizedCategory}:${normalizedStatus}`;
 
     return rememberPaginatedResult(
@@ -56,9 +69,9 @@ export class PrismaStudentsRepository implements StudentsRepository {
       this.env.cacheTtlSeconds,
       async () => {
         const skip = (page - 1) * perPage;
-        const where = {
-          ...(normalizedCategory ? { categoryLabel: normalizedCategory } : {}),
-          ...(normalizedStatus ? { status: normalizedStatus as never } : {}),
+        const where: Prisma.StudentWhereInput = {
+          ...(categoryName ? { category: { name: categoryName } } : {}),
+          ...(statusName ? { status: statusName } : {}),
           ...(normalizedSearch
             ? {
                 OR: [
@@ -101,7 +114,7 @@ export class PrismaStudentsRepository implements StudentsRepository {
   }
 
   async listReferenceData(): Promise<StudentReferenceData> {
-    const [categories, levels] = await Promise.all([
+    const [categories, levels, activeSeason] = await Promise.all([
       this.prisma.category.findMany({
         select: { id: true, name: true },
         orderBy: { name: 'asc' },
@@ -110,11 +123,18 @@ export class PrismaStudentsRepository implements StudentsRepository {
         select: { id: true, name: true },
         orderBy: { name: 'asc' },
       }),
+      this.prisma.season.findFirst({
+        where: { status: 'ACTIVE' },
+        select: { id: true, year: true },
+        orderBy: { year: 'desc' },
+      }),
     ]);
 
     return {
       categories,
       levels,
+      activeSeasonId: activeSeason?.id,
+      activeSeasonYear: activeSeason?.year,
     };
   }
 
@@ -134,6 +154,16 @@ export class PrismaStudentsRepository implements StudentsRepository {
           achievements: 0,
         },
       });
+
+      if (input.seasonId) {
+        await tx.studentSeasonCategory.create({
+          data: {
+            studentId: created.id,
+            seasonId: input.seasonId,
+            categoryId: input.categoryId,
+          },
+        });
+      }
 
       if (input.classId) {
         await tx.studentClass.create({
@@ -190,6 +220,14 @@ export class PrismaStudentsRepository implements StudentsRepository {
         },
       });
 
+      if (input.seasonId) {
+        await tx.studentSeasonCategory.upsert({
+          where: { studentId_seasonId: { studentId: id, seasonId: input.seasonId } },
+          create: { studentId: id, seasonId: input.seasonId, categoryId: input.categoryId },
+          update: { categoryId: input.categoryId },
+        });
+      }
+
       if (classAssignmentPlan.classIdsToClose.length > 0) {
         await tx.studentClass.updateMany({
           where: {
@@ -203,6 +241,20 @@ export class PrismaStudentsRepository implements StudentsRepository {
             toDate: new Date(),
             isPrimary: false,
           },
+        });
+      }
+
+      if (
+        classAssignmentPlan.shouldPromoteExistingLink &&
+        classAssignmentPlan.nextClassId
+      ) {
+        await tx.studentClass.updateMany({
+          where: {
+            studentId: id,
+            classId: classAssignmentPlan.nextClassId,
+            toDate: null,
+          },
+          data: { isPrimary: true },
         });
       }
 

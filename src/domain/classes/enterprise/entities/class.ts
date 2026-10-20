@@ -29,7 +29,7 @@ export interface ClassEntity {
   students: Array<{
     id: string;
     name: string;
-    age: number;
+    age: number | null;
     category: string;
     level: string;
     status: 'Ativo' | 'Inativo';

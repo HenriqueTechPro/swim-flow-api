@@ -16,7 +16,7 @@ export interface PrismaExStudentRecord {
   parentId: string | null;
   achievements: number;
   lastCompetition: string;
-  birthYear: number;
+  birthYear: number | null;
   birthDate: Date | null;
   level: string;
   levelSnapshot: string | null;

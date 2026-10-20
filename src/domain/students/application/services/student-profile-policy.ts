@@ -15,8 +15,25 @@ export class StudentProfilePolicy {
     input: CreateStudentRequest,
     referenceData: StudentReferenceData,
   ): CreateStudentRepositoryInput {
-    const birthYear = Number(input.birthDate.slice(0, 4));
-    const categoryName = parseCategoryValue(getCategoryByBirthYear(birthYear));
+    // Compare the entire ISO date, rejecting impossible dates and future births.
+    const dateString = input.birthDate;
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(dateString)
+      ? new Date(`${dateString}T00:00:00.000Z`)
+      : null;
+    if (!date || Number.isNaN(date.getTime()) ||
+        date.toISOString().slice(0, 10) !== dateString ||
+        dateString > new Date().toISOString().slice(0, 10)) {
+      throw new AppError(422, 'Invalid or future student birth date');
+    }
+
+    const referenceYear = referenceData.activeSeasonYear ?? new Date().getUTCFullYear();
+    const birthYear = date.getUTCFullYear();
+    let categoryName: string;
+    try {
+      categoryName = parseCategoryValue(getCategoryByBirthYear(birthYear, referenceYear));
+    } catch {
+      throw new AppError(422, 'Birth date does not belong to the active season');
+    }
 
     const category = referenceData.categories.find(
       (item) => item.name === categoryName,
@@ -38,6 +55,7 @@ export class StudentProfilePolicy {
       ...input,
       categoryId: category.id,
       levelId: level.id,
+      seasonId: referenceData.activeSeasonId,
     };
   }
 }

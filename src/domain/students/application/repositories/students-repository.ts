@@ -11,6 +11,7 @@ import type {
 export interface CreateStudentRepositoryInput extends CreateStudentRequest {
   categoryId: string;
   levelId: string;
+  seasonId?: string;
 }
 
 export type UpdateStudentRepositoryInput = CreateStudentRepositoryInput;
@@ -23,6 +24,8 @@ export interface StudentReferenceOption {
 export interface StudentReferenceData {
   categories: StudentReferenceOption[];
   levels: StudentReferenceOption[];
+  activeSeasonYear?: number;
+  activeSeasonId?: string;
 }
 
 export interface ListStudentsRepositoryParams extends PaginationParams {
