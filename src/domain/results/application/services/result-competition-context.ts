@@ -5,6 +5,7 @@ const getResultDiscipline = (result: Result) => result.discipline || 'Piscina';
 
 const getResultCourseType = (result: Result) =>
   result.courseType ||
+  (result.poolLengthMeters != null ? `Piscina ${result.poolLengthMeters}m` : undefined) ||
   (getResultDiscipline(result) === 'Piscina'
     ? 'Piscina nao informada'
     : 'Percurso nao informado');
@@ -24,6 +25,7 @@ export const buildResultCompetitionContext = (
   const discipline = getResultDiscipline(result);
   const courseType = getResultCourseType(result);
   const courseTypeValue = result.courseType || '';
+  const poolLengthMeters = result.poolLengthMeters ?? undefined;
   const competitionType = result.competitionType || discipline;
   const eventFormat = getResultEventFormat(result);
   const customDistance = result.customDistance?.trim() || '';
@@ -35,6 +37,7 @@ export const buildResultCompetitionContext = (
       discipline,
       competitionType,
       courseTypeValue,
+      poolLengthMeters ?? '',
       eventFormat,
       result.style,
       result.distance,
@@ -45,6 +48,7 @@ export const buildResultCompetitionContext = (
     competitionType,
     courseType,
     courseTypeValue,
+    poolLengthMeters,
     eventFormat,
     style: result.style,
     distance: result.distance,
