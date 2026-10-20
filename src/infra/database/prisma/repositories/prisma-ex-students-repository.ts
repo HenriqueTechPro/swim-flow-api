@@ -19,6 +19,7 @@ import {
 import { AppError } from '@/shared/errors/app-error';
 import { formatCategoryLabel } from '@/shared/utils/domain-formatters';
 import { PrismaService } from '../prisma.service';
+import { retryRolledBackTransaction } from '../retry-transaction';
 import {
   EX_STUDENT_EXIT_REASON_LABELS,
   PrismaExStudentMapper,
@@ -137,7 +138,7 @@ export class PrismaExStudentsRepository implements ExStudentsRepository {
 
   async create(input: CreateExStudentRepositoryInput) {
     const exitDateAt = parseDateOnly(input.exitDate);
-    const archived = await this.prisma.$transaction(async (tx) => {
+    const archived = await retryRolledBackTransaction(() => this.prisma.$transaction(async (tx) => {
       const student = await tx.student.findUnique({
         where: { id: input.studentId },
         include: {
@@ -186,7 +187,7 @@ export class PrismaExStudentsRepository implements ExStudentsRepository {
           lastCompetition: input.lastCompetition?.trim() || '',
         },
       });
-    });
+    }));
     await this.clearStudentArchiveCaches();
     return PrismaExStudentMapper.toDomain(archived);
   }
