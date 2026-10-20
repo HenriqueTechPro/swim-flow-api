@@ -29,7 +29,10 @@ import {
 const studentInclude = {
   category: { select: { name: true } },
   level: { select: { name: true } },
-  parent: { select: { name: true } },
+  guardians: {
+    orderBy: [{ isPrimary: 'desc' as const }, { createdAt: 'asc' as const }],
+    select: { parentId: true, isPrimary: true, parent: { select: { name: true } } },
+  },
   studentClasses: {
     where: { toDate: null },
     orderBy: { createdAt: 'asc' as const },
@@ -82,12 +85,12 @@ export class PrismaStudentsRepository implements StudentsRepository {
                     },
                   },
                   {
-                    parent: {
+                    guardians: { some: { parent: {
                       name: {
                         contains: normalizedSearch,
                         mode: 'insensitive' as const,
                       },
-                    },
+                    } } },
                   },
                 ],
               }
@@ -147,13 +150,16 @@ export class PrismaStudentsRepository implements StudentsRepository {
           birthDate: new Date(input.birthDate),
           categoryId: input.categoryId,
           levelId: input.levelId,
-          parentId: input.parentId || null,
           phone: input.phone,
           photo: input.photo || null,
           status: input.status as never,
           achievements: 0,
         },
       });
+
+      if (input.parentId) {
+        await tx.studentGuardian.create({ data: { studentId: created.id, parentId: input.parentId, isPrimary: true } });
+      }
 
       if (input.seasonId) {
         await tx.studentSeasonCategory.create({
@@ -219,6 +225,20 @@ export class PrismaStudentsRepository implements StudentsRepository {
           status: input.status as never,
         },
       });
+
+      // Preserve secondary guardians when the principal changes. An explicit
+      // null removes the principal designation, not the other relationships.
+      await tx.studentGuardian.updateMany({
+        where: { studentId: id, isPrimary: true },
+        data: { isPrimary: false },
+      });
+      if (input.parentId) {
+        await tx.studentGuardian.upsert({
+          where: { studentId_parentId: { studentId: id, parentId: input.parentId } },
+          create: { studentId: id, parentId: input.parentId, isPrimary: true },
+          update: { isPrimary: true },
+        });
+      }
 
       if (input.seasonId) {
         await tx.studentSeasonCategory.upsert({
