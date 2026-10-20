@@ -35,7 +35,7 @@ import { TrainingPresenter } from '../presenters/training.presenter';
 @ApiBearerAuth('api-bearer')
 @Controller('/api/trainings')
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
-@Roles('admin', 'teacher')
+@Roles('admin')
 export class TrainingsController {
   constructor(
     private readonly listTrainings: ListTrainingsUseCase,

@@ -160,15 +160,17 @@ export class PrismaClassesRepository implements ClassesRepository {
     if (categoryNames.length > 0 && categoryIds.length === 0) {
       return createPaginatedResult([], 0, { page, perPage });
     }
-    const cacheKey = `${buildPaginatedCacheKey('classes', page, perPage)}:${search ?? ''}:${category ?? ''}:${day ?? ''}:${status ?? ''}:${poolId ?? ''}`;
+    const teacherProfileId = params?.teacherProfileId;
+    const cacheKey = `${buildPaginatedCacheKey('classes', page, perPage)}:${search ?? ''}:${category ?? ''}:${day ?? ''}:${status ?? ''}:${poolId ?? ''}:teacher:${teacherProfileId ?? 'admin'}`;
 
-    return rememberPaginatedResult(
-      this.cache,
-      cacheKey,
-      this.env.cacheTtlSeconds,
-      async () => {
+    const readPage = async () => {
         const skip = (page - 1) * perPage;
         const where = {
+          ...(teacherProfileId ? {
+            classTeachers: { some: {
+              teacher: { profileId: teacherProfileId, status: 'Ativo' as const },
+            } },
+          } : {}),
           ...(categoryIds.length > 0
             ? {
                 classCategories: {
@@ -239,8 +241,13 @@ export class PrismaClassesRepository implements ClassesRepository {
           total,
           { page, perPage },
         );
-      },
-    );
+    };
+
+    // Do not cache records scoped to a teacher: revoking a class assignment
+    // must take effect on the next request, not after cache TTL expiry.
+    return teacherProfileId
+      ? readPage()
+      : rememberPaginatedResult(this.cache, cacheKey, this.env.cacheTtlSeconds, readPage);
   }
 
   async listCategoryReferenceData() {

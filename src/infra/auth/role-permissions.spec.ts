@@ -30,28 +30,15 @@ describe('getPermissionsForRole', () => {
     ]);
   });
 
-  it('grants the expected management permissions to teachers', () => {
+  it('allows teachers only explicitly scoped operations', () => {
     expect(getPermissionsForRole('teacher')).toEqual([
       'students:read',
-      'students:write',
+      'classes:read',
       'attendance:read',
       'attendance:write',
-      'classes:read',
-      'classes:write',
-      'events:read',
-      'events:write',
-      'parents:read',
-      'parents:write',
-      'pools:read',
-      'pools:write',
-      'results:read',
-      'results:write',
-      'teachers:read',
-      'teachers:write',
-      'trainings:read',
-      'trainings:write',
-      'uploads:write',
     ]);
+    expect(getPermissionsForRole('teacher')).not.toContain('parents:read');
+    expect(getPermissionsForRole('teacher')).not.toContain('students:write');
   });
 
   it('keeps regular users limited to self-service uploads', () => {

@@ -37,6 +37,8 @@ import { UpdateClassUseCase } from '@/domain/classes/application/use-cases/updat
 import { UpdateClassTeacherRoleUseCase } from '@/domain/classes/application/use-cases/update-class-teacher-role';
 import { normalizePaginationParams } from '@/domain/shared/pagination/pagination-utils';
 import { JwtAuthGuard } from '@/infra/auth/jwt-auth.guard';
+import { CurrentUser } from '@/infra/auth/current-user.decorator';
+import type { AuthUser } from '@/infra/auth/auth.types';
 import { Permissions } from '@/infra/auth/permissions.decorator';
 import { PermissionsGuard } from '@/infra/auth/permissions.guard';
 import { Roles } from '@/infra/auth/roles.decorator';
@@ -73,6 +75,7 @@ export class ClassesController {
     @Query('day') day?: string,
     @Query('status') status?: string,
     @Query('poolId') poolId?: string,
+    @CurrentUser() user?: AuthUser,
   ) {
     const { classes, meta } = await this.listClasses.execute({
       ...normalizePaginationParams({
@@ -84,6 +87,7 @@ export class ClassesController {
       day,
       status,
       poolId,
+      teacherProfileId: user?.role === 'teacher' ? user.id : undefined,
     });
     return { data: classes.map(ClassPresenter.toHTTP), meta };
   }

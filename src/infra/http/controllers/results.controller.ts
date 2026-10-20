@@ -45,7 +45,7 @@ import { ResultRankingPresenter } from '../presenters/result-ranking.presenter';
 @ApiBearerAuth('api-bearer')
 @Controller('/api/results')
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
-@Roles('admin', 'teacher')
+@Roles('admin')
 export class ResultsController {
   constructor(
     private readonly generateRanking: GenerateRankingUseCase,

@@ -4,6 +4,9 @@ import { ListAttendanceRecordsUseCase } from '@/domain/attendance/application/us
 import { GetAttendanceSummaryUseCase } from '@/domain/attendance/application/use-cases/get-attendance-summary';
 import { SaveAttendanceBatchUseCase } from '@/domain/attendance/application/use-cases/save-attendance-batch';
 import { JwtAuthGuard } from '@/infra/auth/jwt-auth.guard';
+import { TeacherAttendanceScopeGuard } from '@/infra/auth/teacher-attendance-scope.guard';
+import { CurrentUser } from '@/infra/auth/current-user.decorator';
+import type { AuthUser } from '@/infra/auth/auth.types';
 import { Permissions } from '@/infra/auth/permissions.decorator';
 import { PermissionsGuard } from '@/infra/auth/permissions.guard';
 import { Roles } from '@/infra/auth/roles.decorator';
@@ -21,7 +24,7 @@ import { normalizePaginationParams } from '@/domain/shared/pagination/pagination
 @ApiTags('attendance')
 @ApiBearerAuth('api-bearer')
 @Controller('/api/attendance')
-@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard, TeacherAttendanceScopeGuard)
 @Roles('admin', 'teacher')
 export class AttendanceController {
   constructor(
@@ -38,6 +41,7 @@ export class AttendanceController {
     @Query('endDate') endDate?: string,
     @Query('classId') classId?: string,
     @Query('studentId') studentId?: string,
+    @CurrentUser() user?: AuthUser,
   ) {
     const summary = await this.getAttendanceSummary.execute({
       date,
@@ -45,6 +49,7 @@ export class AttendanceController {
       endDate,
       classId,
       studentId,
+      teacherProfileId: user?.role === 'teacher' ? user.id : undefined,
     });
 
     return { data: AttendanceSummaryPresenter.toHTTP(summary) };
@@ -61,6 +66,7 @@ export class AttendanceController {
     @Query('classId') classId?: string,
     @Query('studentId') studentId?: string,
     @Query('status') status?: string,
+    @CurrentUser() user?: AuthUser,
   ) {
     const pagination = normalizePaginationParams({
       page: Number(page),
@@ -81,6 +87,7 @@ export class AttendanceController {
       classId,
       studentId,
       status,
+      teacherProfileId: user?.role === 'teacher' ? user.id : undefined,
     });
 
     return {

@@ -87,6 +87,7 @@ import { PrismaTrainingsRepository } from './prisma/repositories/prisma-training
     },
   ],
   exports: [
+    PrismaService,
     AuthProfilesRepository,
     AuthSessionsRepository,
     AttendanceRepository,
