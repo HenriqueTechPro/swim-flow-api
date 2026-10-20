@@ -4,7 +4,7 @@ export interface Student {
   photo?: string;
   gender: 'Masculino' | 'Feminino';
   birthDate: string;
-  birthYear: number;
+  birthYear: number | null;
   category: string;
   level: string;
   responsible: string;
