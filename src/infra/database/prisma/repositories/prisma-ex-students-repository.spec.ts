@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { PrismaExStudentsRepository } from './prisma-ex-students-repository';
 import type { PrismaService } from '../prisma.service';
 import type { CacheRepository } from '@/infra/cache/cache-repository';
@@ -94,6 +95,23 @@ describe('PrismaExStudentsRepository departure integrity', () => {
     });
     await expect(repository.reactivate(departureId)).rejects.toBeInstanceOf(AppError);
     expect(transactionClient.student.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('replays the complete archive transaction once after a PostgreSQL P2034 rollback', async () => {
+    db.$transaction.mockImplementationOnce(async () => {
+      throw new Prisma.PrismaClientKnownRequestError('write conflict', {
+        code: 'P2034',
+        clientVersion: '6.19.3',
+      });
+    });
+    const archived = await repository.create({
+      studentId, exitDate: '2026-09-01', exitReason: 'Falta de tempo',
+    });
+
+    expect(archived.id).toBe(departureId);
+    expect(db.$transaction).toHaveBeenCalledTimes(2);
+    expect(transactionClient.exStudent.create).toHaveBeenCalledTimes(1);
+    expect(cache.deleteMatching).toHaveBeenCalledWith('ex-students:list:');
   });
 
   it('does not create an active departure when student is already inactive', async () => {
