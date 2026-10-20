@@ -20,6 +20,6 @@ export interface ExStudent {
   parentId?: string;
   achievements: number;
   lastCompetition: string;
-  birthYear: number;
+  birthYear: number | null;
   level: string;
 }
