@@ -1,0 +1,60 @@
+name: PostgreSQL baseline quality gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  prisma-postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: swimflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d swimflow"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 8
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/swimflow?schema=public
+      DIRECT_URL: postgresql://ci:ci@localhost:5432/swimflow?schema=public
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Validate Prisma models
+        run: npm run prisma:validate
+      - name: Generate client
+        run: npm run prisma:generate
+      - name: Ensure committed migration matches Prisma schema and manual SQL
+        run: node scripts/create-neon-baseline.cjs --check
+      - name: Ensure initial migration stays immutable after future migrations
+        run: |
+          mkdir prisma/migrations/20270101000000_ci_incremental
+          trap 'rmdir prisma/migrations/20270101000000_ci_incremental' EXIT
+          node scripts/create-neon-baseline.cjs --check
+      - name: Deploy versioned migration to disposable PostgreSQL
+        run: npm run prisma:migrate:deploy
+      - name: Verify concrete SQL constraints and nullability
+        run: node node_modules/prisma/build/index.js db execute --file test/sql/neon-baseline-verification.sql --schema prisma/schema.prisma
+      - name: Check migration status
+        run: node node_modules/prisma/build/index.js migrate status --schema prisma/schema.prisma
+      - name: Compare deployed Prisma-managed schema with current schema
+        run: node node_modules/prisma/build/index.js migrate diff --from-url "$DATABASE_URL" --to-schema-datamodel prisma/schema.prisma --exit-code
+      - name: Verify deploy is idempotent
+        run: npm run prisma:migrate:deploy
