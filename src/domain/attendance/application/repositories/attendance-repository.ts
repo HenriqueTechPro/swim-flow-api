@@ -12,6 +12,7 @@ export interface ListAttendanceRepositoryParams extends PaginationParams {
   classId?: string;
   studentId?: string;
   status?: string;
+  teacherProfileId?: string;
 }
 
 export interface AttendanceBatchContext {
@@ -29,6 +30,7 @@ export interface AttendanceSummaryParams {
   endDate?: string;
   classId?: string;
   studentId?: string;
+  teacherProfileId?: string;
 }
 
 export interface AttendanceClassSummary {
