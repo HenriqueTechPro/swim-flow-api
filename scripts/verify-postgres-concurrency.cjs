@@ -135,23 +135,20 @@ async function run() {
   assert.equal(await prisma.studentClass.count({
     where: { studentId: enrollmentStudent.id, isPrimary: true, toDate: null },
   }), 1);
+  // Use a different student to test two concurrent writes to the same pair,
+  // independent of which primary-class attempt won above.
+  const pairStudent = await createStudent(category.id, level.id);
   await exactlyOne([
     prisma.studentClass.create({ data: {
-      studentId: enrollmentStudent.id, classId: classA.id, isPrimary: false,
+      studentId: pairStudent.id, classId: classA.id, isPrimary: false,
     } }),
     prisma.studentClass.create({ data: {
-      studentId: enrollmentStudent.id, classId: classA.id, isPrimary: false,
+      studentId: pairStudent.id, classId: classA.id, isPrimary: false,
     } }),
-  ].map((operation) => operation), isUnique, 'same student/class pair duplicate')
-    .catch(async (err) => {
-      // If class A was already the primary, both attempts should fail because
-      // an active pair already exists. Verify that instead.
-      if (enrolled.classId !== classA.id) throw err;
-      const count = await prisma.studentClass.count({
-        where: { studentId: enrollmentStudent.id, classId: classA.id, toDate: null },
-      });
-      assert.equal(count, 1);
-    });
+  ], isUnique, 'same student/class pair duplicate');
+  assert.equal(await prisma.studentClass.count({
+    where: { studentId: pairStudent.id, classId: classA.id, toDate: null },
+  }), 1);
 
   // 4. A transaction that demotes a current guardian must fully roll back
   // if its replacement references a missing adult. No partial transfer.
