@@ -94,3 +94,8 @@ BEGIN
     NULL;
   END;
 END $$;
+
+-- Leave the ephemeral database free of baseline-only fixtures so application
+-- integration tests can activate a different competitive season.
+DELETE FROM "pools" WHERE "id" = 'bb000000-0000-4000-8000-000000000001';
+DELETE FROM "seasons" WHERE "id" = 'aa000000-0000-4000-8000-000000000001';
