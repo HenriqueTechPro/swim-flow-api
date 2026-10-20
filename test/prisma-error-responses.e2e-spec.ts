@@ -14,9 +14,9 @@ const requestBody = {
   email: 'test@example.invalid',
   phone: '(71) 99999-1111',
   profession: 'Professor',
-  address: '',
-  emergencyContact: '',
-  emergencyPhone: '',
+  address: 'Rua de exemplo',
+  emergencyContact: 'Contato CI',
+  emergencyPhone: '(71) 98888-1111',
   status: 'Ativo',
 };
 
