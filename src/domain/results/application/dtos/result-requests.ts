@@ -16,11 +16,13 @@ export interface CreateResultRequest {
   customDistance?: string;
   competitionType: ResultCompetitionType;
   courseType?: ResultCourseType;
+  poolLengthMeters?: number;
+  routeKey?: string;
   eventFormat: ResultEventFormat;
-  time: string;
+  time?: string | null;
   date: string;
   competition?: string;
-  position?: number;
+  position?: number | null;
   resultStatus: ResultStatus;
   category?: string;
   notes?: string;
