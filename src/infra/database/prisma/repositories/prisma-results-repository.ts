@@ -193,6 +193,10 @@ function prepared(input: CreateResultRepositoryInput) {
   const status = STATUS[input.resultStatus];
   if (!status) throw new AppError(422, 'Unknown race status');
 
+  if (!STYLES.includes(input.style as SwimmingStyle))
+    throw new AppError(422, 'Invalid swimming style');
+  const swimmingStyle = input.style as SwimmingStyle;
+
   const common = {
     studentId: input.studentId,
     heldOn,
@@ -215,7 +219,7 @@ function prepared(input: CreateResultRepositoryInput) {
       studentId: input.studentId,
       distanceMeters: meters,
       poolLengthMeters: length,
-      style: input.style,
+      style: swimmingStyle,
       format,
       status,
       durationMs,
@@ -223,7 +227,7 @@ function prepared(input: CreateResultRepositoryInput) {
     });
     return {
       discipline: 'Piscina' as const,
-      data: { ...common, style: input.style, format, poolLengthMeters: length },
+      data: { ...common, style: swimmingStyle, format, poolLengthMeters: length },
     };
   }
 
@@ -248,7 +252,7 @@ function prepared(input: CreateResultRepositoryInput) {
 
   return {
     discipline: 'Aguas Abertas' as const,
-    data: { ...common, style: input.style, format, bodyType: bodyType ?? null, routeKey },
+    data: { ...common, style: swimmingStyle, format, bodyType: bodyType ?? null, routeKey },
   };
 }
 
