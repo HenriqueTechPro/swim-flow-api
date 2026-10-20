@@ -87,7 +87,11 @@ export class PrismaAttendanceRepository implements AttendanceRepository {
     const cacheKey = `attendance:list:${page}:${perPage}:${search ?? ''}:${startDate ?? ''}:${endDate ?? ''}:${classId ?? ''}:${studentId ?? ''}:${status ?? ''}:teacher:${params?.teacherProfileId ?? 'admin'}`;
     const where = buildAttendanceWhere(params);
 
-    const cached = await this.cacheRepository.get(cacheKey);
+    // Teacher grants are revocable; never serve cached sensitive rows
+    // after their assignment has been removed.
+    const cached = params?.teacherProfileId
+      ? null
+      : await this.cacheRepository.get(cacheKey);
     if (cached) {
       return JSON.parse(cached) as {
         items: ReturnType<typeof PrismaAttendanceRecordMapper.toDomain>[];
@@ -125,11 +129,13 @@ export class PrismaAttendanceRepository implements AttendanceRepository {
       perPage,
     };
 
-    await this.cacheRepository.set(
-      cacheKey,
-      JSON.stringify(result),
-      this.envService.cacheTtlSeconds,
-    );
+    if (!params?.teacherProfileId) {
+      await this.cacheRepository.set(
+        cacheKey,
+        JSON.stringify(result),
+        this.envService.cacheTtlSeconds,
+      );
+    }
 
     return result;
   }
