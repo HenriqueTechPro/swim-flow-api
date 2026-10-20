@@ -10,13 +10,16 @@ export interface PrismaStudentRecord {
   photo: string | null;
   gender: 'Masculino' | 'Feminino';
   birthDate: Date | null;
-  parentId: string | null;
   phone: string;
   status: string;
   achievements: number;
   category: { name: string };
   level: { name: string };
-  parent: { name: string } | null;
+  guardians: Array<{
+    parentId: string;
+    isPrimary: boolean;
+    parent: { name: string };
+  }>;
   studentClasses: Array<{ classId: string }>;
 }
 
@@ -25,6 +28,7 @@ const getBirthYearFromDate = (birthDate?: Date | null): number | null =>
 
 export class PrismaStudentMapper {
   static toDomain(this: void, student: PrismaStudentRecord): Student {
+    const primaryGuardian = student.guardians.find((link) => link.isPrimary);
     return {
       id: student.id,
       name: student.name,
@@ -36,8 +40,8 @@ export class PrismaStudentMapper {
       birthYear: getBirthYearFromDate(student.birthDate),
       category: formatCategoryLabel(student.category.name),
       level: student.level.name,
-      responsible: student.parent?.name ?? '',
-      parentId: student.parentId ?? undefined,
+      responsible: primaryGuardian?.parent.name ?? '',
+      parentId: primaryGuardian?.parentId,
       classId: student.studentClasses[0]?.classId ?? null,
       phone: student.phone,
       status: formatEntityStatus(student.status),
