@@ -19,9 +19,12 @@ O verificador (não altera arquivos):
 `node scripts/create-neon-baseline.cjs --check`
 
 O gerador compara **todo** o schema + os quatro arquivos complementares.
-Um SHA-256 dos insumos faz parte do cabeçalho da migração. O arquivo
-versionado deve permanecer idêntico ao gerado sob o Prisma versionado em
-`package-lock.json`. Nunca usar `prisma db push` como substituto de
+Um SHA-256 dos insumos faz parte do cabeçalho da migração. Enquanto
+ela for a única migration, o verificador compara o SQL com o schema atual.
+Depois que surgirem migrations incrementais, passa a conferir a assinatura
+Git do SQL inicial, garantindo que nunca seja reescrito. A CI também compara
+o schema Prisma atual com a estrutura efetivamente criada pelo conjunto de
+migrations executadas. Nunca usar `prisma db push` como substituto de
 migration versionada.
 
 ## Restrições nativas do PostgreSQL
@@ -48,7 +51,8 @@ de desligamento futuras.
 
 A workflow `.github/workflows/database-quality.yml` cria um PostgreSQL 16
 efêmero, roda `npm ci`, valida Prisma, compara a migração com os insumos,
-executa `prisma migrate deploy` e checa índices, CHECKs e campos NULL.
+executa `prisma migrate deploy` e checa índices, CHECKs e campos NULL,
+além de detectar diferenças entre o schema Prisma e o banco resultante.
 O teste insere dados fictícios no contêiner e exige falha para uma segunda
 temporada ACTIVE, período invertido e piscina de tamanho zero.
 A seguir, `prisma migrate deploy` roda novamente para provar que não
