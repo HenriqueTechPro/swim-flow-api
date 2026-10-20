@@ -56,14 +56,14 @@ na camada de apresentação.
 ---
 ## Situação
 
-Este PR introduz a persistência **canônica futura** `PoolResult` e
-`OpenWaterResult` e uma política de comparação tipada e testada.
+Etapa 02B-1 introduziu modelos separados e uma política de comparação.
+Na Etapa 02B-2, o repositório Prisma, os seeds e os contratos de entrada
+passaram a usar somente `PoolResult` e `OpenWaterResult`. O antigo modelo
+`Result` foi removido antes da primeira migration Neon.
 
-**ATENÇÃO:** a API em execução ainda usa a tabela legada `Result`.
-**Não** publicar o schema, **não** gerar a baseline de Neon e **não** criar dados
-nas novas tabelas antes que o próximo PR migre a API e elimine a tabela legada
-do schema. As tabelas coexistem apenas temporariamente durante a remodelagem
-na branch. Não há escrita dupla.
+**ATENÇÃO:** o schema atual ainda não deve ser implantado sobre o banco legado.
+Não há SQL inicial gerado/aplicado e não há escrita dupla. O próximo trabalho
+é revisar as restrições nativas do PostgreSQL e os contratos do dashboard.
 
 ## Modelo físico
 
@@ -114,9 +114,8 @@ Adicionar e testar na primeira migration SQL, antes de Neon:
 - Definir unicidade e integridade para `routeKey` se a modalidade evoluir
   para uma entidade de percurso.
 
-## Próximo PR (02B-2)
+## Próximas validações
 
-Atualizar contratos HTTP, presenters, PrismaResultsRepository, casos de uso,
-ranking, recordes, estatísticas e gráficos. Unificar consultas públicas sem
-fundir resultados físicos. Remover `Result` e sua persistência em texto
-antes de criar o banco Neon. Validar com testes de integração PostgreSQL.
+Concluir a padronização dos contratos frontend, preparar a baseline SQL
+com restrições `CHECK`, índices parciais e executar testes completos contra
+um PostgreSQL descartável. Só depois configurar Neon e Render.
