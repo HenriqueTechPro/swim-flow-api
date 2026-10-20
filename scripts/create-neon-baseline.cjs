@@ -4,7 +4,7 @@
 // Generate or verify the first versioned migration for a NEW EMPTY Postgres DB.
 // No database is contacted. Prisma-managed DDL is followed by checked-in SQL.
 const { spawnSync } = require('node:child_process');
-const { readFileSync, writeFileSync, mkdirSync, existsSync } = require('node:fs');
+const { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } = require('node:fs');
 const { resolve, join } = require('node:path');
 const { createHash } = require('node:crypto');
 
@@ -20,6 +20,29 @@ const inputs = [
 const check = process.argv.includes('--check');
 if (process.argv.slice(2).some((arg) => arg !== '--check')) {
   throw new Error('Usage: node scripts/create-neon-baseline.cjs [--check]');
+}
+// The baseline is frozen once incremental migrations exist. Do NOT compare
+// future schema versions against the initial DDL (that would encourage
+// rewriting the already-applied migration and break migration history).
+const migrationsDir = join(root, 'prisma/migrations');
+const migrationDirs = readdirSync(migrationsDir, { withFileTypes: true })
+  .filter((item) => item.isDirectory() && /^\\d{14}_/.test(item.name))
+  .map((item) => item.name);
+if (migrationDirs.length > 1) {
+  if (!check) throw new Error('Baseline is immutable; create an incremental Prisma migration');
+  // Git blob SHA of the first reviewed baseline, computed from file bytes.
+  // This protects the original SQL once later schema revisions appear.
+  const expectedBlobSha = 'a400e1c412e875cc33a766939c1dfcb5b8ccb8bb';
+  const bytes = readFileSync(target);
+  const actualBlobSha = createHash('sha1')
+    .update(Buffer.from('blob ' + bytes.length + '\\0'))
+    .update(bytes)
+    .digest('hex');
+  if (actualBlobSha !== expectedBlobSha) {
+    throw new Error('Historical initial migration has changed; migrations must be append-only');
+  }
+  console.log('Historical baseline is unchanged; incremental migrations will be deployed separately.');
+  process.exit(0);
 }
 const sources = inputs.map((path) => ({ path, content: readFileSync(join(root, path), 'utf8') }));
 const executable = join(root, 'node_modules/prisma/build/index.js');
