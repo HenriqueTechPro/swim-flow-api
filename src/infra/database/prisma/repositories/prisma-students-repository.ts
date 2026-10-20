@@ -64,7 +64,8 @@ export class PrismaStudentsRepository implements StudentsRepository {
     if ((normalizedCategory && !categoryName) || (normalizedStatus && !statusName)) {
       return createPaginatedResult([], 0, { page, perPage });
     }
-    const cacheKey = `${buildPaginatedCacheKey('students', page, perPage)}:${normalizedSearch}:${normalizedCategory}:${normalizedStatus}`;
+    const teacherProfileId = params?.teacherProfileId;
+    const cacheKey = `${buildPaginatedCacheKey('students', page, perPage)}:${normalizedSearch}:${normalizedCategory}:${normalizedStatus}:teacher:${teacherProfileId ?? 'admin'}`;
 
     return rememberPaginatedResult(
       this.cache,
@@ -73,6 +74,14 @@ export class PrismaStudentsRepository implements StudentsRepository {
       async () => {
         const skip = (page - 1) * perPage;
         const where: Prisma.StudentWhereInput = {
+          ...(teacherProfileId ? {
+            studentClasses: { some: {
+              toDate: null,
+              swimmingClass: { classTeachers: { some: {
+                teacher: { profileId: teacherProfileId, status: 'Ativo' },
+              } } },
+            } },
+          } : {}),
           ...(categoryName ? { category: { name: categoryName } } : {}),
           ...(statusName ? { status: statusName } : {}),
           ...(normalizedSearch
