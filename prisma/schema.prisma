@@ -500,6 +500,7 @@ model TeacherCategory {
   teacher    Teacher  @relation(fields: [teacherId], references: [id])
   category   Category @relation(fields: [categoryId], references: [id])
 
+  @@unique([teacherId, categoryId])
   @@map("teacher_categories")
 }
 
@@ -511,6 +512,7 @@ model ClassCategory {
   swimmingClass SwimmingClass @relation(fields: [classId], references: [id])
   category   Category      @relation(fields: [categoryId], references: [id])
 
+  @@unique([classId, categoryId])
   @@map("class_categories")
 }
 
@@ -523,6 +525,7 @@ model ClassSchedule {
   createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   swimmingClass SwimmingClass @relation(fields: [classId], references: [id])
 
+  @@unique([classId, dayOfWeek, startTime, endTime])
   @@map("class_schedules")
 }
 
@@ -545,6 +548,7 @@ model ClassTeacher {
   swimmingClass SwimmingClass @relation(fields: [classId], references: [id])
   teacher       Teacher       @relation(fields: [teacherId], references: [id])
 
+  @@unique([classId, teacherId])
   @@map("class_teachers")
   @@index([classId, role])
   @@index([teacherId])
