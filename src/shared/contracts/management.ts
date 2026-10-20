@@ -296,6 +296,7 @@ export const resultsRankingQuerySchema = z
     style: z.enum(resultStyleValues),
     distance: resultDistanceSchema,
     customDistance: optionalResultDistanceSchema.optional().default(""),
+    poolLengthMeters: z.coerce.number().positive().optional(),
     eventFormat: z.enum(resultEventFormatValues),
     category: z.string().trim().min(1),
   })
