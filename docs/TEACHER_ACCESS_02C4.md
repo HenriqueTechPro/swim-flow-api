@@ -31,8 +31,7 @@ O `PermissionsGuard` limita qualquer claim de permissões às regras do servidor
 
 - Listas usam `WHERE` com relacionamentos Prisma, **antes** de `skip/take`
   e `COUNT`. Não filtrar resultados depois da paginação.
-- Chaves de cache incluem `teacherProfileId`, evitando mistura entre
-  visões de professores e administradores.
+- Chaves de cache identificam o escopo, mas **requisições de professores não usam cache** para registros pessoais: revogar a atribuição de turma tem efeito na próxima consulta.
 - O guard da frequência checa a relação real no banco antes de executar o
   caso de uso; consultas de frequência aplicam novamente filtros no Prisma.
 - Uma associação sem `Teacher.profileId` retorna listas vazias, e não acesso
@@ -60,9 +59,6 @@ O `PermissionsGuard` limita qualquer claim de permissões às regras do servidor
    e revogação de vínculos (sem banco Neon criado).
 6. Considerar RLS PostgreSQL como segunda camada para endpoints com dados
    pessoais, sem substituir autorização por registro no NestJS.
-7. Revogar caches relacionados a turmas, professores e matrículas após
-   alterações que mudem o escopo: a TTL atual pode manter visão antiga
-   temporariamente. Enquanto a revogação não estiver completa, o endpoint
-   sensível pode precisar evitar cache para garantir revogação imediata.
+7. Validar revogação em testes de integração com PostgreSQL: consultas de professores já ignoram caches, e o guard consulta vínculos atuais. Avaliar eventos de revogação em outras rotas caso se amplie o escopo.
 
 Nenhum SQL foi aplicado, e nenhum dado legado foi excluído neste PR.
