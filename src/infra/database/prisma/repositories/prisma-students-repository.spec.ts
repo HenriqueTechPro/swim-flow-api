@@ -9,6 +9,7 @@ describe('PrismaStudentsRepository season snapshots', () => {
   const tx = {
     student: {
       create: jest.fn(),
+      update: jest.fn().mockResolvedValue(undefined),
       findUniqueOrThrow: jest.fn(),
     },
     studentSeasonCategory: {
