@@ -7,6 +7,7 @@ import { PrismaService } from '../../src/infra/database/prisma/prisma.service';
 import { JwtAuthGuard } from '../../src/infra/auth/jwt-auth.guard';
 import { PermissionsGuard } from '../../src/infra/auth/permissions.guard';
 import { RolesGuard } from '../../src/infra/auth/roles.guard';
+import { TeacherAttendanceScopeGuard } from '../../src/infra/auth/teacher-attendance-scope.guard';
 
 export function withDefaultTestOverrides(builder: TestingModuleBuilder) {
   return builder.overrideProvider(PrismaService).useValue({
@@ -22,6 +23,8 @@ export function withAuthenticatedOverrides(builder: TestingModuleBuilder) {
     .overrideGuard(RolesGuard)
     .useValue({ canActivate: () => true })
     .overrideGuard(PermissionsGuard)
+    .useValue({ canActivate: () => true })
+    .overrideGuard(TeacherAttendanceScopeGuard)
     .useValue({ canActivate: () => true });
 }
 
