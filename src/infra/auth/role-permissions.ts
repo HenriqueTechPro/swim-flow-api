@@ -31,26 +31,13 @@ const RESOURCE_PERMISSIONS: AppPermission[] = [
 
 const ROLE_PERMISSIONS: Record<AppRole, AppPermission[]> = {
   admin: RESOURCE_PERMISSIONS,
+  // Scoped reads only. Every other resource must be administrator-only
+  // until its queries and mutations have record-level authorization.
   teacher: [
     'students:read',
-    'students:write',
+    'classes:read',
     'attendance:read',
     'attendance:write',
-    'classes:read',
-    'classes:write',
-    'events:read',
-    'events:write',
-    'parents:read',
-    'parents:write',
-    'pools:read',
-    'pools:write',
-    'results:read',
-    'results:write',
-    'teachers:read',
-    'teachers:write',
-    'trainings:read',
-    'trainings:write',
-    'uploads:write',
   ],
   user: ['uploads:write'],
 };
