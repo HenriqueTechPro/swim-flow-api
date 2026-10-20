@@ -24,6 +24,8 @@ import { ListStudentsUseCase } from '@/domain/students/application/use-cases/lis
 import { UpdateStudentUseCase } from '@/domain/students/application/use-cases/update-student';
 import { normalizePaginationParams } from '@/domain/shared/pagination/pagination-utils';
 import { JwtAuthGuard } from '@/infra/auth/jwt-auth.guard';
+import { CurrentUser } from '@/infra/auth/current-user.decorator';
+import type { AuthUser } from '@/infra/auth/auth.types';
 import { Permissions } from '@/infra/auth/permissions.decorator';
 import { PermissionsGuard } from '@/infra/auth/permissions.guard';
 import { Roles } from '@/infra/auth/roles.decorator';
@@ -62,6 +64,7 @@ export class StudentsController {
     @Query('search') search?: string,
     @Query('category') category?: string,
     @Query('status') status?: string,
+    @CurrentUser() user?: AuthUser,
   ) {
     const { students, meta } = await this.listStudents.execute({
       ...normalizePaginationParams({
@@ -71,6 +74,7 @@ export class StudentsController {
       search,
       category: category && category !== 'all' ? category : undefined,
       status: status && status !== 'all' ? status : undefined,
+      teacherProfileId: user?.role === 'teacher' ? user.id : undefined,
     });
     return { data: students.map(StudentPresenter.toHTTP), meta };
   }
