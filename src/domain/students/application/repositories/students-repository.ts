@@ -32,6 +32,7 @@ export interface ListStudentsRepositoryParams extends PaginationParams {
   search?: string;
   category?: string;
   status?: string;
+  teacherProfileId?: string;
 }
 
 export abstract class StudentsRepository {
