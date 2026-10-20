@@ -33,7 +33,7 @@ describe('PrismaExStudentsRepository departure integrity', () => {
     student: { findUnique: jest.Mock; updateMany: jest.Mock };
     exStudent: {
       findUnique: jest.Mock; findFirst: jest.Mock; create: jest.Mock;
-      update: jest.Mock;
+      update: jest.Mock; updateMany: jest.Mock; findUniqueOrThrow: jest.Mock;
     };
   };
   let db: { $transaction: jest.Mock };
@@ -53,6 +53,8 @@ describe('PrismaExStudentsRepository departure integrity', () => {
       exStudent: {
         findUnique: jest.fn().mockResolvedValue(snapshot),
         findFirst: jest.fn().mockResolvedValue(null),
+        findUniqueOrThrow: jest.fn().mockResolvedValue(snapshot),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
         create: jest.fn().mockResolvedValue(snapshot),
         update: jest.fn().mockImplementation(async (args: { data: object }) => ({
           ...snapshot, ...args.data,
@@ -109,6 +111,16 @@ describe('PrismaExStudentsRepository departure integrity', () => {
       where: { id: departureId },
       data: { voidedAt: expect.any(Date) },
     });
+  });
+
+  it('rejects updates after the departure closes concurrently', async () => {
+    transactionClient.exStudent.updateMany.mockResolvedValue({ count: 0 });
+    await expect(repository.update(departureId, {
+      exitDate: '2026-09-01',
+      exitReason: 'Falta de tempo',
+      achievements: 2,
+      lastCompetition: '',
+    })).rejects.toThrow('Departure was closed during update');
   });
 
   it('rejects impossible calendar dates', async () => {
