@@ -24,12 +24,9 @@ import {
 } from '../mappers/prisma-parent-mapper';
 
 const parentInclude = {
-  students: {
-    orderBy: { name: 'asc' as const },
-    select: {
-      id: true,
-      name: true,
-    },
+  studentGuardians: {
+    include: { student: { select: { id: true, name: true } } },
+    orderBy: { createdAt: 'asc' as const },
   },
 };
 
@@ -62,13 +59,10 @@ export class PrismaParentsRepository implements ParentsRepository {
                   { email: { contains: search, mode: 'insensitive' } },
                   { profession: { contains: search, mode: 'insensitive' } },
                   {
-                    students: {
-                      some: {
-                        name: {
-                          contains: search,
-                          mode: 'insensitive',
-                        },
-                      },
+                    studentGuardians: {
+                      some: { student: {
+                        name: { contains: search, mode: 'insensitive' },
+                      } },
                     },
                   },
                 ],
@@ -125,6 +119,7 @@ export class PrismaParentsRepository implements ParentsRepository {
     });
 
     await this.cache.deleteMatching('parents:list:');
+    await this.cache.deleteMatching('students:list:');
     return PrismaParentMapper.toDomain(parent as unknown as PrismaParentRecord);
   }
 
@@ -156,11 +151,6 @@ export class PrismaParentsRepository implements ParentsRepository {
         },
       });
 
-      await tx.student.updateMany({
-        where: { parentId: id },
-        data: { parentId: null },
-      });
-
       await this.syncChildren(tx, id, input.childrenIds);
 
       return tx.parent.findUniqueOrThrow({
@@ -170,6 +160,7 @@ export class PrismaParentsRepository implements ParentsRepository {
     });
 
     await this.cache.deleteMatching('parents:list:');
+    await this.cache.deleteMatching('students:list:');
     return PrismaParentMapper.toDomain(parent as unknown as PrismaParentRecord);
   }
 
@@ -184,17 +175,15 @@ export class PrismaParentsRepository implements ParentsRepository {
     }
 
     await this.prisma.$transaction(async (tx) => {
-      await tx.student.updateMany({
-        where: { parentId: id },
-        data: { parentId: null },
-      });
-
+      // Relations to students are explicitly links; the FK cascade removes
+      // only this guardian's links and preserves other adults.
       await tx.parent.delete({
         where: { id },
       });
     });
 
     await this.cache.deleteMatching('parents:list:');
+    await this.cache.deleteMatching('students:list:');
     return PrismaParentMapper.toDomain(
       existing as unknown as PrismaParentRecord,
     );
@@ -205,13 +194,51 @@ export class PrismaParentsRepository implements ParentsRepository {
     parentId: string,
     childrenIds: string[],
   ) {
-    if (childrenIds.length === 0) {
-      return;
+    const requestedIds = [...new Set(childrenIds)];
+    const existing = await tx.studentGuardian.findMany({
+      where: { parentId },
+      select: { studentId: true },
+    });
+    const existingIds = new Set(existing.map((item) => item.studentId));
+    const idsToAdd = requestedIds.filter((id) => !existingIds.has(id));
+
+    // A misspelled/unknown child id must roll back the entire transaction.
+    // Never silently accept a partial relationship update.
+    if (requestedIds.length > 0) {
+      const found = await tx.student.findMany({
+        where: { id: { in: requestedIds } },
+        select: { id: true },
+      });
+      if (found.length !== requestedIds.length) {
+        throw new AppError(422, 'One or more selected students do not exist');
+      }
     }
 
-    await tx.student.updateMany({
-      where: { id: { in: childrenIds } },
-      data: { parentId },
+    await tx.studentGuardian.deleteMany({
+      where: {
+        parentId,
+        studentId: { notIn: requestedIds },
+      },
+    });
+
+    if (idsToAdd.length === 0) return;
+
+    // An existing principal adult is never silently replaced when an
+    // additional guardian is linked through the parent's form.
+    const primaryLinks = await tx.studentGuardian.findMany({
+      where: { studentId: { in: idsToAdd }, isPrimary: true },
+      select: { studentId: true },
+    });
+    const hasPrimary = new Set(primaryLinks.map((item) => item.studentId));
+
+    await tx.studentGuardian.createMany({
+      data: idsToAdd.map((studentId) => ({
+        parentId,
+        studentId,
+        isPrimary: !hasPrimary.has(studentId),
+        canReceiveUpdates: false,
+      })),
+      skipDuplicates: true,
     });
   }
 }
