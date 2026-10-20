@@ -35,7 +35,7 @@ import { PoolPresenter } from '../presenters/pool.presenter';
 @ApiBearerAuth('api-bearer')
 @Controller('/api/pools')
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
-@Roles('admin', 'teacher')
+@Roles('admin')
 export class PoolsController {
   constructor(
     private readonly listPools: ListPoolsUseCase,
