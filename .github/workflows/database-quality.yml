@@ -58,6 +58,12 @@ jobs:
           VITE_SUPABASE_URL: https://example.supabase.co
           VITE_SUPABASE_PUBLISHABLE_KEY: ci-placeholder
         run: node scripts/verify-postgres-flows.cjs
+      - name: Verify concurrent writes and transaction rollback on PostgreSQL
+        env:
+          SWIMFLOW_DISPOSABLE_DB: 'yes'
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: ci-placeholder
+        run: node scripts/verify-postgres-concurrency.cjs
       - name: Check migration status
         run: node node_modules/prisma/build/index.js migrate status --schema prisma/schema.prisma
       - name: Compare deployed Prisma-managed schema with current schema
