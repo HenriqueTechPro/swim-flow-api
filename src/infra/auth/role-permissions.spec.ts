@@ -40,8 +40,6 @@ describe('getPermissionsForRole', () => {
       'classes:write',
       'events:read',
       'events:write',
-      'ex-students:read',
-      'ex-students:write',
       'parents:read',
       'parents:write',
       'pools:read',
