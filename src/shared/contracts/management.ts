@@ -50,6 +50,7 @@ const applyResultConsistencyRules = (
     position?: number | null;
     time?: string | null;
     poolLengthMeters?: number;
+    routeKey?: string;
   },
   ctx: z.RefinementCtx,
 ) => {
@@ -66,6 +67,13 @@ const applyResultConsistencyRules = (
   }
 
   if (data.discipline === "Piscina") {
+    if (data.routeKey) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["routeKey"], message: "Pool results cannot have open-water routes" });
+    }
+    const length = data.courseType === "Piscina Curta" ? 25 : data.courseType === "Piscina Longa" ? 50 : null;
+    if (length !== null && data.poolLengthMeters !== undefined && length !== data.poolLengthMeters) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["poolLengthMeters"], message: "Pool length conflicts with selected course type" });
+    }
     if (
       data.courseType &&
       !resultPoolCourseTypeValues.includes(
@@ -97,6 +105,9 @@ const applyResultConsistencyRules = (
   }
 
   if (data.discipline === "Aguas Abertas") {
+    if (data.poolLengthMeters !== undefined) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["poolLengthMeters"], message: "Open water cannot have a pool length" });
+    }
     if (
       data.courseType &&
       !resultOpenWaterCourseTypeValues.includes(
