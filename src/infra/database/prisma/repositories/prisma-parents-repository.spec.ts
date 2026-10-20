@@ -26,6 +26,7 @@ describe('PrismaParentsRepository guardian synchronization', () => {
       create: jest.fn(),
       update: jest.fn(),
       findUniqueOrThrow: jest.fn(),
+      delete: jest.fn().mockResolvedValue(undefined),
     },
     student: { findMany: jest.fn() },
     studentGuardian: {
@@ -99,6 +100,19 @@ describe('PrismaParentsRepository guardian synchronization', () => {
 
     await expect(repo.create(input)).rejects.toThrow('selected students do not exist');
     expect(tx.studentGuardian.createMany).not.toHaveBeenCalled();
+    expect(tx.studentGuardian.deleteMany).not.toHaveBeenCalled();
+  });
+
+  it('deletes an adult without deleting any student record', async () => {
+    prisma.parent.findUnique.mockResolvedValueOnce(
+      await tx.parent.findUniqueOrThrow(),
+    );
+
+    await repo.remove(nextParent);
+
+    expect(tx.parent.delete).toHaveBeenCalledWith({ where: { id: nextParent } });
+    // Deletion of the adult cascades only the StudentGuardian join rows in SQL.
+    expect(tx.student.findMany).not.toHaveBeenCalled();
     expect(tx.studentGuardian.deleteMany).not.toHaveBeenCalled();
   });
 
