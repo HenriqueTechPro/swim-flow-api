@@ -17,6 +17,8 @@ export class ExStudentPresenter {
       lastCompetition: exStudent.lastCompetition,
       birthYear: exStudent.birthYear,
       level: exStudent.level,
+      reactivatedAt: exStudent.reactivatedAt ?? null,
+      voidedAt: exStudent.voidedAt ?? null,
     };
   }
 }
