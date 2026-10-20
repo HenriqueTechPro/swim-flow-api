@@ -8,6 +8,7 @@ const buildRecordContextKey = (result: Result) =>
     result.discipline,
     result.competitionType,
     normalizeCourseType(result.courseType),
+    result.poolLengthMeters ?? '',
     result.eventFormat,
     result.style,
     result.distance,
@@ -20,7 +21,7 @@ export class ResultRecordPolicy {
     const bestResultsByContext = new Map<string, Result>();
 
     const sortedResults = [...results]
-      .filter((result) => result.resultStatus === 'Classificado' && result.timeInSeconds > 0 && result.discipline === 'Piscina' && result.eventFormat === 'Prova Individual' && Boolean(result.courseType))
+      .filter((result) => result.resultStatus === 'Classificado' && result.timeInSeconds > 0 && result.discipline === 'Piscina' && result.eventFormat === 'Prova Individual' && Boolean(result.courseType || result.poolLengthMeters))
       .sort((left, right) => {
         if (left.timeInSeconds !== right.timeInSeconds) {
           return left.timeInSeconds - right.timeInSeconds;
