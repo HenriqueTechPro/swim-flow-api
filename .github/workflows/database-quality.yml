@@ -64,6 +64,13 @@ jobs:
           VITE_SUPABASE_URL: https://example.supabase.co
           VITE_SUPABASE_PUBLISHABLE_KEY: ci-placeholder
         run: node scripts/verify-postgres-concurrency.cjs
+      - name: HTTP end-to-end with real NestJS repositories and PostgreSQL
+        env:
+          SWIMFLOW_DISPOSABLE_DB: 'yes'
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: ci-placeholder
+          JWT_ACCESS_SECRET: ci-only-secret-must-be-at-least-32-characters
+        run: npx jest --config ./test/jest-e2e.json --runInBand test/postgres-http.e2e-spec.ts
       - name: Check migration status
         run: node node_modules/prisma/build/index.js migrate status --schema prisma/schema.prisma
       - name: Compare deployed Prisma-managed schema with current schema
