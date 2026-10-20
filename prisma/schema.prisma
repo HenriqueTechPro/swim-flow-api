@@ -90,6 +90,13 @@ enum GuardianRelationship {
   @@map("guardian_relationship")
 }
 
+enum TeacherAccountLinkAction {
+  LINK
+  UNLINK
+
+  @@map("teacher_account_link_action")
+}
+
 enum CoachRole {
   head_coach
   assistant_coach
@@ -466,6 +473,22 @@ model Student {
 // A swimmer can have multiple authorized adults. Only one link may be marked
 // isPrimary=true per swimmer (enforced by a partial UNIQUE index in baseline SQL).
 // The HTTP parentId property is a projection of this relation, not stored twice.
+// Immutable security audit: IDs deliberately remain snapshots rather than
+// foreign keys, so deleting a teacher/account does not erase the link history.
+model TeacherAccountLinkEvent {
+  id             String                   @id @default(uuid()) @db.Uuid
+  teacherId      String                   @map("teacher_id") @db.Uuid
+  profileId      String                   @map("profile_id") @db.Uuid
+  actorProfileId String                   @map("actor_profile_id") @db.Uuid
+  action         TeacherAccountLinkAction
+  createdAt      DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([teacherId, createdAt])
+  @@index([profileId, createdAt])
+  @@index([actorProfileId, createdAt])
+  @@map("teacher_account_link_events")
+}
+
 model StudentGuardian {
   id                String               @id @default(uuid()) @db.Uuid
   studentId         String               @map("student_id") @db.Uuid

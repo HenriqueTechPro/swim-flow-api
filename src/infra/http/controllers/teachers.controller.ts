@@ -20,6 +20,12 @@ import {
 import { CreateTeacherUseCase } from '@/domain/teachers/application/use-cases/create-teacher';
 import { DeleteTeacherUseCase } from '@/domain/teachers/application/use-cases/delete-teacher';
 import { ListTeachersUseCase } from '@/domain/teachers/application/use-cases/list-teachers';
+import { GetTeacherAccountLinkUseCase } from '@/domain/teachers/application/use-cases/get-teacher-account-link';
+import { LinkTeacherAccountUseCase } from '@/domain/teachers/application/use-cases/link-teacher-account';
+import { UnlinkTeacherAccountUseCase } from '@/domain/teachers/application/use-cases/unlink-teacher-account';
+import { linkTeacherAccountSchema, type LinkTeacherAccountDto } from '@/shared/contracts/teacher-accounts';
+import { CurrentUser } from '@/infra/auth/current-user.decorator';
+import type { AuthUser } from '@/infra/auth/auth.types';
 import { UpdateTeacherUseCase } from '@/domain/teachers/application/use-cases/update-teacher';
 import { normalizePaginationParams } from '@/domain/shared/pagination/pagination-utils';
 import { JwtAuthGuard } from '@/infra/auth/jwt-auth.guard';
@@ -42,6 +48,9 @@ export class TeachersController {
     private readonly createTeacher: CreateTeacherUseCase,
     private readonly updateTeacher: UpdateTeacherUseCase,
     private readonly deleteTeacher: DeleteTeacherUseCase,
+    private readonly getTeacherAccountLink: GetTeacherAccountLinkUseCase,
+    private readonly linkTeacherAccount: LinkTeacherAccountUseCase,
+    private readonly unlinkTeacherAccount: UnlinkTeacherAccountUseCase,
   ) {}
 
   @Get()
@@ -85,6 +94,38 @@ export class TeachersController {
       TeacherRequestMapper.toUpdate(body),
     );
     return { data: TeacherPresenter.toHTTP(teacher) };
+  }
+
+  @Get(':id/account')
+  @Permissions('teachers:read')
+  async account(@Param('id', new ParseUUIDPipe()) id: string) {
+    return { data: await this.getTeacherAccountLink.execute(id) };
+  }
+
+  @Put(':id/account')
+  @Permissions('teachers:write')
+  async linkAccount(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @CurrentUser() user: AuthUser,
+    @Body(new ZodValidationPipe(linkTeacherAccountSchema)) body: LinkTeacherAccountDto,
+  ) {
+    return { data: await this.linkTeacherAccount.execute({
+      teacherId: id,
+      profileId: body.profileId,
+      actorProfileId: user.id,
+    }) };
+  }
+
+  @Delete(':id/account')
+  @Permissions('teachers:write')
+  async unlinkAccount(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return { data: await this.unlinkTeacherAccount.execute({
+      teacherId: id,
+      actorProfileId: user.id,
+    }) };
   }
 
   @Delete(':id')

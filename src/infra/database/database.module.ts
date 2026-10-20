@@ -12,6 +12,7 @@ import { PoolsRepository } from '@/domain/pools/application/repositories/pools-r
 import { ResultsRepository } from '@/domain/results/application/repositories/results-repository';
 import { StudentsRepository } from '@/domain/students/application/repositories/students-repository';
 import { TeachersRepository } from '@/domain/teachers/application/repositories/teachers-repository';
+import { TeacherAccountLinksRepository } from '@/domain/teachers/application/repositories/teacher-account-links-repository';
 import { TrainingsRepository } from '@/domain/trainings/application/repositories/trainings-repository';
 import { ManagedUploadResourcesRepository } from '@/domain/uploads/application/repositories/managed-upload-resources-repository';
 import { PrismaAttendanceRepository } from './prisma/repositories/prisma-attendance-repository';
@@ -27,6 +28,7 @@ import { PrismaAuthProfilesRepository } from './prisma/repositories/prisma-auth-
 import { PrismaAuthSessionsRepository } from './prisma/repositories/prisma-auth-sessions-repository';
 import { PrismaStudentsRepository } from './prisma/repositories/prisma-students-repository';
 import { PrismaTeachersRepository } from './prisma/repositories/prisma-teachers-repository';
+import { PrismaTeacherAccountLinksRepository } from './prisma/repositories/prisma-teacher-account-links-repository';
 import { PrismaTrainingsRepository } from './prisma/repositories/prisma-trainings-repository';
 
 @Module({
@@ -82,6 +84,10 @@ import { PrismaTrainingsRepository } from './prisma/repositories/prisma-training
       useClass: PrismaTeachersRepository,
     },
     {
+      provide: TeacherAccountLinksRepository,
+      useClass: PrismaTeacherAccountLinksRepository,
+    },
+    {
       provide: TrainingsRepository,
       useClass: PrismaTrainingsRepository,
     },
@@ -100,6 +106,7 @@ import { PrismaTrainingsRepository } from './prisma/repositories/prisma-training
     ResultsRepository,
     StudentsRepository,
     TeachersRepository,
+    TeacherAccountLinksRepository,
     TrainingsRepository,
   ],
 })
