@@ -1,5 +1,10 @@
-import { Controller, Get, Query } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Header, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from '@/infra/auth/jwt-auth.guard';
+import { RolesGuard } from '@/infra/auth/roles.guard';
+import { PermissionsGuard } from '@/infra/auth/permissions.guard';
+import { Roles } from '@/infra/auth/roles.decorator';
+import { Permissions } from '@/infra/auth/permissions.decorator';
 import {
   resultsRankingQuerySchema,
   type ResultsRankingQueryDto,
@@ -12,8 +17,14 @@ import { ZodValidationPipe } from '../pipes/zod-validation-pipe';
 import { PublicResultPresenter } from '../presenters/public-result.presenter';
 import { ResultRankingPresenter } from '../presenters/result-ranking.presenter';
 
-@ApiTags('public-results')
+// Historical URL retained for compatibility; this endpoint is NOT public.
+// Athlete publication needs a dedicated, consent-aware data model.
+@ApiTags('restricted-results')
+@ApiBearerAuth('api-bearer')
 @Controller('/api/public/results')
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@Roles('admin')
+@Permissions('results:read')
 export class PublicResultsController {
   constructor(
     private readonly generateRanking: GenerateRankingUseCase,
@@ -21,6 +32,8 @@ export class PublicResultsController {
     private readonly listResults: ListResultsUseCase,
   ) {}
 
+  @Header('Cache-Control', 'private, no-store, max-age=0')
+  @Header('X-Robots-Tag', 'noindex, nofollow, noarchive')
   @Get('contexts')
   async contexts(
     @Query('discipline') discipline?: string,
@@ -37,6 +50,8 @@ export class PublicResultsController {
     };
   }
 
+  @Header('Cache-Control', 'private, no-store, max-age=0')
+  @Header('X-Robots-Tag', 'noindex, nofollow, noarchive')
   @Get('ranking')
   async ranking(
     @Query(new ZodValidationPipe(resultsRankingQuerySchema))
@@ -54,6 +69,8 @@ export class PublicResultsController {
     };
   }
 
+  @Header('Cache-Control', 'private, no-store, max-age=0')
+  @Header('X-Robots-Tag', 'noindex, nofollow, noarchive')
   @Get()
   async index(
     @Query('page') page?: string,
