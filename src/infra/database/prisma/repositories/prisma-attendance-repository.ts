@@ -17,7 +17,7 @@ import {
 const buildAttendanceWhere = (
   params?: Pick<
     ListAttendanceRepositoryParams,
-    'search' | 'startDate' | 'endDate' | 'classId' | 'studentId' | 'status'
+    'search' | 'startDate' | 'endDate' | 'classId' | 'studentId' | 'status' | 'teacherProfileId'
   >,
 ) => {
   const search = params?.search?.trim();
@@ -47,6 +47,20 @@ const buildAttendanceWhere = (
         }
       : {}),
     ...(classId ? { classId } : {}),
+    ...(params?.teacherProfileId ? {
+      // Both the coach and CURRENT student membership must match.
+      // If classId is missing, the query matches no student (fail closed).
+      AND: [
+        { swimmingClass: { classTeachers: { some: {
+          teacher: { profileId: params.teacherProfileId, status: 'Ativo' as const },
+        } } } },
+        { student: { studentClasses: { some: {
+          classId: classId ?? '',
+          toDate: null,
+        } } } },
+      ],
+    } : {}),
+
     ...(studentId ? { studentId } : {}),
     ...(status ? { status: status as never } : {}),
   };
@@ -70,7 +84,7 @@ export class PrismaAttendanceRepository implements AttendanceRepository {
     const classId = params?.classId?.trim();
     const studentId = params?.studentId?.trim();
     const status = params?.status?.trim();
-    const cacheKey = `attendance:list:${page}:${perPage}:${search ?? ''}:${startDate ?? ''}:${endDate ?? ''}:${classId ?? ''}:${studentId ?? ''}:${status ?? ''}`;
+    const cacheKey = `attendance:list:${page}:${perPage}:${search ?? ''}:${startDate ?? ''}:${endDate ?? ''}:${classId ?? ''}:${studentId ?? ''}:${status ?? ''}:teacher:${params?.teacherProfileId ?? 'admin'}`;
     const where = buildAttendanceWhere(params);
 
     const cached = await this.cacheRepository.get(cacheKey);
@@ -132,6 +146,7 @@ export class PrismaAttendanceRepository implements AttendanceRepository {
       endDate,
       classId,
       studentId,
+      teacherProfileId: params?.teacherProfileId,
     });
 
     const [records, classes] = await Promise.all([
@@ -152,6 +167,10 @@ export class PrismaAttendanceRepository implements AttendanceRepository {
         where: {
           status: 'Ativa',
           ...(classId ? { id: classId } : {}),
+          ...(params?.teacherProfileId ? { classTeachers: { some: {
+            teacher: { profileId: params.teacherProfileId, status: 'Ativo' as const },
+          } } } : {}),
+
           ...(studentId
             ? {
                 studentClasses: {
