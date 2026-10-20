@@ -26,7 +26,7 @@ if (process.argv.slice(2).some((arg) => arg !== '--check')) {
 // rewriting the already-applied migration and break migration history).
 const migrationsDir = join(root, 'prisma/migrations');
 const migrationDirs = readdirSync(migrationsDir, { withFileTypes: true })
-  .filter((item) => item.isDirectory() && /^\\d{14}_/.test(item.name))
+  .filter((item) => item.isDirectory() && /^\d{14}_/.test(item.name))
   .map((item) => item.name);
 if (migrationDirs.length > 1) {
   if (!check) throw new Error('Baseline is immutable; create an incremental Prisma migration');
@@ -35,7 +35,7 @@ if (migrationDirs.length > 1) {
   const expectedBlobSha = 'a400e1c412e875cc33a766939c1dfcb5b8ccb8bb';
   const bytes = readFileSync(target);
   const actualBlobSha = createHash('sha1')
-    .update(Buffer.from('blob ' + bytes.length + '\\0'))
+    .update(Buffer.from('blob ' + bytes.length + '\0'))
     .update(bytes)
     .digest('hex');
   if (actualBlobSha !== expectedBlobSha) {
