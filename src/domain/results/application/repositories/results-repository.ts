@@ -16,6 +16,8 @@ export interface ListResultsRepositoryParams extends PaginationParams {
   discipline?: string;
   competitionType?: string;
   courseType?: string;
+  poolLengthMeters?: number;
+  routeKey?: string;
   style?: string;
   eventFormat?: string;
   resultStatus?: string;
