@@ -11,6 +11,7 @@ import { PublicAuthRateLimitGuard } from './public-auth-rate-limit.guard';
 import { RolesGuard } from './roles.guard';
 import { SupabaseAuthService } from './supabase-auth.service';
 import { TrustedOriginGuard } from './trusted-origin.guard';
+import { TeacherAttendanceScopeGuard } from './teacher-attendance-scope.guard';
 
 @Module({
   imports: [DatabaseModule, EnvModule, JwtModule.register({})],
@@ -27,6 +28,7 @@ import { TrustedOriginGuard } from './trusted-origin.guard';
     JwtAuthGuard,
     RolesGuard,
     PermissionsGuard,
+    TeacherAttendanceScopeGuard,
     PublicAuthRateLimitGuard,
     TrustedOriginGuard,
     SupabaseAuthService,
