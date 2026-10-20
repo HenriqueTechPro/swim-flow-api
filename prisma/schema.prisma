@@ -72,6 +72,14 @@ enum SwimmingCategory {
   @@map("swimming_category")
 }
 
+enum SeasonStatus {
+  PLANNED
+  ACTIVE
+  CLOSED
+
+  @@map("season_status")
+}
+
 enum CoachRole {
   head_coach
   assistant_coach
@@ -249,6 +257,43 @@ model AuthSession {
   @@index([refreshTokenHash])
 }
 
+// Season of reference for competitive-age classification. Historical categories
+// are snapshots per season, not a mutable property derived from the current year.
+model Season {
+  id                  String                  @id @default(uuid()) @db.Uuid
+  year                Int                     @unique
+  label               String
+  startsOn            DateTime                @map("starts_on") @db.Date
+  endsOn              DateTime                @map("ends_on") @db.Date
+  status              SeasonStatus            @default(PLANNED)
+  createdAt           DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime                @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  studentCategories   StudentSeasonCategory[]
+  events              Event[]
+  poolResults         PoolResult[]
+  openWaterResults    OpenWaterResult[]
+
+  @@index([status, year])
+  @@map("seasons")
+}
+
+model StudentSeasonCategory {
+  id         String   @id @default(uuid()) @db.Uuid
+  studentId  String   @map("student_id") @db.Uuid
+  seasonId   String   @map("season_id") @db.Uuid
+  categoryId String   @map("category_id") @db.Uuid
+  assignedAt DateTime @default(now()) @map("assigned_at") @db.Timestamptz(6)
+  notes      String?
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  season     Season   @relation(fields: [seasonId], references: [id], onDelete: Restrict)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@unique([studentId, seasonId])
+  @@index([seasonId, categoryId])
+  @@index([categoryId])
+  @@map("student_season_categories")
+}
+
 model Category {
   id        String           @id @default(uuid()) @db.Uuid
   name      SwimmingCategory @unique
@@ -260,6 +305,7 @@ model Category {
   teacherCategories TeacherCategory[]
   swimmingClasses   SwimmingClass[]
   classCategories   ClassCategory[]
+  studentSeasonCategories StudentSeasonCategory[]
 
   @@map("categories")
 }
@@ -313,7 +359,7 @@ model ExStudent {
   parentId            String?   @map("parent_id") @db.Uuid
   achievements        Int       @default(0)
   lastCompetition     String    @default("") @map("last_competition")
-  birthYear           Int       @map("birth_year")
+  birthYear           Int?      @map("birth_year")
   birthDate           DateTime? @map("birth_date") @db.Date
   level               String    @default("")
   levelSnapshot       String?   @map("level_snapshot")
@@ -339,8 +385,11 @@ model Event {
   updatedAt   DateTime    @default(now()) @map("updated_at") @db.Timestamptz(6)
   poolResults PoolResult[]
   openWaterResults OpenWaterResult[]
+  seasonId    String? @map("season_id") @db.Uuid
+  season      Season? @relation(fields: [seasonId], references: [id], onDelete: SetNull)
 
   @@map("events")
+  @@index([seasonId, date])
   @@index([date, status])
 }
 
@@ -398,6 +447,7 @@ model Student {
   anthropometricAssessments AnthropometricAssessment[]
   technicalAssessments     StudentTechnicalAssessment[]
   levelHistory             StudentLevelHistory[]
+  seasonCategories        StudentSeasonCategory[]
 
   @@map("students")
   @@index([categoryId, levelId])
@@ -449,7 +499,7 @@ model StudentClass {
   studentId String    @map("student_id") @db.Uuid
   classId   String    @map("class_id") @db.Uuid
   isPrimary Boolean   @default(false) @map("is_primary")
-  fromDate  DateTime? @map("from_date") @db.Date
+  fromDate  DateTime  @default(now()) @map("from_date") @db.Date
   toDate    DateTime? @map("to_date") @db.Date
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   student   Student   @relation(fields: [studentId], references: [id])
@@ -459,6 +509,7 @@ model StudentClass {
   @@index([studentId, toDate])
   @@index([classId, toDate])
   @@index([studentId, classId, toDate])
+  @@index([classId, fromDate, toDate])
 }
 
 model Pool {
@@ -699,6 +750,7 @@ model StudentLevelHistory {
 model PoolResult {
   id                  String           @id @default(uuid()) @db.Uuid
   studentId           String           @map("student_id") @db.Uuid
+  seasonId            String?          @map("season_id") @db.Uuid
   eventId             String?          @map("event_id") @db.Uuid
   heldOn              DateTime         @map("held_on") @db.Date
   distanceMeters      Int              @map("distance_meters")
@@ -714,6 +766,7 @@ model PoolResult {
   createdAt           DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   student             Student          @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  season              Season?          @relation(fields: [seasonId], references: [id], onDelete: SetNull)
   event               Event?           @relation(fields: [eventId], references: [id], onDelete: SetNull)
 
   @@map("pool_results")
@@ -721,6 +774,7 @@ model PoolResult {
   @@index([studentId, style, distanceMeters, poolLengthMeters])
   @@index([style, distanceMeters, poolLengthMeters, status, durationMs])
   @@index([eventId])
+  @@index([seasonId, heldOn])
 }
 
 // Open-water course and environmental conditions are not equivalent to a pool.
@@ -728,6 +782,7 @@ model PoolResult {
 model OpenWaterResult {
   id                  String                @id @default(uuid()) @db.Uuid
   studentId           String                @map("student_id") @db.Uuid
+  seasonId            String?          @map("season_id") @db.Uuid
   eventId             String?               @map("event_id") @db.Uuid
   heldOn              DateTime              @map("held_on") @db.Date
   distanceMeters      Int                   @map("distance_meters")
@@ -744,10 +799,12 @@ model OpenWaterResult {
   createdAt           DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   student             Student               @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  season              Season?          @relation(fields: [seasonId], references: [id], onDelete: SetNull)
   event               Event?                @relation(fields: [eventId], references: [id], onDelete: SetNull)
 
   @@map("open_water_results")
   @@index([studentId, heldOn])
   @@index([studentId, distanceMeters, bodyType])
   @@index([eventId, status])
+  @@index([seasonId, heldOn])
 }
