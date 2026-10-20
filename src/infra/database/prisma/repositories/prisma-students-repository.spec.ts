@@ -17,6 +17,9 @@ describe('PrismaStudentsRepository season snapshots', () => {
     studentClass: {
       create: jest.fn().mockResolvedValue(undefined),
     },
+    studentGuardian: {
+      create: jest.fn().mockResolvedValue(undefined),
+    },
   };
 
   const prisma = {
@@ -49,8 +52,7 @@ describe('PrismaStudentsRepository season snapshots', () => {
       achievements: 0,
       category: { name: 'Mirim_1' },
       level: { name: 'Iniciante' },
-      parentId: null,
-      parent: null,
+      guardians: [],
       studentClasses: [],
     });
   });
