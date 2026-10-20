@@ -173,6 +173,14 @@ function buildWhere(params?: ListResultsRepositoryParams): ResultWhere {
   }
   if (p.courseType) {
     const value = p.courseType.trim();
+    const canonicalLength = value === 'Piscina Curta' || value === 'Piscina Curta (25m)'
+      ? 25
+      : value === 'Piscina Longa' || value === 'Piscina Longa (50m)'
+        ? 50
+        : null;
+    if (p.poolLengthMeters !== undefined && canonicalLength !== null &&
+        p.poolLengthMeters !== canonicalLength)
+      throw new AppError(422, 'Pool length conflicts with courseType filter');
     if (!['Piscina Curta', 'Piscina Longa', 'Piscina Curta (25m)', 'Piscina Longa (50m)'].includes(value))
       pool = null;
     else if (pool)
