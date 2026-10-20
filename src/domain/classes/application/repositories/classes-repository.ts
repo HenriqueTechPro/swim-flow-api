@@ -36,6 +36,7 @@ export interface ListClassesRepositoryParams extends PaginationParams {
   day?: string;
   status?: string;
   poolId?: string;
+  teacherProfileId?: string;
 }
 
 export abstract class ClassesRepository {
