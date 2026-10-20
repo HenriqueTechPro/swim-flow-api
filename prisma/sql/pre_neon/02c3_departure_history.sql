@@ -9,7 +9,5 @@ CREATE UNIQUE INDEX "ex_students_one_current_departure_idx"
 ALTER TABLE "ex_students"
   ADD CONSTRAINT "ex_students_single_closure_chk"
     CHECK ("reactivated_at" IS NULL OR "voided_at" IS NULL),
-  ADD CONSTRAINT "ex_students_exit_date_chk"
-    CHECK ("exit_date_at" <= CURRENT_DATE),
   ADD CONSTRAINT "ex_students_nonnegative_achievements_chk"
     CHECK ("achievements" >= 0);
