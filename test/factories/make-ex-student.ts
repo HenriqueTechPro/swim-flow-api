@@ -18,5 +18,7 @@ export function makeExStudent(override: MakeExStudentOverride = {}): ExStudent {
     lastCompetition: override.lastCompetition ?? 'Festival Interno',
     birthYear: override.birthYear ?? 2014,
     level: override.level ?? 'Intermediário',
+    reactivatedAt: override.reactivatedAt ?? null,
+    voidedAt: override.voidedAt ?? null,
   };
 }
