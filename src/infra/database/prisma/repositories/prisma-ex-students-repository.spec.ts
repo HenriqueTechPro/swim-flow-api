@@ -123,6 +123,13 @@ describe('PrismaExStudentsRepository departure integrity', () => {
     })).rejects.toThrow('Departure was closed during update');
   });
 
+  it('rejects future departure dates without touching the database', async () => {
+    await expect(repository.create({
+      studentId, exitDate: '2099-12-31', exitReason: 'Falta de tempo',
+    })).rejects.toThrow('Invalid exit date');
+    expect(db.$transaction).not.toHaveBeenCalled();
+  });
+
   it('rejects impossible calendar dates', async () => {
     await expect(repository.create({
       studentId, exitDate: '2026-02-30', exitReason: 'Falta de tempo',
