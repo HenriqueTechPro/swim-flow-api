@@ -37,6 +37,15 @@ describe('Swim Flow: actual NestJS -> Prisma -> disposable PostgreSQL', () => {
     }
     prisma = new PrismaClient();
     await prisma.$connect();
+    // Reject even an explicitly opt-in local DB when domain data already exists.
+    // The test must never silently mix with real records or delete them.
+    const [profiles, students, seasons, pools] = await Promise.all([
+      prisma.profile.count(), prisma.student.count(),
+      prisma.season.count(), prisma.pool.count(),
+    ]);
+    if ([profiles, students, seasons, pools].some((count) => count !== 0)) {
+      throw new Error('DB integration suite requires a freshly migrated, empty database');
+    }
     // CI owns a brand-new database. Do not clear or truncate other environments.
     await prisma.profile.createMany({
       data: [
