@@ -68,7 +68,7 @@ describe('Legacy public-results URL restricted to administrators (e2e)', () => {
 
   const legacyRoutes = [
     '/api/public/results?studentId=student-1&search=Ana',
-    '/api/public/results/ranking?studentId=student-1',
+    '/api/public/results/ranking?page=1&perPage=10&discipline=Piscina&competitionType=Piscina&courseType=Piscina%20Curta&style=Livre&distance=50m&eventFormat=Prova%20Individual&category=Petiz%202',
     '/api/public/results/contexts?category=Petiz%202',
   ];
 
