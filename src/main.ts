@@ -4,6 +4,6 @@ import { createApp } from './app.factory';
 
 async function bootstrap() {
   const app = await createApp();
-  await app.listen(env.port);
+  await app.listen(env.port, '0.0.0.0');
 }
 void bootstrap();

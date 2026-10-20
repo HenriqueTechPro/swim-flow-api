@@ -38,6 +38,8 @@ const loadEnvFile = (filepath: string) => {
 loadEnvFile(resolve(appRoot, '.env'));
 loadEnvFile(resolve(appRoot, '.env.local'));
 
+const booleanFromEnv = z.enum(['true', 'false']).transform((value) => value === 'true');
+
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   VITE_SUPABASE_URL: z.string().url(),
@@ -58,7 +60,7 @@ const envSchema = z.object({
     .optional()
     .transform((value) => (value && value.length > 0 ? value : undefined)),
   AUTH_COOKIE_PATH: z.string().trim().min(1).default('/api/auth'),
-  AUTH_SECURE_COOKIES: z.coerce.boolean().default(false),
+  AUTH_SECURE_COOKIES: booleanFromEnv.default('false'),
   API_CORS_ORIGIN: z
     .string()
     .default('http://localhost:8080')
@@ -67,10 +69,9 @@ const envSchema = z.object({
       message: 'API_CORS_ORIGIN must include at least one origin',
     }),
   CACHE_TTL_SECONDS: z.coerce.number().default(30),
-  NEST_API_PORT: z.coerce.number().default(3334),
-  SWAGGER_ENABLED: z
-    .coerce.boolean()
-    .default(process.env.NODE_ENV !== 'production'),
+  NEST_API_PORT: z.coerce.number().int().min(1).max(65535).default(3334),
+  PORT: z.coerce.number().int().min(1).max(65535).optional(),
+  SWAGGER_ENABLED: booleanFromEnv.default(process.env.NODE_ENV !== 'production' ? 'true' : 'false'),
   SWAGGER_PATH: z.string().default('docs'),
 });
 
@@ -110,7 +111,7 @@ export const env = {
   authSecureCookies: parsedEnv.AUTH_SECURE_COOKIES,
   corsOrigins: parsedEnv.API_CORS_ORIGIN,
   cacheTtlSeconds: parsedEnv.CACHE_TTL_SECONDS,
-  port: parsedEnv.NEST_API_PORT,
+  port: parsedEnv.PORT ?? parsedEnv.NEST_API_PORT,
   swaggerEnabled: parsedEnv.SWAGGER_ENABLED,
   swaggerPath: parsedEnv.SWAGGER_PATH,
 };
