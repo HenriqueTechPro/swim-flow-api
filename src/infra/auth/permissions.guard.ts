@@ -36,8 +36,12 @@ export class PermissionsGuard implements CanActivate {
       throw new ForbiddenException('User role not resolved');
     }
 
-    const permissions =
-      authUser.permissions ?? getPermissionsForRole(authUser.role);
+    // Database role is authoritative; never trust broader permissions
+    // passed from a stale token, mocked client or a future identity provider.
+    const allowed = getPermissionsForRole(authUser.role);
+    const permissions = authUser.permissions
+      ? authUser.permissions.filter((permission) => allowed.includes(permission))
+      : allowed;
 
     request.user = {
       ...authUser,
