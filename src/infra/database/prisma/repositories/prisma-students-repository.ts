@@ -18,6 +18,7 @@ import {
 } from '@/domain/students/application/repositories/students-repository';
 import { StudentClassAssignmentPolicy } from '@/domain/students/application/services/student-class-assignment-policy';
 import { AppError } from '@/shared/errors/app-error';
+import { parseCategoryValue } from '@/shared/utils/domain-formatters';
 import { PrismaService } from '../prisma.service';
 import {
   PrismaStudentMapper,
@@ -57,7 +58,7 @@ export class PrismaStudentsRepository implements StudentsRepository {
       async () => {
         const skip = (page - 1) * perPage;
         const where = {
-          ...(normalizedCategory ? { categoryLabel: normalizedCategory } : {}),
+          ...(normalizedCategory ? { category: { name: parseCategoryValue(normalizedCategory) as never } } : {}),
           ...(normalizedStatus ? { status: normalizedStatus as never } : {}),
           ...(normalizedSearch
             ? {
@@ -101,7 +102,7 @@ export class PrismaStudentsRepository implements StudentsRepository {
   }
 
   async listReferenceData(): Promise<StudentReferenceData> {
-    const [categories, levels] = await Promise.all([
+    const [categories, levels, activeSeason] = await Promise.all([
       this.prisma.category.findMany({
         select: { id: true, name: true },
         orderBy: { name: 'asc' },
@@ -110,11 +111,18 @@ export class PrismaStudentsRepository implements StudentsRepository {
         select: { id: true, name: true },
         orderBy: { name: 'asc' },
       }),
+      this.prisma.season.findFirst({
+        where: { status: 'ACTIVE' },
+        select: { id: true, year: true },
+        orderBy: { year: 'desc' },
+      }),
     ]);
 
     return {
       categories,
       levels,
+      activeSeasonId: activeSeason?.id,
+      activeSeasonYear: activeSeason?.year,
     };
   }
 
@@ -134,6 +142,16 @@ export class PrismaStudentsRepository implements StudentsRepository {
           achievements: 0,
         },
       });
+
+      if (input.seasonId) {
+        await tx.studentSeasonCategory.create({
+          data: {
+            studentId: created.id,
+            seasonId: input.seasonId,
+            categoryId: input.categoryId,
+          },
+        });
+      }
 
       if (input.classId) {
         await tx.studentClass.create({
@@ -189,6 +207,14 @@ export class PrismaStudentsRepository implements StudentsRepository {
           status: input.status as never,
         },
       });
+
+      if (input.seasonId) {
+        await tx.studentSeasonCategory.upsert({
+          where: { studentId_seasonId: { studentId: id, seasonId: input.seasonId } },
+          create: { studentId: id, seasonId: input.seasonId, categoryId: input.categoryId },
+          update: { categoryId: input.categoryId },
+        });
+      }
 
       if (classAssignmentPlan.classIdsToClose.length > 0) {
         await tx.studentClass.updateMany({
