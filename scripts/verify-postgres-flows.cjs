@@ -22,7 +22,11 @@ async function rejectsConstraint(action, context) {
   await assert.rejects(action, (error) => {
     // Prisma constraint errors: unique, FK, CHECK and required relation.
     // A syntax bug, missing table or connection failure must FAIL the test.
-    return Boolean(error && ['P2002', 'P2003', 'P2004', 'P2014'].includes(error.code));
+    return Boolean(error && (
+      ['P2002', 'P2003', 'P2004', 'P2014'].includes(error.code) ||
+      (error.name === 'PrismaClientUnknownRequestError' &&
+       /check constraint|violates check constraint|23514|_chk/i.test(String(error.message)))
+    ));
   }, context);
 }
 
