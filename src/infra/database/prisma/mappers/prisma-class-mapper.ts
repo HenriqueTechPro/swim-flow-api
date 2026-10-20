@@ -1,6 +1,5 @@
 import type { ClassEntity } from '@/domain/classes/enterprise/entities/class';
 import {
-  REFERENCE_YEAR,
   formatMixedCategoryLabel,
   sortGroupedCategories,
 } from '@/shared/lib/categories';
@@ -51,8 +50,8 @@ export interface PrismaClassRecord {
 const normalizeStudentStatus = (status: string): 'Ativo' | 'Inativo' =>
   formatEntityStatus(status) === 'Ativo' ? 'Ativo' : 'Inativo';
 
-const getBirthYearFromDate = (birthDate?: Date | null) =>
-  birthDate ? birthDate.getUTCFullYear() : REFERENCE_YEAR;
+const getBirthYearFromDate = (birthDate?: Date | null): number | null =>
+  birthDate ? birthDate.getUTCFullYear() : null;
 
 const formatTime = (value: Date) => value.toISOString().slice(11, 16);
 
@@ -122,7 +121,11 @@ export class PrismaClassMapper {
         return {
           id: item.student.id,
           name: item.student.name,
-          age: REFERENCE_YEAR - getBirthYearFromDate(item.student.birthDate),
+          // Age for category is measured in the current reference year.
+          // Missing birth dates must remain unknown, never appear as age zero.
+          age: item.student.birthDate
+            ? new Date().getUTCFullYear() - item.student.birthDate.getUTCFullYear()
+            : null,
           category: formatCategoryLabel(item.student.category.name),
           level: item.student.level.name,
           status: normalizeStudentStatus(item.student.status),
