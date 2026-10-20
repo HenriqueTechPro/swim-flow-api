@@ -31,7 +31,7 @@ function parseDateOnly(value: string): Date {
     throw new AppError(422, 'Invalid exit date');
   }
   const date = new Date(`${value}T00:00:00.000Z`);
-  if (Number.isNaN(date.valueOf()) || date.toISOString().slice(0, 10) !== value) {
+  if (Number.isNaN(date.valueOf()) || date.toISOString().slice(0, 10) !== value || value > new Date().toISOString().slice(0, 10)) {
     throw new AppError(422, 'Invalid exit date');
   }
   return date;
