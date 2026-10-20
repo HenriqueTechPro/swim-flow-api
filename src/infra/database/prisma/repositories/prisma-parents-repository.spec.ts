@@ -47,6 +47,7 @@ describe('PrismaParentsRepository guardian synchronization', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    tx.studentGuardian.findMany.mockReset();
     tx.parent.create.mockResolvedValue({ id: nextParent });
     tx.parent.findUniqueOrThrow.mockResolvedValue({
       id: nextParent,
