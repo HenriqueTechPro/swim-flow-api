@@ -130,7 +130,8 @@ const cleanupSmokeData = async () => {
     }
 
     if (studentIds.length > 0) {
-      await tx.result.deleteMany({ where: { studentId: { in: studentIds } } })
+      await tx.poolResult.deleteMany({ where: { studentId: { in: studentIds } } })
+      await tx.openWaterResult.deleteMany({ where: { studentId: { in: studentIds } } })
       await tx.exStudent.deleteMany({
         where: {
           OR: [
@@ -394,49 +395,38 @@ const main = async () => {
     ],
   })
 
-  await prisma.result.createMany({
-    data: [
-      {
-        studentId: studentOne.id,
-        discipline: 'Piscina',
-        style: 'Livre',
-        distance: '100m',
-        customDistance: '',
-        competitionType: 'Piscina',
-        courseType: 'Piscina Curta',
-        eventFormat: 'Prova Individual',
-        time: '01:16.32',
-        timeInSeconds: 76.32,
-        date: new Date('2026-04-05'),
-        competition: `${SMOKE_PREFIX} Festival Interno`,
-        position: 1,
-        resultStatus: 'Classificado',
-        personalBest: true,
-        improvement: 1.8,
-        category: youngerCategoryName,
-        notes: 'Melhor marca da temporada de testes.',
-      },
-      {
-        studentId: studentTwo.id,
-        discipline: 'Aguas Abertas',
-        style: 'Livre',
-        distance: '1km',
-        customDistance: '',
-        competitionType: 'Aguas Abertas',
-        courseType: 'Mar',
-        eventFormat: 'Travessia',
-        time: '15:42.10',
-        timeInSeconds: 942.1,
-        date: new Date('2026-04-06'),
-        competition: `${SMOKE_PREFIX} Travessia`,
-        position: 2,
-        resultStatus: 'Classificado',
-        personalBest: false,
-        improvement: 0.5,
-        category: olderCategoryName,
-        notes: 'Resultado gerado para validar metragens abertas.',
-      },
-    ],
+  await prisma.poolResult.create({
+    data: {
+      studentId: studentOne.id,
+      style: 'Livre',
+      distanceMeters: 100,
+      poolLengthMeters: 25,
+      format: 'INDIVIDUAL',
+      status: 'CLASSIFIED',
+      durationMs: 76320,
+      heldOn: new Date('2026-04-05'),
+      competitionSnapshot: `${SMOKE_PREFIX} Festival Interno`,
+      categorySnapshot: youngerCategoryName,
+      position: 1,
+      notes: 'Melhor marca da temporada de testes.',
+    },
+  })
+
+  await prisma.openWaterResult.create({
+    data: {
+      studentId: studentTwo.id,
+      style: 'Livre',
+      distanceMeters: 1000,
+      bodyType: 'SEA',
+      format: 'TRAVESSIA',
+      status: 'CLASSIFIED',
+      durationMs: 942100,
+      heldOn: new Date('2026-04-06'),
+      competitionSnapshot: `${SMOKE_PREFIX} Travessia`,
+      categorySnapshot: olderCategoryName,
+      position: 2,
+      notes: 'Resultado gerado para validar metragens abertas.',
+    },
   })
 
   await prisma.attendanceRecord.createMany({

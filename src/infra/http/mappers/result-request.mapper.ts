@@ -17,6 +17,8 @@ export class ResultRequestMapper {
       customDistance: body.customDistance || undefined,
       competitionType: body.competitionType,
       courseType: body.courseType || undefined,
+      poolLengthMeters: body.poolLengthMeters,
+      routeKey: body.routeKey || undefined,
       eventFormat: body.eventFormat,
       time: body.time,
       date: body.date,

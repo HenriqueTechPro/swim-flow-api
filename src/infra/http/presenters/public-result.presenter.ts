@@ -12,6 +12,8 @@ export class PublicResultPresenter {
       customDistance: result.customDistance,
       competitionType: result.competitionType,
       courseType: result.courseType,
+      poolLengthMeters: result.poolLengthMeters,
+      durationMs: result.durationMs,
       eventFormat: result.eventFormat,
       time: result.time,
       timeInSeconds: result.timeInSeconds,

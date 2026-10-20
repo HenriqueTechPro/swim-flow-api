@@ -298,35 +298,6 @@ model Parent {
   @@map("parents")
 }
 
-model Result {
-  id           String           @id @default(uuid()) @db.Uuid
-  studentId    String           @map("student_id") @db.Uuid
-  style        SwimmingStyle
-  distance     String
-  customDistance String         @default("") @map("custom_distance")
-  competitionType String        @default("") @map("competition_type")
-  courseType   String           @default("") @map("course_type")
-  discipline   String           @default("Piscina")
-  eventFormat  String           @default("Prova Individual") @map("event_format")
-  time         String
-  timeInSeconds Decimal         @map("time_in_seconds") @db.Decimal
-  date         DateTime?        @db.Date
-  competition  String           @default("")
-  position     Int              @default(0)
-  resultStatus String           @default("Classificado") @map("result_status")
-  personalBest Boolean          @default(false) @map("personal_best")
-  improvement  Decimal          @default(0) @db.Decimal
-  category     String           @default("")
-  notes        String?
-  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime         @default(now()) @map("updated_at") @db.Timestamptz(6)
-  student      Student          @relation(fields: [studentId], references: [id])
-
-  @@map("results")
-  @@index([studentId, date])
-  @@index([date, competition])
-}
-
 model ExStudent {
   id                  String    @id @default(uuid()) @db.Uuid
   studentId           String?   @map("student_id") @db.Uuid
@@ -420,7 +391,6 @@ model Student {
   level           Level        @relation(fields: [levelId], references: [id])
   parent          Parent?      @relation(fields: [parentId], references: [id])
   exStudents      ExStudent[]
-  results         Result[]
   poolResults     PoolResult[]
   openWaterResults OpenWaterResult[]
   studentClasses  StudentClass[]

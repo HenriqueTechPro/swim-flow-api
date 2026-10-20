@@ -325,7 +325,7 @@ export class InMemoryResultsRepository implements ResultsRepository {
   }
 
   async create(input: CreateResultRepositoryInput): Promise<Result> {
-    const duration = normalizeResultTime(input.time);
+    const duration = normalizeResultTime(input.time ?? '');
 
     const result = makeResult({
       studentId: input.studentId,
@@ -360,7 +360,7 @@ export class InMemoryResultsRepository implements ResultsRepository {
       throw new AppError(404, 'Result not found');
     }
 
-    const duration = normalizeResultTime(input.time);
+    const duration = normalizeResultTime(input.time ?? '');
 
     const updatedResult: Result = {
       ...this.items[itemIndex],

@@ -10,7 +10,7 @@ export const resultPoolCourseTypeValues = ["Piscina Curta", "Piscina Longa"] as 
 export const resultOpenWaterCourseTypeValues = ["Mar", "Rio", "Lago", "Represa"] as const;
 export const resultCourseTypeValues = [...resultPoolCourseTypeValues, ...resultOpenWaterCourseTypeValues] as const;
 export const resultEventFormatValues = ["Prova Individual", "Revezamento", "Travessia", "Knockout Sprint", "Ultramaratona"] as const;
-export const resultStatusValues = ["Classificado", "Desclassificado"] as const;
+export const resultStatusValues = ["Classificado", "Desclassificado", "Pendente", "Não largou", "Não completou"] as const;
 export const trainingVenueTypeValues = ["Piscina", "Mar", "Represa"] as const;
 export const exStudentExitReasonValues = [
   "Mudança de cidade",
@@ -47,10 +47,17 @@ const applyResultConsistencyRules = (
     eventFormat: (typeof resultEventFormatValues)[number];
     customDistance?: string;
     resultStatus: (typeof resultStatusValues)[number];
-    position?: number;
+    position?: number | null;
+    time?: string | null;
+    poolLengthMeters?: number;
+    routeKey?: string;
   },
   ctx: z.RefinementCtx,
 ) => {
+  if (data.resultStatus === "Classificado" && data.time !== undefined && !data.time) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["time"], message: "Classified results require a recorded duration" });
+  }
+
   if (data.competitionType !== data.discipline) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -60,6 +67,13 @@ const applyResultConsistencyRules = (
   }
 
   if (data.discipline === "Piscina") {
+    if (data.routeKey) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["routeKey"], message: "Pool results cannot have open-water routes" });
+    }
+    const length = data.courseType === "Piscina Curta" ? 25 : data.courseType === "Piscina Longa" ? 50 : null;
+    if (length !== null && data.poolLengthMeters !== undefined && length !== data.poolLengthMeters) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["poolLengthMeters"], message: "Pool length conflicts with selected course type" });
+    }
     if (
       data.courseType &&
       !resultPoolCourseTypeValues.includes(
@@ -91,6 +105,9 @@ const applyResultConsistencyRules = (
   }
 
   if (data.discipline === "Aguas Abertas") {
+    if (data.poolLengthMeters !== undefined) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["poolLengthMeters"], message: "Open water cannot have a pool length" });
+    }
     if (
       data.courseType &&
       !resultOpenWaterCourseTypeValues.includes(
@@ -105,11 +122,11 @@ const applyResultConsistencyRules = (
     }
   }
 
-  if (data.resultStatus === "Desclassificado" && (data.position ?? 0) > 0) {
+  if (data.resultStatus !== "Classificado" && (data.position ?? 0) > 0) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["position"],
-      message: "Disqualified results cannot keep a finishing position",
+      message: "Non-classified results cannot keep a finishing position",
     });
   }
 };
@@ -256,10 +273,12 @@ const resultBaseSchema = z.object({
   competitionType: z.enum(resultDisciplineValues).optional().default("Piscina"),
   courseType: z.union([z.enum(resultCourseTypeValues), z.literal("")]).optional().default(""),
   eventFormat: z.enum(resultEventFormatValues).optional().default("Prova Individual"),
-  time: resultTimeSchema,
-  date: z.string().min(1),
+  time: z.union([resultTimeSchema, z.literal(""), z.null()]).optional().default(""),
+  poolLengthMeters: z.number().finite().positive().optional(),
+  routeKey: z.string().trim().min(1).max(160).optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   competition: z.string().optional().default(""),
-  position: z.number().int().min(0).optional().default(0),
+  position: z.number().int().min(0).nullable().optional().default(null),
   resultStatus: z.enum(resultStatusValues).optional().default("Classificado"),
   category: z.string().optional().default(""),
   notes: z.string().optional(),
@@ -269,8 +288,9 @@ export const createResultSchema = resultBaseSchema.superRefine(applyResultConsis
 
 export const updateResultSchema = resultBaseSchema
   .extend({
-    personalBest: z.boolean().default(false),
-    improvement: z.number().default(0),
+    // Accepted temporarily for dashboard compatibility, but never trusted as persisted facts.
+    personalBest: z.boolean().optional().default(false),
+    improvement: z.number().optional().default(0),
   })
   .superRefine(applyResultConsistencyRules);
 
@@ -287,6 +307,7 @@ export const resultsRankingQuerySchema = z
     style: z.enum(resultStyleValues),
     distance: resultDistanceSchema,
     customDistance: optionalResultDistanceSchema.optional().default(""),
+    poolLengthMeters: z.coerce.number().positive().optional(),
     eventFormat: z.enum(resultEventFormatValues),
     category: z.string().trim().min(1),
   })
@@ -300,6 +321,7 @@ export const resultsRankingQuerySchema = z
         customDistance: data.customDistance,
         resultStatus: "Classificado",
         position: 0,
+        time: undefined,
       },
       ctx,
     ),

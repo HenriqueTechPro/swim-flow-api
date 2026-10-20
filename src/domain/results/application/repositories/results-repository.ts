@@ -16,6 +16,8 @@ export interface ListResultsRepositoryParams extends PaginationParams {
   discipline?: string;
   competitionType?: string;
   courseType?: string;
+  poolLengthMeters?: number;
+  routeKey?: string;
   style?: string;
   eventFormat?: string;
   resultStatus?: string;
@@ -53,6 +55,7 @@ export interface ResultCompetitionContext {
   competitionType: string;
   courseType: string;
   courseTypeValue: string;
+  poolLengthMeters?: number;
   eventFormat: string;
   style: string;
   distance: string;

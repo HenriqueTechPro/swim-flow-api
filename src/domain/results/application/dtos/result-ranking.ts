@@ -12,6 +12,7 @@ export interface GenerateRankingRequest extends PaginationParams {
   discipline: ResultDiscipline;
   competitionType: ResultCompetitionType;
   courseType?: ResultCourseType;
+  poolLengthMeters?: number;
   style: ResultStyle;
   distance: ResultDistance;
   customDistance?: string;

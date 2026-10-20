@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
+import type {
+  OpenWaterBodyType,
+  OpenWaterResultFormat,
+  PoolResultFormat,
+  Prisma,
+  RaceResultStatus,
+  SwimmingStyle,
+} from '@prisma/client';
 import { CacheRepository } from '@/infra/cache/cache-repository';
-import {
-  buildPaginatedCacheKey,
-  rememberPaginatedResult,
-} from '@/infra/cache/cache.helpers';
 import { EnvService } from '@/infra/env/env.service';
 import {
   createPaginatedResult,
@@ -13,157 +17,262 @@ import type { GenerateRankingRequest } from '@/domain/results/application/dtos/r
 import {
   ResultsRepository,
   type CreateResultRepositoryInput,
+  type ListResultsRepositoryParams,
   type ResultCompetitionContext,
   type ResultEvolutionParams,
   type ResultFilterOptions,
   type ResultStyleDistributionItem,
-  type ListResultsRepositoryParams,
   type ResultsEvolution,
   type ResultsSummary,
   type UpdateResultRepositoryInput,
 } from '@/domain/results/application/repositories/results-repository';
 import { buildResultCompetitionContext } from '@/domain/results/application/services/result-competition-context';
+import { CompetitiveResultPolicy } from '@/domain/results/application/services/competitive-result.policy';
 import { AppError } from '@/shared/errors/app-error';
-import { normalizeDurationString, parseDuration } from '@/shared/utils/duration';
+import { parseDuration } from '@/shared/utils/duration';
 import type { Result } from '@/domain/results/enterprise/entities/result';
 import { PrismaService } from '../prisma.service';
 import {
-  PrismaResultMapper,
-  type PrismaResultRecord,
-} from '../mappers/prisma-result-mapper';
+  PrismaCompetitiveResultMapper,
+  resultStudentInclude,
+  type PoolRecord,
+  type OpenWaterRecord,
+} from '../mappers/prisma-competitive-result-mapper';
 
-const resultInclude = {
-  student: {
-    select: {
-      name: true,
-    },
-  },
+const STATUS: Record<string, RaceResultStatus> = {
+  Classificado: 'CLASSIFIED',
+  Desclassificado: 'DISQUALIFIED',
+  Pendente: 'PENDING',
+  'Não largou': 'DID_NOT_START',
+  'Não completou': 'DID_NOT_FINISH',
 };
+const WATER: Record<string, OpenWaterBodyType> = {
+  Mar: 'SEA', Rio: 'RIVER', Lago: 'LAKE', Represa: 'RESERVOIR',
+};
+const POOL_FORMAT: Record<string, PoolResultFormat> = {
+  'Prova Individual': 'INDIVIDUAL', Revezamento: 'RELAY',
+};
+const WATER_FORMAT: Record<string, OpenWaterResultFormat> = {
+  'Prova Individual': 'INDIVIDUAL',
+  Revezamento: 'RELAY',
+  Travessia: 'TRAVESSIA',
+  'Knockout Sprint': 'KNOCKOUT_SPRINT',
+  Ultramaratona: 'ULTRAMARATHON',
+};
+const STYLES: SwimmingStyle[] = ['Livre', 'Costas', 'Peito', 'Borboleta', 'Medley'];
+const monthLabels = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 
-const normalizeResultTime = (time: string) => {
-  const parsed = parseDuration(time);
+function parseMeters(label: string): number {
+  const match = /^(\d+(?:[.,]\d+)?)(m|km)$/i.exec(label.trim());
+  const amount = match ? Number(match[1].replace(',', '.')) : NaN;
+  const meters = amount * (match?.[2].toLowerCase() === 'km' ? 1000 : 1);
+  if (!Number.isSafeInteger(meters) || meters <= 0)
+    throw new AppError(422, 'Distance must be a positive whole number of meters');
+  return meters;
+}
 
-  if (!parsed) {
-    throw new AppError(400, 'Invalid result duration');
+function parseDate(value: string, field: string): Date {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value))
+    throw new AppError(422, `Invalid ${field}`);
+  const date = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value)
+    throw new AppError(422, `Invalid ${field}`);
+  return date;
+}
+
+function poolMeters(course?: string, explicit?: number): number | null {
+  const value =
+    explicit !== undefined
+      ? explicit
+      : course === 'Piscina Curta' || course === 'Piscina Curta (25m)'
+        ? 25
+        : course === 'Piscina Longa' || course === 'Piscina Longa (50m)'
+          ? 50
+          : null;
+  if (value !== null && (!Number.isFinite(value) || value <= 0))
+    throw new AppError(422, 'Pool length must be positive');
+
+  if ((course === 'Piscina Curta' || course === 'Piscina Curta (25m)') && value !== 25)
+    throw new AppError(422, 'Pool length conflicts with short-course type');
+  if ((course === 'Piscina Longa' || course === 'Piscina Longa (50m)') && value !== 50)
+    throw new AppError(422, 'Pool length conflicts with long-course type');
+  return value;
+}
+
+function dateWhere(start?: string, end?: string) {
+  return start || end
+    ? {
+        heldOn: {
+          ...(start ? { gte: parseDate(start, 'startDate') } : {}),
+          ...(end ? { lte: parseDate(end, 'endDate') } : {}),
+        },
+      }
+    : {};
+}
+
+interface ResultWhere {
+  pool: Prisma.PoolResultWhereInput | null;
+  openWater: Prisma.OpenWaterResultWhereInput | null;
+}
+
+function buildWhere(params?: ListResultsRepositoryParams): ResultWhere {
+  const p = params ?? {};
+  const discipline = p.discipline?.trim() || p.competitionType?.trim();
+  // Conflicting filters never bridge two different modalities.
+  if (p.discipline && p.competitionType && p.discipline !== p.competitionType)
+    return { pool: null, openWater: null };
+
+  const distanceText = p.customDistance?.trim() || p.distance?.trim();
+  const meters = distanceText ? parseMeters(distanceText) : undefined;
+  const status = p.resultStatus ? STATUS[p.resultStatus] : undefined;
+  const style = p.style && STYLES.includes(p.style as SwimmingStyle)
+    ? (p.style as SwimmingStyle)
+    : undefined;
+  const search = p.search?.trim();
+
+  let pool: Prisma.PoolResultWhereInput | null =
+    discipline && discipline !== 'Piscina' ? null : {
+      ...dateWhere(p.startDate, p.endDate),
+      ...(p.studentId ? { studentId: p.studentId } : {}),
+      ...(meters !== undefined ? { distanceMeters: meters } : {}),
+      ...(p.category ? { categorySnapshot: p.category } : {}),
+      ...(p.competition ? { competitionSnapshot: p.competition } : {}),
+      ...(status ? { status } : {}),
+      ...(style ? { style } : {}),
+      ...(search ? { OR: [
+        { student: { name: { contains: search, mode: 'insensitive' } } },
+        { competitionSnapshot: { contains: search, mode: 'insensitive' } },
+        { categorySnapshot: { contains: search, mode: 'insensitive' } },
+      ] } : {}),
+    };
+
+  let openWater: Prisma.OpenWaterResultWhereInput | null =
+    discipline && discipline !== 'Aguas Abertas' ? null : {
+      ...dateWhere(p.startDate, p.endDate),
+      ...(p.studentId ? { studentId: p.studentId } : {}),
+      ...(meters !== undefined ? { distanceMeters: meters } : {}),
+      ...(p.category ? { categorySnapshot: p.category } : {}),
+      ...(p.competition ? { competitionSnapshot: p.competition } : {}),
+      ...(status ? { status } : {}),
+      ...(style ? { style } : {}),
+      ...(search ? { OR: [
+        { student: { name: { contains: search, mode: 'insensitive' } } },
+        { competitionSnapshot: { contains: search, mode: 'insensitive' } },
+        { categorySnapshot: { contains: search, mode: 'insensitive' } },
+      ] } : {}),
+    };
+
+  if (p.style && !style) return { pool: null, openWater: null };
+  if (p.resultStatus && !status) return { pool: null, openWater: null };
+
+  if (p.poolLengthMeters !== undefined) {
+    if (!Number.isFinite(p.poolLengthMeters) || p.poolLengthMeters <= 0)
+      throw new AppError(422, 'Invalid poolLengthMeters filter');
+    if (pool) pool.poolLengthMeters = p.poolLengthMeters;
+    openWater = null;
   }
+  if (p.courseType) {
+    const value = p.courseType.trim();
+    const canonicalLength = value === 'Piscina Curta' || value === 'Piscina Curta (25m)'
+      ? 25
+      : value === 'Piscina Longa' || value === 'Piscina Longa (50m)'
+        ? 50
+        : null;
+    if (p.poolLengthMeters !== undefined && canonicalLength !== null &&
+        p.poolLengthMeters !== canonicalLength)
+      throw new AppError(422, 'Pool length conflicts with courseType filter');
+    if (!['Piscina Curta', 'Piscina Longa', 'Piscina Curta (25m)', 'Piscina Longa (50m)'].includes(value))
+      pool = null;
+    else if (pool)
+      pool.poolLengthMeters = poolMeters(value);
+    if (!WATER[value]) openWater = null;
+    else if (openWater) openWater.bodyType = WATER[value];
+  }
+  if (p.eventFormat) {
+    if (!POOL_FORMAT[p.eventFormat]) pool = null;
+    else if (pool) pool.format = POOL_FORMAT[p.eventFormat];
+    if (!WATER_FORMAT[p.eventFormat]) openWater = null;
+    else if (openWater) openWater.format = WATER_FORMAT[p.eventFormat];
+  }
+  return { pool, openWater };
+}
+
+function prepared(input: CreateResultRepositoryInput) {
+  const meters = parseMeters(input.customDistance?.trim() || input.distance);
+  const heldOn = parseDate(input.date, 'date');
+  const parsed = input.time ? parseDuration(input.time) : null;
+  if (input.time && !parsed) throw new AppError(422, 'Invalid result time');
+  const durationMs = parsed?.totalMilliseconds ?? null;
+  const position = input.position && input.position > 0 ? input.position : null;
+  const status = STATUS[input.resultStatus];
+  if (!status) throw new AppError(422, 'Unknown race status');
+
+  if (!STYLES.includes(input.style as SwimmingStyle))
+    throw new AppError(422, 'Invalid swimming style');
+  const swimmingStyle = input.style as SwimmingStyle;
+
+  const common = {
+    studentId: input.studentId,
+    heldOn,
+    distanceMeters: meters,
+    durationMs,
+    position,
+    status,
+    competitionSnapshot: input.competition?.trim() || null,
+    categorySnapshot: input.category?.trim() || null,
+    notes: input.notes?.trim() || null,
+  };
+
+  if (input.discipline === 'Piscina') {
+    const length = poolMeters(input.courseType, input.poolLengthMeters);
+    const format = POOL_FORMAT[input.eventFormat];
+    if (!format) throw new AppError(422, 'Invalid pool event format');
+
+    CompetitiveResultPolicy.assertValid({
+      discipline: 'POOL',
+      studentId: input.studentId,
+      distanceMeters: meters,
+      poolLengthMeters: length,
+      style: swimmingStyle,
+      format,
+      status,
+      durationMs,
+      position,
+    });
+    return {
+      discipline: 'Piscina' as const,
+      data: { ...common, style: swimmingStyle, format, poolLengthMeters: length },
+    };
+  }
+
+  const bodyType = input.courseType ? WATER[input.courseType] : undefined;
+  if (input.courseType && !bodyType)
+    throw new AppError(422, 'Invalid open-water course type');
+  const format = WATER_FORMAT[input.eventFormat];
+  if (!format) throw new AppError(422, 'Invalid open-water event format');
+  const routeKey = input.routeKey?.trim() || null;
+
+  CompetitiveResultPolicy.assertValid({
+    discipline: 'OPEN_WATER',
+    studentId: input.studentId,
+    distanceMeters: meters,
+    bodyType: bodyType ?? null,
+    routeKey,
+    format,
+    status,
+    durationMs,
+    position,
+  });
 
   return {
-    time: normalizeDurationString(time) ?? time,
-    timeInSeconds: parsed.totalSeconds,
+    discipline: 'Aguas Abertas' as const,
+    data: { ...common, style: swimmingStyle, format, bodyType: bodyType ?? null, routeKey },
   };
-};
+}
 
-const normalizeCourseType = (value?: string) => {
-  if (!value) return '';
-  if (value === 'Piscina Curta (25m)') return 'Piscina Curta';
-  if (value === 'Piscina Longa (50m)') return 'Piscina Longa';
-  return value;
-};
-
-const normalizeCustomDistance = (value?: string) => value?.trim() || '';
-
-const styleLabels: Record<string, string> = {
-  Livre: 'Livre',
-  Costas: 'Costas',
-  Peito: 'Peito',
-  Borboleta: 'Borboleta',
-  Medley: 'Medley',
-};
-const shortMonthLabels = [
-  'jan',
-  'fev',
-  'mar',
-  'abr',
-  'mai',
-  'jun',
-  'jul',
-  'ago',
-  'set',
-  'out',
-  'nov',
-  'dez',
-];
-
-const formatMonthLabel = (monthKey: string) => {
-  const [year, month] = monthKey.split('-');
-  const monthIndex = Number(month) - 1;
-  const monthLabel = shortMonthLabels[monthIndex] || month;
-
-  return `${monthLabel}/${year.slice(-2)}`;
-};
-
-const buildResultsWhere = (params?: ListResultsRepositoryParams) => {
-  const search = params?.search?.trim();
-  const discipline = params?.discipline?.trim();
-  const competitionType = params?.competitionType?.trim();
-  const courseType = params?.courseType?.trim();
-  const style = params?.style?.trim();
-  const eventFormat = params?.eventFormat?.trim();
-  const resultStatus = params?.resultStatus?.trim();
-  const distance = params?.distance?.trim();
-  const customDistance = params?.customDistance?.trim();
-  const competition = params?.competition?.trim();
-  const category = params?.category?.trim();
-  const startDate = params?.startDate?.trim();
-  const endDate = params?.endDate?.trim();
-  const studentId = params?.studentId?.trim();
-
-  const andConditions: Record<string, unknown>[] = [];
-
-  if (search) {
-    andConditions.push({
-      OR: [
-        { student: { name: { contains: search, mode: 'insensitive' } } },
-        { style: { contains: search, mode: 'insensitive' } },
-        { distance: { contains: search, mode: 'insensitive' } },
-        { customDistance: { contains: search, mode: 'insensitive' } },
-        { competition: { contains: search, mode: 'insensitive' } },
-        { category: { contains: search, mode: 'insensitive' } },
-      ],
-    });
-  }
-
-  if (discipline) andConditions.push({ discipline });
-  if (competitionType) andConditions.push({ competitionType });
-
-  if (courseType) {
-    andConditions.push({ courseType: normalizeCourseType(courseType) });
-  }
-
-  if (style) andConditions.push({ style });
-  if (eventFormat) andConditions.push({ eventFormat });
-  if (resultStatus) andConditions.push({ resultStatus });
-
-  if (distance) {
-    andConditions.push({
-      OR: [{ distance }, { customDistance: normalizeCustomDistance(distance) }],
-    });
-  }
-
-  if (customDistance) {
-    andConditions.push({ customDistance: normalizeCustomDistance(customDistance) });
-  }
-
-  if (competition) andConditions.push({ competition });
-  if (category) andConditions.push({ category });
-  if (studentId) andConditions.push({ studentId });
-
-  if (startDate || endDate) {
-    const dateFilter: Record<string, Date> = {};
-
-    if (startDate) {
-      dateFilter.gte = new Date(`${startDate}T00:00:00.000Z`);
-    }
-
-    if (endDate) {
-      dateFilter.lte = new Date(`${endDate}T23:59:59.999Z`);
-    }
-
-    andConditions.push({ date: dateFilter });
-  }
-
-  return andConditions.length > 0 ? { AND: andConditions } : {};
-};
+function sortResults(left: Result, right: Result) {
+  return right.date.localeCompare(left.date) || right.id.localeCompare(left.id);
+}
 
 @Injectable()
 export class PrismaResultsRepository implements ResultsRepository {
@@ -173,447 +282,248 @@ export class PrismaResultsRepository implements ResultsRepository {
     private readonly env: EnvService,
   ) {}
 
+  private async load(params?: ListResultsRepositoryParams): Promise<Result[]> {
+    const { pool, openWater } = buildWhere(params);
+    const [poolRows, waterRows] = await Promise.all([
+      pool ? this.prisma.poolResult.findMany({ where: pool, include: resultStudentInclude }) : Promise.resolve([] as PoolRecord[]),
+      openWater ? this.prisma.openWaterResult.findMany({ where: openWater, include: resultStudentInclude }) : Promise.resolve([] as OpenWaterRecord[]),
+    ]);
+    return [
+      ...poolRows.map(PrismaCompetitiveResultMapper.pool),
+      ...waterRows.map(PrismaCompetitiveResultMapper.openWater),
+    ].sort(sortResults);
+  }
+
   async list(params?: ListResultsRepositoryParams) {
     const { page, perPage } = normalizePaginationParams(params);
-    const search = params?.search?.trim();
-    const discipline = params?.discipline?.trim();
-    const competitionType = params?.competitionType?.trim();
-    const courseType = params?.courseType?.trim();
-    const style = params?.style?.trim();
-    const eventFormat = params?.eventFormat?.trim();
-    const resultStatus = params?.resultStatus?.trim();
-    const distance = params?.distance?.trim();
-    const customDistance = params?.customDistance?.trim();
-    const competition = params?.competition?.trim();
-    const category = params?.category?.trim();
-    const startDate = params?.startDate?.trim();
-    const endDate = params?.endDate?.trim();
-    const studentId = params?.studentId?.trim();
-    const cacheKey = `${buildPaginatedCacheKey('results', page, perPage)}:${search ?? ''}:${discipline ?? ''}:${competitionType ?? ''}:${courseType ?? ''}:${style ?? ''}:${eventFormat ?? ''}:${resultStatus ?? ''}:${distance ?? ''}:${customDistance ?? ''}:${competition ?? ''}:${category ?? ''}:${startDate ?? ''}:${endDate ?? ''}:${studentId ?? ''}`;
+    const cacheKey = `results:v2:list:${JSON.stringify({ ...params, page, perPage })}`;
+    const { pool, openWater } = buildWhere(params);
+    return this.cache.get(cacheKey).then(async (cached) => {
+      if (cached) return JSON.parse(cached) as Awaited<ReturnType<PrismaResultsRepository['list']>>;
 
-    return rememberPaginatedResult(
-      this.cache,
-      cacheKey,
-      this.env.cacheTtlSeconds,
-      async () => {
-        const skip = (page - 1) * perPage;
-        const where = buildResultsWhere(params);
-
-        const [results, total] = await this.prisma.$transaction([
-          this.prisma.result.findMany({
-            where,
-            include: resultInclude,
-            orderBy: { date: 'desc' },
-            skip,
-            take: perPage,
-          }),
-          this.prisma.result.count({ where }),
-        ]);
-
-        return createPaginatedResult(
-          (results as unknown as PrismaResultRecord[]).map(
-            PrismaResultMapper.toDomain,
-          ),
-          total,
-          { page, perPage },
-        );
-      },
-    );
+      // A globally ordered page of a union requires reading at most
+      // skip + take from EACH table. Never page each table independently.
+      const take = page * perPage;
+      const [poolRows, waterRows, poolCount, waterCount] = await Promise.all([
+        pool ? this.prisma.poolResult.findMany({
+          where: pool, include: resultStudentInclude,
+          orderBy: [{ heldOn: 'desc' }, { id: 'desc' }], take,
+        }) : Promise.resolve([] as PoolRecord[]),
+        openWater ? this.prisma.openWaterResult.findMany({
+          where: openWater, include: resultStudentInclude,
+          orderBy: [{ heldOn: 'desc' }, { id: 'desc' }], take,
+        }) : Promise.resolve([] as OpenWaterRecord[]),
+        pool ? this.prisma.poolResult.count({ where: pool }) : Promise.resolve(0),
+        openWater ? this.prisma.openWaterResult.count({ where: openWater }) : Promise.resolve(0),
+      ]);
+      const items = [
+        ...poolRows.map(PrismaCompetitiveResultMapper.pool),
+        ...waterRows.map(PrismaCompetitiveResultMapper.openWater),
+      ].sort(sortResults).slice((page - 1) * perPage, page * perPage);
+      const result = createPaginatedResult(items, poolCount + waterCount, { page, perPage });
+      await this.cache.set(cacheKey, JSON.stringify(result), this.env.cacheTtlSeconds);
+      return result;
+    });
   }
 
   async summary(params?: ListResultsRepositoryParams): Promise<ResultsSummary> {
-    const now = new Date();
-    const lastMonth = new Date(now);
+    const { pool, openWater } = buildWhere(params);
+    const lastMonth = new Date();
     lastMonth.setMonth(lastMonth.getMonth() - 1);
-
-    const results = await this.prisma.result.findMany({
-      where: buildResultsWhere(params),
-      select: {
-        discipline: true,
-        personalBest: true,
-        improvement: true,
-        resultStatus: true,
-        date: true,
-      },
-    });
-
+    const [poolCount, waterCount, poolDisqualified, waterDisqualified, poolRecent, waterRecent, poolRecords] =
+      await Promise.all([
+        pool ? this.prisma.poolResult.count({ where: pool }) : Promise.resolve(0),
+        openWater ? this.prisma.openWaterResult.count({ where: openWater }) : Promise.resolve(0),
+        pool ? this.prisma.poolResult.count({ where: { AND: [pool, { status: 'DISQUALIFIED' }] } }) : Promise.resolve(0),
+        openWater ? this.prisma.openWaterResult.count({ where: { AND: [openWater, { status: 'DISQUALIFIED' }] } }) : Promise.resolve(0),
+        pool ? this.prisma.poolResult.count({ where: { AND: [pool, { heldOn: { gte: lastMonth } }] } }) : Promise.resolve(0),
+        openWater ? this.prisma.openWaterResult.count({ where: { AND: [openWater, { heldOn: { gte: lastMonth } }] } }) : Promise.resolve(0),
+        pool ? this.prisma.poolResult.findMany({
+          where: { AND: [pool, { status: 'CLASSIFIED', format: 'INDIVIDUAL', durationMs: { not: null }, poolLengthMeters: { not: null } }] },
+          select: { studentId: true, style: true, distanceMeters: true, poolLengthMeters: true, durationMs: true, heldOn: true, id: true },
+          orderBy: [{ heldOn: 'asc' }, { id: 'asc' }],
+        }) : Promise.resolve([]),
+      ]);
+    const personalRecords = new Map<string, number>();
+    let improvements = 0;
+    for (const record of poolRecords) {
+      if (record.durationMs === null || record.poolLengthMeters === null) continue;
+      const key = [record.studentId, record.style, record.distanceMeters, record.poolLengthMeters.toString()].join(':');
+      const best = personalRecords.get(key);
+      if (best === undefined || record.durationMs < best) {
+        if (best !== undefined) improvements++;
+        personalRecords.set(key, record.durationMs);
+      }
+    }
     return {
-      totalResults: results.length,
-      personalBests: results.filter((result) => result.personalBest).length,
-      improvements: results.filter((result) => Number(result.improvement) < 0).length,
-      lastMonthResults: results.filter((result) => {
-        const resultDate = result.date;
-        return resultDate instanceof Date && resultDate >= lastMonth;
-      }).length,
-      poolResults: results.filter(
-        (result) => (result.discipline || 'Piscina') === 'Piscina',
-      ).length,
-      openWaterResults: results.filter(
-        (result) => result.discipline === 'Aguas Abertas',
-      ).length,
-      disqualifiedResults: results.filter(
-        (result) => result.resultStatus === 'Desclassificado',
-      ).length,
+      totalResults: poolCount + waterCount,
+      poolResults: poolCount,
+      openWaterResults: waterCount,
+      disqualifiedResults: poolDisqualified + waterDisqualified,
+      lastMonthResults: poolRecent + waterRecent,
+      personalBests: personalRecords.size,
+      improvements,
     };
   }
 
   async listFilterOptions(): Promise<ResultFilterOptions> {
-    const [disciplineRows, styleRows, distanceRows, categoryRows, competitionRows, eventFormatRows] =
-      await Promise.all([
-        this.prisma.result.findMany({
-          distinct: ['discipline'],
-          select: { discipline: true },
-          orderBy: { discipline: 'asc' },
-        }),
-        this.prisma.result.findMany({
-          distinct: ['style'],
-          select: { style: true },
-          orderBy: { style: 'asc' },
-        }),
-        this.prisma.result.findMany({
-          select: { distance: true, customDistance: true },
-          where: {
-            OR: [{ distance: { not: '' } }, { customDistance: { not: '' } }],
-          },
-          orderBy: { distance: 'asc' },
-        }),
-        this.prisma.result.findMany({
-          distinct: ['category'],
-          select: { category: true },
-          where: { category: { not: '' } },
-          orderBy: { category: 'asc' },
-        }),
-        this.prisma.result.findMany({
-          distinct: ['competition'],
-          select: { competition: true },
-          where: { competition: { not: '' } },
-          orderBy: { competition: 'asc' },
-        }),
-        this.prisma.result.findMany({
-          distinct: ['eventFormat'],
-          select: { eventFormat: true },
-          where: { eventFormat: { not: '' } },
-          orderBy: { eventFormat: 'asc' },
-        }),
-      ]);
-
+    const [poolDistances, waterDistances, poolCategories, waterCategories, poolCompetitions, waterCompetitions, poolStyles, waterStyles] = await Promise.all([
+      this.prisma.poolResult.findMany({ distinct: ['distanceMeters'], select: { distanceMeters: true } }),
+      this.prisma.openWaterResult.findMany({ distinct: ['distanceMeters'], select: { distanceMeters: true } }),
+      this.prisma.poolResult.findMany({ distinct: ['categorySnapshot'], select: { categorySnapshot: true } }),
+      this.prisma.openWaterResult.findMany({ distinct: ['categorySnapshot'], select: { categorySnapshot: true } }),
+      this.prisma.poolResult.findMany({ distinct: ['competitionSnapshot'], select: { competitionSnapshot: true } }),
+      this.prisma.openWaterResult.findMany({ distinct: ['competitionSnapshot'], select: { competitionSnapshot: true } }),
+      this.prisma.poolResult.findMany({ distinct: ['style'], select: { style: true } }),
+      this.prisma.openWaterResult.findMany({ distinct: ['style'], select: { style: true } }),
+    ]);
+    const unique = (items: Array<string | null | undefined>) =>
+      Array.from(new Set(items.filter((item): item is string => !!item))).sort((a, b) => a.localeCompare(b, 'pt-BR', { numeric: true }));
     return {
-      disciplines: disciplineRows
-        .map((row) => row.discipline)
-        .filter((value): value is string => Boolean(value)),
-      styles: styleRows.map((row) => row.style).filter(Boolean),
-      distances: Array.from(
-        new Set(
-          distanceRows
-            .map((row) => normalizeCustomDistance(row.customDistance) || row.distance)
-            .filter(Boolean),
-        ),
-      ).sort((left, right) =>
-        left.localeCompare(right, 'pt-BR', { numeric: true }),
-      ),
-      categories: categoryRows.map((row) => row.category).filter(Boolean),
-      competitions: competitionRows
-        .map((row) => row.competition)
-        .filter(Boolean),
-      eventFormats: eventFormatRows
-        .map((row) => row.eventFormat)
-        .filter(Boolean),
+      disciplines: ['Piscina', 'Aguas Abertas'],
+      styles: unique([...poolStyles.map(x => x.style), ...waterStyles.map(x => x.style)]),
+      distances: unique([...poolDistances.map(x => `${x.distanceMeters}m`), ...waterDistances.map(x => `${x.distanceMeters}m`)]),
+      categories: unique([...poolCategories.map(x => x.categorySnapshot), ...waterCategories.map(x => x.categorySnapshot)]),
+      competitions: unique([...poolCompetitions.map(x => x.competitionSnapshot), ...waterCompetitions.map(x => x.competitionSnapshot)]),
+      eventFormats: ['Prova Individual', 'Revezamento', 'Travessia', 'Knockout Sprint', 'Ultramaratona'],
     };
   }
 
-  async listCompetitionContexts(
-    params?: ListResultsRepositoryParams,
-  ): Promise<ResultCompetitionContext[]> {
-    const results = await this.prisma.result.findMany({
-      where: {
-        ...buildResultsWhere(params),
-        resultStatus: 'Classificado',
-        timeInSeconds: { gt: 0 },
-      },
-      include: resultInclude,
-      orderBy: [
-        { style: 'asc' },
-        { distance: 'asc' },
-        { customDistance: 'asc' },
-        { category: 'asc' },
-      ],
-    });
-
-    const uniqueContexts = new Map<string, ResultCompetitionContext>();
-
-    for (const record of results as unknown as PrismaResultRecord[]) {
-      const context = buildResultCompetitionContext(
-        PrismaResultMapper.toDomain(record),
-      );
-
-      if (!uniqueContexts.has(context.key)) {
-        uniqueContexts.set(context.key, context);
-      }
+  async listCompetitionContexts(params?: ListResultsRepositoryParams): Promise<ResultCompetitionContext[]> {
+    const rows = (await this.load({ ...params, resultStatus: 'Classificado' }))
+      .filter(x => x.timeInSeconds > 0 && x.discipline === 'Piscina' && x.eventFormat === 'Prova Individual' && x.poolLengthMeters != null);
+    const unique = new Map<string, ResultCompetitionContext>();
+    for (const record of rows) {
+      const context = buildResultCompetitionContext(record);
+      if (!unique.has(context.key)) unique.set(context.key, context);
     }
-
-    return Array.from(uniqueContexts.values()).sort((left, right) => {
-      const labelComparison = left.label.localeCompare(right.label, 'pt-BR', {
-        numeric: true,
-      });
-
-      if (labelComparison !== 0) {
-        return labelComparison;
-      }
-
-      return left.subtitle.localeCompare(right.subtitle, 'pt-BR');
-    });
+    return [...unique.values()].sort((a, b) => a.label.localeCompare(b.label, 'pt-BR', { numeric: true }));
   }
 
-  async getStyleDistribution(
-    params?: ListResultsRepositoryParams,
-  ): Promise<ResultStyleDistributionItem[]> {
-    const grouped = await this.prisma.result.groupBy({
-      by: ['style'],
-      where: buildResultsWhere(params),
-      _count: { style: true },
-      orderBy: { style: 'asc' },
-    });
-
-    return grouped
-      .filter((item) => Boolean(item.style))
-      .map((item) => ({
-        style: item.style,
-        label: styleLabels[item.style] || item.style,
-        count: item._count.style,
-      }));
+  async getStyleDistribution(params?: ListResultsRepositoryParams): Promise<ResultStyleDistributionItem[]> {
+    const { pool, openWater } = buildWhere(params);
+    const [poolGroups, waterGroups] = await Promise.all([
+      pool ? this.prisma.poolResult.groupBy({ by: ['style'], where: pool, _count: { _all: true } }) : Promise.resolve([]),
+      openWater ? this.prisma.openWaterResult.groupBy({ by: ['style'], where: openWater, _count: { _all: true } }) : Promise.resolve([]),
+    ]);
+    const counts = new Map<string, number>();
+    for (const x of [...poolGroups, ...waterGroups]) {
+      const style = x.style ?? 'Nao informado';
+      counts.set(style, (counts.get(style) ?? 0) + x._count._all);
+    }
+    return [...counts.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([style, count]) => ({ style, label: style, count }));
   }
 
   async getEvolution(params?: ResultEvolutionParams): Promise<ResultsEvolution> {
-    const chartStartDate = params?.chartStartDate?.trim();
-    const chartEndDate = params?.chartEndDate?.trim();
-
-    const results = await this.prisma.result.findMany({
-      where: {
-        ...buildResultsWhere(params),
-        resultStatus: 'Classificado',
-        timeInSeconds: { gt: 0 },
-      },
-      include: resultInclude,
-      orderBy: [{ date: 'asc' }, { studentId: 'asc' }],
+    const empty = { students: [], points: [] };
+    // Do not plot incomparable events as if they were the same stroke/distance.
+    if (
+      params?.discipline === 'Aguas Abertas' ||
+      !params?.style || !params.distance || (!params.courseType && !params.poolLengthMeters) ||
+      (params.eventFormat && params.eventFormat !== 'Prova Individual')
+    ) return empty;
+    const { pool } = buildWhere({
+      ...params, discipline: 'Piscina', eventFormat: 'Prova Individual', resultStatus: 'Classificado',
+      startDate: params.chartStartDate || params.startDate,
+      endDate: params.chartEndDate || params.endDate,
     });
-
-    const dateFilteredResults = (results as unknown as PrismaResultRecord[])
-      .map(PrismaResultMapper.toDomain)
-      .filter((result) => {
-        if (chartStartDate && result.date < chartStartDate) return false;
-        if (chartEndDate && result.date > chartEndDate) return false;
-        return true;
-      });
-
-    const studentMap = new Map<
-      string,
-      { studentId: string; studentName: string; resultCount: number }
-    >();
-
-    for (const result of dateFilteredResults) {
-      const existing = studentMap.get(result.studentId);
-
-      if (existing) {
-        existing.resultCount += 1;
-        continue;
-      }
-
-      studentMap.set(result.studentId, {
-        studentId: result.studentId,
-        studentName: result.studentName,
-        resultCount: 1,
-      });
+    if (!pool) return empty;
+    const rows = await this.prisma.poolResult.findMany({
+      where: { AND: [pool, { durationMs: { gt: 0 }, poolLengthMeters: { not: null } }] },
+      include: resultStudentInclude,
+      orderBy: [{ heldOn: 'asc' }, { id: 'asc' }],
+    });
+    const students = new Map<string, { studentId: string; studentName: string; resultCount: number }>();
+    const months = new Map<string, Map<string, { studentId: string; studentName: string; bestTimeSeconds: number }>>();
+    for (const row of rows) {
+      const name = row.student.name;
+      const item = students.get(row.studentId) ?? { studentId: row.studentId, studentName: name, resultCount: 0 };
+      item.resultCount++;
+      students.set(row.studentId, item);
+      if (params.focusStudentId && params.focusStudentId !== row.studentId) continue;
+      if (row.durationMs === null) continue;
+      const monthKey = row.heldOn.toISOString().slice(0, 7);
+      const month = months.get(monthKey) ?? new Map();
+      const prev = month.get(row.studentId);
+      if (!prev || row.durationMs / 1000 < prev.bestTimeSeconds)
+        month.set(row.studentId, { studentId: row.studentId, studentName: name, bestTimeSeconds: row.durationMs / 1000 });
+      months.set(monthKey, month);
     }
-
-    const focusedResults = params?.focusStudentId
-      ? dateFilteredResults.filter(
-          (result) => result.studentId === params.focusStudentId,
-        )
-      : dateFilteredResults;
-
-    const groupedByMonth = new Map<
-      string,
-      Map<string, { studentId: string; studentName: string; bestTimeSeconds: number }>
-    >();
-
-    for (const result of focusedResults) {
-      const monthKey = result.date.slice(0, 7);
-      const monthGroup = groupedByMonth.get(monthKey) ?? new Map();
-      const existing = monthGroup.get(result.studentId);
-
-      if (!existing || result.timeInSeconds < existing.bestTimeSeconds) {
-        monthGroup.set(result.studentId, {
-          studentId: result.studentId,
-          studentName: result.studentName,
-          bestTimeSeconds: result.timeInSeconds,
-        });
-      }
-
-      groupedByMonth.set(monthKey, monthGroup);
-    }
-
-    const points = Array.from(groupedByMonth.entries())
-      .sort(([left], [right]) => left.localeCompare(right))
-      .map(([monthKey, values]) => {
-        return {
-          monthKey,
-          monthLabel: formatMonthLabel(monthKey),
-          values: Array.from(values.values()).sort((left, right) =>
-            left.studentName.localeCompare(right.studentName, 'pt-BR'),
-          ),
-        };
-      });
-
     return {
-      students: Array.from(studentMap.values()).sort((left, right) =>
-        left.studentName.localeCompare(right.studentName, 'pt-BR'),
-      ),
-      points,
+      students: [...students.values()].sort((a, b) => a.studentName.localeCompare(b.studentName, 'pt-BR')),
+      points: [...months.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([monthKey, values]) => ({
+        monthKey,
+        monthLabel: `${monthLabels[Number(monthKey.slice(5, 7)) - 1]}/${monthKey.slice(2, 4)}`,
+        values: [...values.values()].sort((a, b) => a.studentName.localeCompare(b.studentName, 'pt-BR')),
+      })),
     };
   }
 
   async listRankingCandidates(input: GenerateRankingRequest): Promise<Result[]> {
-    const results = await this.prisma.result.findMany({
-      where: {
-        discipline: input.discipline,
-        competitionType: input.competitionType,
-        courseType: normalizeCourseType(input.courseType),
-        style: input.style,
-        distance: input.distance,
-        customDistance: normalizeCustomDistance(input.customDistance),
-        eventFormat: input.eventFormat,
-        category: input.category,
-        resultStatus: 'Classificado',
-      },
-      include: resultInclude,
-      orderBy: [
-        { timeInSeconds: 'asc' },
-        { date: 'asc' },
-        { studentId: 'asc' },
-      ],
+    // A water-body label (Mar/Rio/etc.) is NOT enough to compare open-water routes.
+    if (input.discipline !== 'Piscina' || input.eventFormat !== 'Prova Individual') return [];
+    const { pool } = buildWhere({ ...input, resultStatus: 'Classificado' });
+    if (!pool || (!input.courseType && !input.poolLengthMeters)) return [];
+    const rows = await this.prisma.poolResult.findMany({
+      where: { AND: [pool, { status: 'CLASSIFIED', format: 'INDIVIDUAL', durationMs: { gt: 0 } }] },
+      include: resultStudentInclude,
+      orderBy: [{ durationMs: 'asc' }, { heldOn: 'asc' }, { id: 'asc' }],
     });
-
-    return (results as unknown as PrismaResultRecord[]).map(
-      PrismaResultMapper.toDomain,
-    );
+    return rows.map(PrismaCompetitiveResultMapper.pool);
   }
 
-  async listRecordCandidates(
-    params?: ListResultsRepositoryParams,
-  ): Promise<Result[]> {
-    const results = await this.prisma.result.findMany({
-      where: buildResultsWhere(params),
-      include: resultInclude,
-      orderBy: [
-        { timeInSeconds: 'asc' },
-        { date: 'asc' },
-        { studentId: 'asc' },
-      ],
+  async listRecordCandidates(params?: ListResultsRepositoryParams): Promise<Result[]> {
+    if (params?.discipline === 'Aguas Abertas') return [];
+    const { pool } = buildWhere({ ...params, discipline: 'Piscina', eventFormat: 'Prova Individual', resultStatus: 'Classificado' });
+    if (!pool) return [];
+    const rows = await this.prisma.poolResult.findMany({
+      where: { AND: [pool, { poolLengthMeters: { not: null }, durationMs: { gt: 0 }, status: 'CLASSIFIED' }] },
+      include: resultStudentInclude,
+      orderBy: [{ durationMs: 'asc' }, { heldOn: 'asc' }, { id: 'asc' }],
     });
-
-    return (results as unknown as PrismaResultRecord[]).map(
-      PrismaResultMapper.toDomain,
-    );
+    return rows.map(PrismaCompetitiveResultMapper.pool);
   }
 
-  async create(input: CreateResultRepositoryInput) {
-    const student = await this.prisma.student.findUnique({
-      where: { id: input.studentId },
-      select: { id: true, categoryLabel: true },
-    });
+  async create(input: CreateResultRepositoryInput): Promise<Result> {
+    const row = prepared(input);
+    const student = await this.prisma.student.findUnique({ where: { id: input.studentId }, select: { id: true } });
+    if (!student) throw new AppError(404, 'Student not found');
+    const result = row.discipline === 'Piscina'
+      ? PrismaCompetitiveResultMapper.pool(await this.prisma.poolResult.create({ data: row.data, include: resultStudentInclude }))
+      : PrismaCompetitiveResultMapper.openWater(await this.prisma.openWaterResult.create({ data: row.data, include: resultStudentInclude }));
+    await this.cache.deleteMatching('results:');
+    return result;
+  }
 
-    if (!student) {
-      throw new AppError(404, 'Student not found');
+  async update(id: string, input: UpdateResultRepositoryInput): Promise<Result> {
+    const row = prepared(input);
+    const [poolOld, waterOld] = await Promise.all([
+      this.prisma.poolResult.findUnique({ where: { id }, select: { id: true } }),
+      this.prisma.openWaterResult.findUnique({ where: { id }, select: { id: true } }),
+    ]);
+    if (!poolOld && !waterOld) throw new AppError(404, 'Result not found');
+    if ((poolOld && row.discipline !== 'Piscina') || (waterOld && row.discipline !== 'Aguas Abertas'))
+      throw new AppError(422, 'Changing result discipline requires recreating the result');
+    const result = poolOld && row.discipline === 'Piscina'
+      ? PrismaCompetitiveResultMapper.pool(await this.prisma.poolResult.update({ where: { id }, data: row.data, include: resultStudentInclude }))
+      : row.discipline === 'Aguas Abertas'
+        ? PrismaCompetitiveResultMapper.openWater(await this.prisma.openWaterResult.update({ where: { id }, data: row.data, include: resultStudentInclude }))
+        : (() => { throw new AppError(422, 'Invalid result context'); })();
+    await this.cache.deleteMatching('results:');
+    return result;
+  }
+
+  async remove(id: string): Promise<Result> {
+    const pool = await this.prisma.poolResult.findUnique({ where: { id }, include: resultStudentInclude });
+    if (pool) {
+      await this.prisma.poolResult.delete({ where: { id } });
+      await this.cache.deleteMatching('results:');
+      return PrismaCompetitiveResultMapper.pool(pool);
     }
-
-    const duration = normalizeResultTime(input.time);
-
-    const result = await this.prisma.result.create({
-      data: {
-        studentId: input.studentId,
-        discipline: input.discipline,
-        style: input.style,
-        distance: input.distance,
-        customDistance: normalizeCustomDistance(input.customDistance),
-        competitionType: input.competitionType,
-        courseType: normalizeCourseType(input.courseType),
-        eventFormat: input.eventFormat,
-        time: duration.time,
-        timeInSeconds: duration.timeInSeconds,
-        date: new Date(input.date),
-        competition: input.competition || '',
-        position: input.position ?? 0,
-        resultStatus: input.resultStatus,
-        personalBest: false,
-        improvement: 0,
-        category: input.category || student.categoryLabel || '',
-        notes: input.notes || null,
-      },
-      include: resultInclude,
-    });
-
-    await this.cache.deleteMatching('results:list:');
-    return PrismaResultMapper.toDomain(result as unknown as PrismaResultRecord);
-  }
-
-  async update(id: string, input: UpdateResultRepositoryInput) {
-    const existing = await this.prisma.result.findUnique({
-      where: { id },
-      select: { id: true },
-    });
-
-    if (!existing) {
-      throw new AppError(404, 'Result not found');
-    }
-
-    const duration = normalizeResultTime(input.time);
-
-    const result = await this.prisma.result.update({
-      where: { id },
-      data: {
-        studentId: input.studentId,
-        discipline: input.discipline,
-        style: input.style,
-        distance: input.distance,
-        customDistance: normalizeCustomDistance(input.customDistance),
-        competitionType: input.competitionType,
-        courseType: normalizeCourseType(input.courseType),
-        eventFormat: input.eventFormat,
-        time: duration.time,
-        timeInSeconds: duration.timeInSeconds,
-        date: new Date(input.date),
-        competition: input.competition || '',
-        position: input.position ?? 0,
-        resultStatus: input.resultStatus,
-        personalBest: input.personalBest,
-        improvement: input.improvement,
-        category: input.category || '',
-        notes: input.notes || null,
-      },
-      include: resultInclude,
-    });
-
-    await this.cache.deleteMatching('results:list:');
-    return PrismaResultMapper.toDomain(result as unknown as PrismaResultRecord);
-  }
-
-  async remove(id: string) {
-    const existing = await this.prisma.result.findUnique({
-      where: { id },
-      include: resultInclude,
-    });
-
-    if (!existing) {
-      throw new AppError(404, 'Result not found');
-    }
-
-    await this.prisma.result.delete({
-      where: { id },
-    });
-
-    await this.cache.deleteMatching('results:list:');
-    return PrismaResultMapper.toDomain(
-      existing as unknown as PrismaResultRecord,
-    );
+    const water = await this.prisma.openWaterResult.findUnique({ where: { id }, include: resultStudentInclude });
+    if (!water) throw new AppError(404, 'Result not found');
+    await this.prisma.openWaterResult.delete({ where: { id } });
+    await this.cache.deleteMatching('results:');
+    return PrismaCompetitiveResultMapper.openWater(water);
   }
 }
