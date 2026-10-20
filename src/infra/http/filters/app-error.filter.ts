@@ -5,30 +5,10 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import type { Response } from 'express';
 import { AppError } from '@/shared/errors/app-error';
 
-const prismaErrorMap: Record<
-  string,
-  { statusCode: number; error: string; message: string }
-> = {
-  P2002: {
-    statusCode: HttpStatus.CONFLICT,
-    error: 'Conflict',
-    message: 'A uniqueness constraint would be violated by this operation',
-  },
-  P2003: {
-    statusCode: HttpStatus.CONFLICT,
-    error: 'Conflict',
-    message: 'The operation violates a related resource constraint',
-  },
-  P2025: {
-    statusCode: HttpStatus.NOT_FOUND,
-    error: 'Not Found',
-    message: 'Requested resource was not found',
-  },
-};
+import { mapPrismaException } from './prisma-error.mapper';
 
 @Catch()
 export class AppErrorFilter implements ExceptionFilter {
@@ -58,17 +38,9 @@ export class AppErrorFilter implements ExceptionFilter {
       );
     }
 
-    if (exception instanceof Prisma.PrismaClientKnownRequestError) {
-      const mappedError = prismaErrorMap[exception.code];
-
-      return response
-        .status(mappedError?.statusCode ?? HttpStatus.UNPROCESSABLE_ENTITY)
-        .json({
-          statusCode:
-            mappedError?.statusCode ?? HttpStatus.UNPROCESSABLE_ENTITY,
-          error: mappedError?.error ?? 'Database Error',
-          message: mappedError?.message ?? 'Database operation failed',
-        });
+    const mappedError = mapPrismaException(exception);
+    if (mappedError) {
+      return response.status(mappedError.statusCode).json(mappedError);
     }
 
     console.error(exception);
