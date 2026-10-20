@@ -2,6 +2,7 @@ export interface StudentClassAssignmentPlan {
   classIdsToClose: string[];
   nextClassId: string | null;
   shouldCreateNextClassLink: boolean;
+  shouldPromoteExistingLink: boolean;
 }
 
 export class StudentClassAssignmentPolicy {
@@ -17,6 +18,7 @@ export class StudentClassAssignmentPolicy {
         classIdsToClose: currentClassIds,
         nextClassId: null,
         shouldCreateNextClassLink: false,
+        shouldPromoteExistingLink: false,
       };
     }
 
@@ -25,6 +27,7 @@ export class StudentClassAssignmentPolicy {
         classIdsToClose: currentClassIds.filter((classId) => classId !== nextClassId),
         nextClassId,
         shouldCreateNextClassLink: false,
+        shouldPromoteExistingLink: true,
       };
     }
 
@@ -32,6 +35,7 @@ export class StudentClassAssignmentPolicy {
       classIdsToClose: currentClassIds,
       nextClassId,
       shouldCreateNextClassLink: true,
+      shouldPromoteExistingLink: false,
     };
   }
 }
