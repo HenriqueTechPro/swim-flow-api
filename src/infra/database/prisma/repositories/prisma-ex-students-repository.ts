@@ -199,8 +199,8 @@ export class PrismaExStudentsRepository implements ExStudentsRepository {
       if (existing.reactivatedAt || existing.voidedAt) {
         throw new AppError(409, 'Historical departures are immutable');
       }
-      return tx.exStudent.update({
-        where: { id },
+      const changed = await tx.exStudent.updateMany({
+        where: { id, ...activeDepartureFilter },
         data: {
           exitDateAt,
           exitReason: toPrismaExStudentExitReason(input.exitReason),
@@ -209,6 +209,10 @@ export class PrismaExStudentsRepository implements ExStudentsRepository {
           lastCompetition: input.lastCompetition,
         },
       });
+      if (changed.count !== 1) {
+        throw new AppError(409, 'Departure was closed during update');
+      }
+      return tx.exStudent.findUniqueOrThrow({ where: { id } });
     });
     await this.clearStudentArchiveCaches();
     return PrismaExStudentMapper.toDomain(updated);
