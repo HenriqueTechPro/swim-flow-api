@@ -22,4 +22,6 @@ export interface ExStudent {
   lastCompetition: string;
   birthYear: number | null;
   level: string;
+  reactivatedAt?: string | null;
+  voidedAt?: string | null;
 }
