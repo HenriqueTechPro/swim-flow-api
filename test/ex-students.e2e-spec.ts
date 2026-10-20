@@ -81,6 +81,11 @@ describe('ExStudentsController (e2e)', () => {
       .get('/api/ex-students')
       .expect(200);
     expect(listFinal.body.data).toEqual([]);
+    const history = await request(app.getHttpServer())
+      .get('/api/ex-students?includeHistory=true')
+      .expect(200);
+    expect(history.body.data).toHaveLength(1);
+    expect(history.body.data[0].voidedAt).toBeTruthy();
   });
 
   it('reactivates an ex-student', async () => {
@@ -97,7 +102,8 @@ describe('ExStudentsController (e2e)', () => {
       .expect(201);
 
     expect(reactivateResponse.body.data.id).toBe(existingExStudent.id);
-    expect(exStudentsRepository.items).toHaveLength(0);
+    expect(exStudentsRepository.items).toHaveLength(1);
+    expect(exStudentsRepository.items[0].reactivatedAt).toBeTruthy();
   });
 
   it('filters and paginates ex-students list', async () => {
