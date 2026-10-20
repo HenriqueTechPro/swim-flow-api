@@ -12,6 +12,10 @@ import { PoolsRepository } from '@/domain/pools/application/repositories/pools-r
 import { ResultsRepository } from '@/domain/results/application/repositories/results-repository';
 import { StudentsRepository } from '@/domain/students/application/repositories/students-repository';
 import { TeachersRepository } from '@/domain/teachers/application/repositories/teachers-repository';
+import { TeacherAccountLinksRepository } from '@/domain/teachers/application/repositories/teacher-account-links-repository';
+import { GetTeacherAccountLinkUseCase } from '@/domain/teachers/application/use-cases/get-teacher-account-link';
+import { LinkTeacherAccountUseCase } from '@/domain/teachers/application/use-cases/link-teacher-account';
+import { UnlinkTeacherAccountUseCase } from '@/domain/teachers/application/use-cases/unlink-teacher-account';
 import { TrainingsRepository } from '@/domain/trainings/application/repositories/trainings-repository';
 import { ManagedUploadResourcesRepository } from '@/domain/uploads/application/repositories/managed-upload-resources-repository';
 import { ManagedUploadsRepository } from '@/domain/uploads/application/repositories/managed-uploads-repository';
@@ -185,6 +189,9 @@ export const useCaseProviders: Provider[] = [
   provideUseCase(ListStudentReferenceDataUseCase, StudentsRepository),
   provideUseCase(ListStudentsUseCase, StudentsRepository),
   provideUseCase(UpdateStudentUseCase, StudentsRepository),
+  provideUseCase(GetTeacherAccountLinkUseCase, TeacherAccountLinksRepository),
+  provideUseCase(LinkTeacherAccountUseCase, TeacherAccountLinksRepository),
+  provideUseCase(UnlinkTeacherAccountUseCase, TeacherAccountLinksRepository),
   provideUseCase(CreateTeacherUseCase, TeachersRepository),
   provideUseCase(DeleteTeacherUseCase, TeachersRepository),
   provideUseCase(ListTeachersUseCase, TeachersRepository),
