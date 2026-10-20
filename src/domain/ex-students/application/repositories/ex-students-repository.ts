@@ -13,6 +13,8 @@ export type UpdateExStudentRepositoryInput = UpdateExStudentRequest;
 export interface ListExStudentsRepositoryParams extends PaginationParams {
   search?: string;
   category?: string;
+  studentId?: string;
+  includeHistory?: boolean;
 }
 
 export interface ExStudentsSummary {

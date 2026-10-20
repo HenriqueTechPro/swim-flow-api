@@ -3,23 +3,21 @@ import type { ExStudentExitReason as PrismaExStudentExitReason } from '@prisma/c
 
 export interface PrismaExStudentRecord {
   id: string;
-  studentId: string | null;
+  studentId: string;
   name: string;
   category: string;
-  categorySnapshot: string | null;
   exitDateAt: Date;
+  reactivatedAt: Date | null;
+  voidedAt: Date | null;
   exitReason: PrismaExStudentExitReason;
   exitNotes: string | null;
   phone: string;
   responsible: string;
-  responsibleSnapshot: string | null;
   parentId: string | null;
   achievements: number;
   lastCompetition: string;
-  birthYear: number | null;
   birthDate: Date | null;
   level: string;
-  levelSnapshot: string | null;
 }
 
 const EXIT_REASON_LABELS: Record<PrismaExStudentExitReason, ExStudentExitReason> = {
@@ -52,21 +50,23 @@ export class PrismaExStudentMapper {
   static toDomain(this: void, exStudent: PrismaExStudentRecord): ExStudent {
     return {
       id: exStudent.id,
-      studentId: exStudent.studentId ?? undefined,
+      studentId: exStudent.studentId,
       name: exStudent.name,
-      category: exStudent.categorySnapshot || exStudent.category,
+      category: exStudent.category,
       exitDate: exStudent.exitDateAt.toISOString().slice(0, 10),
       exitReason: EXIT_REASON_LABELS[exStudent.exitReason],
       exitNotes: exStudent.exitNotes ?? undefined,
       phone: exStudent.phone,
-      responsible: exStudent.responsibleSnapshot || exStudent.responsible,
+      responsible: exStudent.responsible,
       parentId: exStudent.parentId ?? undefined,
       achievements: exStudent.achievements,
       lastCompetition: exStudent.lastCompetition,
       birthYear: exStudent.birthDate
         ? Number(exStudent.birthDate.toISOString().slice(0, 4))
-        : exStudent.birthYear,
-      level: exStudent.levelSnapshot || exStudent.level,
+        : null,
+      level: exStudent.level,
+      reactivatedAt: exStudent.reactivatedAt?.toISOString() ?? null,
+      voidedAt: exStudent.voidedAt?.toISOString() ?? null,
     };
   }
 }

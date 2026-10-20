@@ -13,14 +13,17 @@ describe('ReactivateExStudentUseCase', () => {
     sut = new ReactivateExStudentUseCase(exStudentsRepository);
   });
 
-  it('reactivates an ex-student by removing it from archive', async () => {
+  it('reactivates an ex-student while retaining its departure history', async () => {
     const existingExStudent = makeExStudent();
     exStudentsRepository.items.push(existingExStudent);
 
     const { exStudent } = await sut.execute(existingExStudent.id);
 
     expect(exStudent.id).toBe(existingExStudent.id);
-    expect(exStudentsRepository.items).toHaveLength(0);
+    expect(exStudentsRepository.items).toHaveLength(1);
+    expect(exStudentsRepository.items[0].reactivatedAt).toBeTruthy();
+    expect((await exStudentsRepository.list()).items).toHaveLength(0);
+    expect((await exStudentsRepository.list({includeHistory:true})).items).toHaveLength(1);
   });
 
   it('throws when ex-student does not exist', async () => {

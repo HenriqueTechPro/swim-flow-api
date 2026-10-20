@@ -356,29 +356,29 @@ model Parent {
 }
 
 model ExStudent {
-  id                  String    @id @default(uuid()) @db.Uuid
-  studentId           String?   @map("student_id") @db.Uuid
-  name                String
-  category            String
-  categorySnapshot    String?   @map("category_snapshot")
-  exitDateAt          DateTime  @map("exit_date_at") @db.Date
-  exitReason          ExStudentExitReason @map("exit_reason")
-  exitNotes           String?   @map("exit_notes")
-  phone               String    @default("")
-  responsible         String    @default("")
-  responsibleSnapshot String?   @map("responsible_snapshot")
-  parentId            String?   @map("parent_id") @db.Uuid
-  achievements        Int       @default(0)
-  lastCompetition     String    @default("") @map("last_competition")
-  birthYear           Int?      @map("birth_year")
-  birthDate           DateTime? @map("birth_date") @db.Date
-  level               String    @default("")
-  levelSnapshot       String?   @map("level_snapshot")
-  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt           DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
-  student             Student?  @relation(fields: [studentId], references: [id])
-  parent              Parent?   @relation(fields: [parentId], references: [id])
+  id              String              @id @default(uuid()) @db.Uuid
+  studentId       String              @map("student_id") @db.Uuid
+  name            String
+  category        String
+  exitDateAt      DateTime            @map("exit_date_at") @db.Date
+  exitReason      ExStudentExitReason @map("exit_reason")
+  exitNotes       String?             @map("exit_notes")
+  phone           String              @default("")
+  responsible     String              @default("")
+  parentId        String?             @map("parent_id") @db.Uuid
+  achievements    Int                 @default(0)
+  lastCompetition String              @default("") @map("last_competition")
+  birthDate       DateTime?           @map("birth_date") @db.Date
+  level           String              @default("")
+  reactivatedAt   DateTime?           @map("reactivated_at") @db.Timestamptz(6)
+  voidedAt        DateTime?           @map("voided_at") @db.Timestamptz(6)
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  student         Student             @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  parent          Parent?             @relation(fields: [parentId], references: [id], onDelete: SetNull)
 
+  @@index([studentId, exitDateAt])
+  @@index([reactivatedAt, voidedAt, exitDateAt])
   @@map("ex_students")
 }
 

@@ -40,7 +40,9 @@ import { ExStudentPresenter } from '../presenters/ex-student.presenter';
 @ApiBearerAuth('api-bearer')
 @Controller('/api/ex-students')
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
-@Roles('admin', 'teacher')
+// Departure histories include sensitive information about minors. Until
+// teacher/class scoping is implemented, only administrators may access them.
+@Roles('admin')
 export class ExStudentsController {
   constructor(
     private readonly getExStudentsSummary: GetExStudentsSummaryUseCase,
@@ -65,16 +67,26 @@ export class ExStudentsController {
     @Query('perPage') perPage?: string,
     @Query('search') search?: string,
     @Query('category') category?: string,
+    @Query('studentId') studentId?: string,
+    @Query('includeHistory') includeHistory?: string,
   ) {
     const pagination = normalizePaginationParams({
       page: Number(page),
       perPage: Number(perPage),
     });
+    if (studentId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(studentId)) {
+      throw new BadRequestException('Invalid studentId');
+    }
+    if (includeHistory !== undefined && includeHistory !== 'true' && includeHistory !== 'false') {
+      throw new BadRequestException('includeHistory must be true or false');
+    }
     const { exStudents, meta } = await this.listExStudents.execute({
       page: pagination.page,
       perPage: pagination.perPage,
       search,
       category,
+      studentId,
+      includeHistory: includeHistory === 'true',
     });
     return { data: exStudents.map(ExStudentPresenter.toHTTP), meta };
   }

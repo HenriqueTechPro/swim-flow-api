@@ -13,14 +13,16 @@ describe('DeleteExStudentUseCase', () => {
     sut = new DeleteExStudentUseCase(exStudentsRepository);
   });
 
-  it('deletes an ex-student record', async () => {
+  it('voids a mistaken departure without physically deleting its history', async () => {
     const existingExStudent = makeExStudent();
     exStudentsRepository.items.push(existingExStudent);
 
     const { exStudent } = await sut.execute(existingExStudent.id);
 
     expect(exStudent.id).toBe(existingExStudent.id);
-    expect(exStudentsRepository.items).toHaveLength(0);
+    expect(exStudentsRepository.items).toHaveLength(1);
+    expect(exStudentsRepository.items[0].voidedAt).toBeTruthy();
+    expect((await exStudentsRepository.list()).items).toHaveLength(0);
   });
 
   it('throws when ex-student does not exist', async () => {

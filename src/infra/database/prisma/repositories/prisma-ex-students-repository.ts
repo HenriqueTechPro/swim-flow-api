@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { ExStudentExitReason as PrismaExStudentExitReason, Prisma } from '@prisma/client';
 import { CacheRepository } from '@/infra/cache/cache-repository';
 import {
   buildPaginatedCacheKey,
@@ -17,7 +18,6 @@ import {
 } from '@/domain/ex-students/application/repositories/ex-students-repository';
 import { AppError } from '@/shared/errors/app-error';
 import { formatCategoryLabel } from '@/shared/utils/domain-formatters';
-import type { ExStudentExitReason as PrismaExStudentExitReason } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import {
   EX_STUDENT_EXIT_REASON_LABELS,
@@ -26,23 +26,30 @@ import {
   toPrismaExStudentExitReason,
 } from '../mappers/prisma-ex-student-mapper';
 
-const getBirthYearFromDate = (birthDate?: Date | null): number | null =>
-  birthDate ? birthDate.getUTCFullYear() : null;
+function parseDateOnly(value: string): Date {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    throw new AppError(422, 'Invalid exit date');
+  }
+  const date = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(date.valueOf()) || date.toISOString().slice(0, 10) !== value || value > new Date().toISOString().slice(0, 10)) {
+    throw new AppError(422, 'Invalid exit date');
+  }
+  return date;
+}
+
+const activeDepartureFilter = {
+  reactivatedAt: null,
+  voidedAt: null,
+} as const;
 
 const normalizeSearchTerm = (value: string) =>
-  value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
+  value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
 const buildMatchingExitReasons = (search?: string): PrismaExStudentExitReason[] => {
   if (!search) return [];
-
-  const normalizedSearch = normalizeSearchTerm(search);
-
+  const normalized = normalizeSearchTerm(search);
   return EX_STUDENT_EXIT_REASON_LABELS.filter((reason) =>
-    normalizeSearchTerm(reason).includes(normalizedSearch),
+    normalizeSearchTerm(reason).includes(normalized),
   ).map(toPrismaExStudentExitReason);
 };
 
@@ -54,52 +61,54 @@ export class PrismaExStudentsRepository implements ExStudentsRepository {
     private readonly env: EnvService,
   ) {}
 
+  private async clearStudentArchiveCaches() {
+    await Promise.all([
+      this.cache.deleteMatching('ex-students:list:'),
+      this.cache.deleteMatching('students:list:'),
+    ]);
+  }
+
   async list(params?: ListExStudentsRepositoryParams) {
     const { page, perPage } = normalizePaginationParams(params);
     const search = params?.search?.trim();
     const category = params?.category?.trim();
-    const cacheKey = `${buildPaginatedCacheKey('ex-students', page, perPage)}:${search ?? ''}:${category ?? ''}`;
+    const studentId = params?.studentId;
+    const includeHistory = params?.includeHistory === true;
+    const cacheKey = `${buildPaginatedCacheKey('ex-students', page, perPage)}:${search ?? ''}:${category ?? ''}:${studentId ?? ''}:${includeHistory}`;
 
     return rememberPaginatedResult(
       this.cache,
       cacheKey,
       this.env.cacheTtlSeconds,
       async () => {
-        const skip = (page - 1) * perPage;
-        const matchingExitReasons = buildMatchingExitReasons(search);
-        const searchFilters = search
+        const searchFilters: Prisma.ExStudentWhereInput[] = search
           ? [
-              { name: { contains: search, mode: 'insensitive' as const } },
-              {
-                lastCompetition: {
-                  contains: search,
-                  mode: 'insensitive' as const,
-                },
-              },
-              ...(matchingExitReasons.length > 0
-                ? [{ exitReason: { in: matchingExitReasons } }]
-                : []),
+              { name: { contains: search, mode: 'insensitive' } },
+              { lastCompetition: { contains: search, mode: 'insensitive' } },
+              ...(
+                buildMatchingExitReasons(search).length > 0
+                  ? [{ exitReason: { in: buildMatchingExitReasons(search) } } as Prisma.ExStudentWhereInput]
+                  : []
+              ),
             ]
           : [];
-        const where = {
-          ...(category ? { category: category } : {}),
+        const where: Prisma.ExStudentWhereInput = {
+          ...(!includeHistory ? activeDepartureFilter : {}),
+          ...(studentId ? { studentId } : {}),
+          ...(category ? { category } : {}),
           ...(search ? { OR: searchFilters } : {}),
         };
-
-        const [exStudents, total] = await this.prisma.$transaction([
+        const [rows, total] = await this.prisma.$transaction([
           this.prisma.exStudent.findMany({
             where,
-            orderBy: { name: 'asc' },
-            skip,
+            orderBy: [{ exitDateAt: 'desc' }, { createdAt: 'desc' }],
+            skip: (page - 1) * perPage,
             take: perPage,
           }),
           this.prisma.exStudent.count({ where }),
         ]);
-
         return createPaginatedResult(
-          (exStudents as unknown as PrismaExStudentRecord[]).map(
-            PrismaExStudentMapper.toDomain,
-          ),
+          rows.map(PrismaExStudentMapper.toDomain),
           total,
           { page, perPage },
         );
@@ -108,191 +117,150 @@ export class PrismaExStudentsRepository implements ExStudentsRepository {
   }
 
   async summary() {
-    const [exStudents, archivedStudentRows] = await Promise.all([
+    const [rows, ids] = await Promise.all([
       this.prisma.exStudent.findMany({
-        select: {
-          category: true,
-          achievements: true,
-        },
+        where: activeDepartureFilter,
+        select: { category: true, achievements: true },
       }),
       this.prisma.exStudent.findMany({
-        where: {
-          studentId: {
-            not: null,
-          },
-        },
-        select: {
-          studentId: true,
-        },
+        where: activeDepartureFilter,
+        select: { studentId: true },
       }),
     ]);
-
     return {
-      total: exStudents.length,
-      categoriesCount: new Set(exStudents.map((item) => item.category).filter(Boolean))
-        .size,
-      totalAchievements: exStudents.reduce(
-        (sum, item) => sum + (item.achievements || 0),
-        0,
-      ),
-      archivedStudentIds: archivedStudentRows
-        .map((item) => item.studentId)
-        .filter((value): value is string => Boolean(value)),
+      total: rows.length,
+      categoriesCount: new Set(rows.map((row) => row.category).filter(Boolean)).size,
+      totalAchievements: rows.reduce((sum, row) => sum + row.achievements, 0),
+      archivedStudentIds: [...new Set(ids.map((row) => row.studentId))],
     };
   }
 
   async create(input: CreateExStudentRepositoryInput) {
-    const existingArchive = await this.prisma.exStudent.findFirst({
-      where: { studentId: input.studentId },
-      select: { id: true },
-    });
-
-    if (existingArchive) {
-      throw new AppError(422, 'Este aluno já está com o plano desativado.');
-    }
-
-    const student = await this.prisma.student.findUnique({
-      where: { id: input.studentId },
-      include: {
-        guardians: {
-          where: { isPrimary: true },
-          select: { parentId: true, parent: { select: { name: true } } },
-          take: 1,
+    const exitDateAt = parseDateOnly(input.exitDate);
+    const archived = await this.prisma.$transaction(async (tx) => {
+      const student = await tx.student.findUnique({
+        where: { id: input.studentId },
+        include: {
+          guardians: {
+            where: { isPrimary: true },
+            select: { parentId: true, parent: { select: { name: true } } },
+            take: 1,
+          },
+          category: { select: { name: true } },
+          level: { select: { name: true } },
         },
-        category: { select: { name: true } },
-        level: { select: { name: true } },
-      },
-    });
+      });
+      if (!student) throw new AppError(404, 'Student not found');
 
-    if (!student) {
-      throw new AppError(404, 'Student not found');
-    }
+      const active = await tx.exStudent.findFirst({
+        where: { studentId: student.id, ...activeDepartureFilter },
+        select: { id: true },
+      });
+      if (active) throw new AppError(409, 'Student already has an active departure');
 
-    const birthYear = getBirthYearFromDate(student.birthDate);
-    const categorySnapshot = formatCategoryLabel(student.category.name);
-    const levelSnapshot = student.level.name;
-    const primaryGuardian = student.guardians[0];
-    const responsible = primaryGuardian?.parent.name ?? '';
+      // Compare-and-set in the transaction: a repeated or concurrent archive
+      // must never create another active departure for an inactive student.
+      const changed = await tx.student.updateMany({
+        where: { id: student.id, status: { not: 'Inativo' } },
+        data: { status: 'Inativo' },
+      });
+      if (changed.count !== 1) {
+        throw new AppError(409, 'Student is already inactive');
+      }
 
-    const exStudent = await this.prisma.$transaction(async (tx) => {
-      const created = await tx.exStudent.create({
+      const guardian = student.guardians[0];
+      return tx.exStudent.create({
         data: {
           studentId: student.id,
           name: student.name,
-          birthYear,
           birthDate: student.birthDate,
-          category: categorySnapshot,
-          categorySnapshot,
-          level: levelSnapshot,
-          levelSnapshot,
-          responsible,
-          responsibleSnapshot: responsible,
-          parentId: primaryGuardian?.parentId ?? null,
+          category: formatCategoryLabel(student.category.name),
+          level: student.level.name,
+          responsible: guardian?.parent.name ?? '',
+          parentId: guardian?.parentId ?? null,
           phone: student.phone,
-          exitDateAt: new Date(input.exitDate),
+          exitDateAt,
           exitReason: toPrismaExStudentExitReason(input.exitReason),
-          exitNotes: input.exitNotes || null,
-          achievements: student.achievements || 0,
-          lastCompetition: input.lastCompetition || '',
+          exitNotes: input.exitNotes?.trim() || null,
+          achievements: student.achievements,
+          lastCompetition: input.lastCompetition?.trim() || '',
         },
-      });
-
-      await tx.student.update({
-        where: { id: student.id },
-        data: {
-          status: 'Inativo',
-        },
-      });
-
-      return tx.exStudent.findUniqueOrThrow({
-        where: { id: created.id },
       });
     });
-
-    await this.cache.deleteMatching('ex-students:list:');
-    return PrismaExStudentMapper.toDomain(
-      exStudent as unknown as PrismaExStudentRecord,
-    );
+    await this.clearStudentArchiveCaches();
+    return PrismaExStudentMapper.toDomain(archived);
   }
 
   async update(id: string, input: UpdateExStudentRepositoryInput) {
-    const existing = await this.prisma.exStudent.findUnique({
-      where: { id },
-      select: { id: true },
+    const exitDateAt = parseDateOnly(input.exitDate);
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const existing = await tx.exStudent.findUnique({ where: { id } });
+      if (!existing) throw new AppError(404, 'Departure not found');
+      if (existing.reactivatedAt || existing.voidedAt) {
+        throw new AppError(409, 'Historical departures are immutable');
+      }
+      const changed = await tx.exStudent.updateMany({
+        where: { id, ...activeDepartureFilter },
+        data: {
+          exitDateAt,
+          exitReason: toPrismaExStudentExitReason(input.exitReason),
+          exitNotes: input.exitNotes?.trim() || null,
+          achievements: input.achievements,
+          lastCompetition: input.lastCompetition,
+        },
+      });
+      if (changed.count !== 1) {
+        throw new AppError(409, 'Departure was closed during update');
+      }
+      return tx.exStudent.findUniqueOrThrow({ where: { id } });
     });
-
-    if (!existing) {
-      throw new AppError(404, 'Ex-student not found');
-    }
-
-    const exStudent = await this.prisma.exStudent.update({
-      where: { id },
-      data: {
-        exitDateAt: new Date(input.exitDate),
-        exitReason: toPrismaExStudentExitReason(input.exitReason),
-        exitNotes: input.exitNotes || null,
-        achievements: input.achievements,
-        lastCompetition: input.lastCompetition,
-      },
-    });
-
-    await this.cache.deleteMatching('ex-students:list:');
-    return PrismaExStudentMapper.toDomain(
-      exStudent as unknown as PrismaExStudentRecord,
-    );
+    await this.clearStudentArchiveCaches();
+    return PrismaExStudentMapper.toDomain(updated);
   }
 
+  /**
+   * DELETE is a correction of a mistakenly recorded departure, NOT a hard
+   * delete. We retain the audit snapshot with voidedAt and restore the student.
+   */
   async remove(id: string) {
-    const existing = await this.prisma.exStudent.findUnique({
-      where: { id },
+    const voided = await this.prisma.$transaction(async (tx) => {
+      const existing = await tx.exStudent.findUnique({ where: { id } });
+      if (!existing) throw new AppError(404, 'Departure not found');
+      if (existing.reactivatedAt || existing.voidedAt) {
+        throw new AppError(409, 'Historical departures cannot be voided twice');
+      }
+      const changed = await tx.student.updateMany({
+        where: { id: existing.studentId, status: 'Inativo' },
+        data: { status: 'Ativo' },
+      });
+      if (changed.count !== 1) throw new AppError(409, 'Student status conflicts with departure');
+      return tx.exStudent.update({
+        where: { id },
+        data: { voidedAt: new Date() },
+      });
     });
-
-    if (!existing) {
-      throw new AppError(404, 'Ex-student not found');
-    }
-
-    await this.prisma.exStudent.delete({
-      where: { id },
-    });
-
-    await this.cache.deleteMatching('ex-students:list:');
-    return PrismaExStudentMapper.toDomain(
-      existing as unknown as PrismaExStudentRecord,
-    );
+    await this.clearStudentArchiveCaches();
+    return PrismaExStudentMapper.toDomain(voided);
   }
 
   async reactivate(id: string) {
-    const existing = await this.prisma.exStudent.findUnique({
-      where: { id },
-    });
-
-    if (!existing) {
-      throw new AppError(404, 'Ex-student not found');
-    }
-
-    if (!existing.studentId) {
-      throw new AppError(
-        422,
-        'Nao e possivel reativar um ex-aluno sem vinculo com cadastro original.',
-      );
-    }
-
-    await this.prisma.$transaction(async (tx) => {
-      await tx.student.update({
-        where: { id: existing.studentId as string },
-        data: {
-          status: 'Ativo',
-        },
+    const reactivated = await this.prisma.$transaction(async (tx) => {
+      const existing = await tx.exStudent.findUnique({ where: { id } });
+      if (!existing) throw new AppError(404, 'Departure not found');
+      if (existing.reactivatedAt || existing.voidedAt) {
+        throw new AppError(409, 'Student departure is already closed');
+      }
+      const changed = await tx.student.updateMany({
+        where: { id: existing.studentId, status: 'Inativo' },
+        data: { status: 'Ativo' },
       });
-
-      await tx.exStudent.delete({
+      if (changed.count !== 1) throw new AppError(409, 'Student status conflicts with departure');
+      return tx.exStudent.update({
         where: { id },
+        data: { reactivatedAt: new Date() },
       });
     });
-
-    await this.cache.deleteMatching('ex-students:list:');
-    return PrismaExStudentMapper.toDomain(
-      existing as unknown as PrismaExStudentRecord,
-    );
+    await this.clearStudentArchiveCaches();
+    return PrismaExStudentMapper.toDomain(reactivated);
   }
 }
