@@ -232,7 +232,9 @@ model Level {
   description String?
   sortOrder   Int       @default(0) @map("sort_order")
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  students    Student[]
+  students             Student[]
+  levelHistoryFrom      StudentLevelHistory[] @relation("PreviousStudentLevel")
+  levelHistoryTo        StudentLevelHistory[] @relation("NewStudentLevel")
 
   @@map("levels")
 }
@@ -349,7 +351,10 @@ model Teacher {
   teacherCategories     TeacherCategory[]
   teacherCertifications TeacherCertification[]
   classTeachers         ClassTeacher[]
-  trainings             Training[]
+  trainings                  Training[]
+  anthropometricAssessments  AnthropometricAssessment[] @relation("AnthropometricAssessor")
+  technicalAssessments       StudentTechnicalAssessment[] @relation("TechnicalAssessor")
+  levelChanges               StudentLevelHistory[] @relation("LevelChangeAssessor")
 
   @@map("teachers")
 }
@@ -377,7 +382,10 @@ model Student {
   exStudents      ExStudent[]
   results         Result[]
   studentClasses  StudentClass[]
-  attendanceRecords AttendanceRecord[]
+  attendanceRecords        AttendanceRecord[]
+  anthropometricAssessments AnthropometricAssessment[]
+  technicalAssessments     StudentTechnicalAssessment[]
+  levelHistory             StudentLevelHistory[]
 
   @@map("students")
   @@index([categoryId, levelId])
@@ -492,6 +500,7 @@ model TeacherCategory {
   teacher    Teacher  @relation(fields: [teacherId], references: [id])
   category   Category @relation(fields: [categoryId], references: [id])
 
+  @@unique([teacherId, categoryId])
   @@map("teacher_categories")
 }
 
@@ -503,6 +512,7 @@ model ClassCategory {
   swimmingClass SwimmingClass @relation(fields: [classId], references: [id])
   category   Category      @relation(fields: [categoryId], references: [id])
 
+  @@unique([classId, categoryId])
   @@map("class_categories")
 }
 
@@ -515,6 +525,7 @@ model ClassSchedule {
   createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   swimmingClass SwimmingClass @relation(fields: [classId], references: [id])
 
+  @@unique([classId, dayOfWeek, startTime, endTime])
   @@map("class_schedules")
 }
 
@@ -537,7 +548,136 @@ model ClassTeacher {
   swimmingClass SwimmingClass @relation(fields: [classId], references: [id])
   teacher       Teacher       @relation(fields: [teacherId], references: [id])
 
+  @@unique([classId, teacherId])
   @@map("class_teachers")
   @@index([classId, role])
   @@index([teacherId])
+}
+
+/*
+ * Assessment history is append-friendly: a student's physical measurements and
+ * technical evaluation scores change over time and must not be stored on Student.
+ * All anthropometric measurements use cm or kg, never mixed units or empty strings.
+ * BMI and body proportions are derived values; do not persist them as primary facts.
+ *
+ * The first Neon baseline will require reviewed SQL CHECK constraints for positive
+ * measurements and score ranges. Prisma does not describe CHECK constraints.
+ */
+model AnthropometricAssessment {
+  id                  String    @id @default(uuid()) @db.Uuid
+  studentId           String    @map("student_id") @db.Uuid
+  measuredOn          DateTime  @map("measured_on") @db.Date
+  heightCm            Decimal?  @map("height_cm") @db.Decimal(6, 2)
+  bodyMassKg          Decimal?  @map("body_mass_kg") @db.Decimal(6, 2)
+  armSpanCm           Decimal?  @map("arm_span_cm") @db.Decimal(6, 2)
+  legLengthCm         Decimal?  @map("leg_length_cm") @db.Decimal(6, 2)
+  footLengthCm        Decimal?  @map("foot_length_cm") @db.Decimal(6, 2)
+  handLengthCm        Decimal?  @map("hand_length_cm") @db.Decimal(6, 2)
+  trunkLengthCm       Decimal?  @map("trunk_length_cm") @db.Decimal(6, 2)
+  measurementMethod   String?   @map("measurement_method") @db.VarChar(120)
+  notes               String?
+  assessorTeacherId   String?   @map("assessor_teacher_id") @db.Uuid
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  student             Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  assessor            Teacher?  @relation("AnthropometricAssessor", fields: [assessorTeacherId], references: [id], onDelete: SetNull)
+
+  @@map("anthropometric_assessments")
+  @@index([studentId, measuredOn])
+  @@index([assessorTeacherId])
+}
+
+// Templates are versioned, so existing assessments preserve their rubric.
+model TechnicalAssessmentTemplate {
+  id          String                         @id @default(uuid()) @db.Uuid
+  name        String
+  version     Int                            @default(1)
+  description String?
+  isActive    Boolean                        @default(true) @map("is_active")
+  createdAt   DateTime                       @default(now()) @map("created_at") @db.Timestamptz(6)
+  criteria    TechnicalAssessmentCriterion[]
+  assessments StudentTechnicalAssessment[]
+
+  @@unique([name, version])
+  @@map("technical_assessment_templates")
+}
+
+model TechnicalAssessmentCriterion {
+  id          String                       @id @default(uuid()) @db.Uuid
+  templateId  String                       @map("template_id") @db.Uuid
+  code        String                       @db.VarChar(64)
+  name        String
+  description String?
+  style       SwimmingStyle?
+  minScore    Int                          @default(0) @map("min_score")
+  maxScore    Int                          @default(5) @map("max_score")
+  sortOrder   Int                          @default(0) @map("sort_order")
+  template    TechnicalAssessmentTemplate  @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  scores      TechnicalAssessmentScore[]
+
+  @@unique([id, templateId])
+  @@unique([templateId, code])
+  @@index([templateId, sortOrder])
+  @@map("technical_assessment_criteria")
+}
+
+model StudentTechnicalAssessment {
+  id                String                      @id @default(uuid()) @db.Uuid
+  studentId         String                      @map("student_id") @db.Uuid
+  templateId        String                      @map("template_id") @db.Uuid
+  assessedOn        DateTime                    @map("assessed_on") @db.Date
+  completedAt       DateTime?                   @map("completed_at") @db.Timestamptz(6)
+  assessorTeacherId String?                     @map("assessor_teacher_id") @db.Uuid
+  notes             String?
+  createdAt         DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime                    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  student           Student                     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  template          TechnicalAssessmentTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  assessor          Teacher?                    @relation("TechnicalAssessor", fields: [assessorTeacherId], references: [id], onDelete: SetNull)
+  scores            TechnicalAssessmentScore[]
+
+  // The pair allows composite FKs on TechnicalAssessmentScore to prevent
+  // attaching a score for a criterion from an unrelated template.
+  @@unique([id, templateId])
+  @@index([studentId, assessedOn])
+  @@index([templateId, assessedOn])
+  @@index([assessorTeacherId])
+  @@map("student_technical_assessments")
+}
+
+model TechnicalAssessmentScore {
+  id           String                       @id @default(uuid()) @db.Uuid
+  assessmentId String                       @map("assessment_id") @db.Uuid
+  templateId   String                       @map("template_id") @db.Uuid
+  criterionId  String                       @map("criterion_id") @db.Uuid
+  score        Decimal?                     @db.Decimal(5, 2)
+  notes        String?
+  createdAt    DateTime                     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime                     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  assessment   StudentTechnicalAssessment   @relation(fields: [assessmentId, templateId], references: [id, templateId], onDelete: Cascade, onUpdate: NoAction)
+  criterion    TechnicalAssessmentCriterion @relation(fields: [criterionId, templateId], references: [id, templateId], onDelete: Restrict, onUpdate: NoAction)
+
+  @@unique([assessmentId, criterionId])
+  @@index([criterionId, templateId])
+  @@map("technical_assessment_scores")
+}
+
+model StudentLevelHistory {
+  id                 String    @id @default(uuid()) @db.Uuid
+  studentId          String    @map("student_id") @db.Uuid
+  previousLevelId    String?   @map("previous_level_id") @db.Uuid
+  nextLevelId        String    @map("next_level_id") @db.Uuid
+  effectiveOn        DateTime  @map("effective_on") @db.Date
+  assessorTeacherId  String?   @map("assessor_teacher_id") @db.Uuid
+  notes              String?
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  student            Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  previousLevel      Level?    @relation("PreviousStudentLevel", fields: [previousLevelId], references: [id], onDelete: Restrict)
+  nextLevel          Level     @relation("NewStudentLevel", fields: [nextLevelId], references: [id], onDelete: Restrict)
+  assessor           Teacher?  @relation("LevelChangeAssessor", fields: [assessorTeacherId], references: [id], onDelete: SetNull)
+
+  @@index([studentId, effectiveOn])
+  @@index([nextLevelId])
+  @@index([assessorTeacherId])
+  @@map("student_level_history")
 }
