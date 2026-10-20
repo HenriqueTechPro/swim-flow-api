@@ -40,6 +40,7 @@ import { TeacherAttendanceScopeGuard } from './teacher-attendance-scope.guard';
     JwtAuthGuard,
     RolesGuard,
     PermissionsGuard,
+    TeacherAttendanceScopeGuard,
     PublicAuthRateLimitGuard,
     TrustedOriginGuard,
     SupabaseAuthService,
