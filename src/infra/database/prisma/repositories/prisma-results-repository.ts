@@ -165,6 +165,12 @@ function buildWhere(params?: ListResultsRepositoryParams): ResultWhere {
   if (p.style && !style) return { pool: null, openWater: null };
   if (p.resultStatus && !status) return { pool: null, openWater: null };
 
+  if (p.poolLengthMeters !== undefined) {
+    if (!Number.isFinite(p.poolLengthMeters) || p.poolLengthMeters <= 0)
+      throw new AppError(422, 'Invalid poolLengthMeters filter');
+    if (pool) pool.poolLengthMeters = p.poolLengthMeters;
+    openWater = null;
+  }
   if (p.courseType) {
     const value = p.courseType.trim();
     if (!['Piscina Curta', 'Piscina Longa', 'Piscina Curta (25m)', 'Piscina Longa (50m)'].includes(value))
@@ -405,7 +411,7 @@ export class PrismaResultsRepository implements ResultsRepository {
     // Do not plot incomparable events as if they were the same stroke/distance.
     if (
       params?.discipline === 'Aguas Abertas' ||
-      !params?.style || !params.distance || !params.courseType ||
+      !params?.style || !params.distance || (!params.courseType && !params.poolLengthMeters) ||
       (params.eventFormat && params.eventFormat !== 'Prova Individual')
     ) return empty;
     const { pool } = buildWhere({
@@ -449,7 +455,7 @@ export class PrismaResultsRepository implements ResultsRepository {
     // A water-body label (Mar/Rio/etc.) is NOT enough to compare open-water routes.
     if (input.discipline !== 'Piscina' || input.eventFormat !== 'Prova Individual') return [];
     const { pool } = buildWhere({ ...input, resultStatus: 'Classificado' });
-    if (!pool || !input.courseType) return [];
+    if (!pool || (!input.courseType && !input.poolLengthMeters)) return [];
     const rows = await this.prisma.poolResult.findMany({
       where: { AND: [pool, { status: 'CLASSIFIED', format: 'INDIVIDUAL', durationMs: { gt: 0 } }] },
       include: resultStudentInclude,
