@@ -23,6 +23,7 @@ export interface StudentReferenceOption {
 export interface StudentReferenceData {
   categories: StudentReferenceOption[];
   levels: StudentReferenceOption[];
+  activeSeasonYear?: number;
 }
 
 export interface ListStudentsRepositoryParams extends PaginationParams {
