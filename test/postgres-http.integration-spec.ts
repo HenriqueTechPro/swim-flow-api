@@ -134,6 +134,7 @@ describe('NestJS HTTP + actual Prisma repositories + PostgreSQL 16 (disposable)'
 
   it('denies anonymous requests and denies teachers administrative access using real persisted roles', async () => {
     await request(app.getHttpServer()).get('/api/students').expect(401);
+    await request(app.getHttpServer()).get('/api/public/results').expect(401);
     await asTeacher(request(app.getHttpServer()).get('/api/parents')).expect(403);
     await asTeacher(request(app.getHttpServer()).get('/api/results')).expect(403);
     await asTeacher(request(app.getHttpServer()).get('/api/ex-students')).expect(403);
@@ -266,6 +267,25 @@ describe('NestJS HTTP + actual Prisma repositories + PostgreSQL 16 (disposable)'
         date: '2026-10-19', resultStatus: 'Classificado',
       }).expect(400);
     expect(await prisma.poolResult.count({ where: { studentId } })).toBe(1);
+  });
+
+  it('revokes teacher visibility immediately after the identity link is removed', async () => {
+    const before = await asTeacher(request(app.getHttpServer())
+      .get('/api/students?search=CI%20Athlete%20transferred')).expect(200);
+    expect(before.body.data.some((row: { id: string }) => row.id === studentId)).toBe(true);
+
+    const updated = await prisma.teacher.updateMany({
+      where: { profileId: teacherProfileId },
+      data: { profileId: null },
+    });
+    expect(updated.count).toBe(1);
+
+    const after = await asTeacher(request(app.getHttpServer())
+      .get('/api/students?search=CI%20Athlete%20transferred')).expect(200);
+    expect(after.body.data.some((row: { id: string }) => row.id === studentId)).toBe(false);
+
+    await asTeacher(request(app.getHttpServer())
+      .get('/api/attendance?classId=' + classB)).expect(403);
   });
 
   it('preserves departure history across admin archiving/reactivation over HTTP', async () => {
