@@ -52,6 +52,14 @@ jobs:
         run: npm run prisma:migrate:deploy
       - name: Verify concrete SQL constraints and nullability
         run: node node_modules/prisma/build/index.js db execute --file test/sql/neon-baseline-verification.sql --schema prisma/schema.prisma
+      - name: Exercise HTTP and Prisma integration on the same disposable PostgreSQL
+        env:
+          SWIM_FLOW_TEST_DB: 'true'
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: ci-placeholder
+          JWT_ACCESS_SECRET: ci-only-secret-must-be-at-least-32-characters
+          SWAGGER_ENABLED: 'false'
+        run: npm run test:db
       - name: Check migration status
         run: node node_modules/prisma/build/index.js migrate status --schema prisma/schema.prisma
       - name: Compare deployed Prisma-managed schema with current schema
