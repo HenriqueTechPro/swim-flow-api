@@ -1,5 +1,4 @@
 import type { Student } from '@/domain/students/enterprise/entities/student';
-import { REFERENCE_YEAR } from '@/shared/lib/categories';
 import {
   formatCategoryLabel,
   formatEntityStatus,
@@ -21,10 +20,8 @@ export interface PrismaStudentRecord {
   studentClasses: Array<{ classId: string }>;
 }
 
-const getBirthYearFromDate = (birthDate?: Date | null) => {
-  if (!birthDate) return REFERENCE_YEAR;
-  return birthDate.getUTCFullYear();
-};
+const getBirthYearFromDate = (birthDate?: Date | null): number | null =>
+  birthDate ? birthDate.getUTCFullYear() : null;
 
 export class PrismaStudentMapper {
   static toDomain(this: void, student: PrismaStudentRecord): Student {
