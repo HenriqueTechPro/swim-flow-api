@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { EntityStatus, Prisma, SwimmingCategory } from '@prisma/client';
 import { CacheRepository } from '@/infra/cache/cache-repository';
 import {
   buildPaginatedCacheKey,
@@ -49,6 +50,17 @@ export class PrismaStudentsRepository implements StudentsRepository {
     const normalizedSearch = params?.search?.trim().toLowerCase() || '';
     const normalizedCategory = params?.category?.trim() || '';
     const normalizedStatus = params?.status?.trim() || '';
+    const categoryName = normalizedCategory
+      ? Object.values(SwimmingCategory).find((name) => name === parseCategoryValue(normalizedCategory))
+      : undefined;
+    const statusName = normalizedStatus
+      ? Object.values(EntityStatus).find((name) =>
+          name === (normalizedStatus === 'Licença' ? 'Licenca' : normalizedStatus),
+        )
+      : undefined;
+    if ((normalizedCategory && !categoryName) || (normalizedStatus && !statusName)) {
+      return createPaginatedResult([], 0, { page, perPage });
+    }
     const cacheKey = `${buildPaginatedCacheKey('students', page, perPage)}:${normalizedSearch}:${normalizedCategory}:${normalizedStatus}`;
 
     return rememberPaginatedResult(
@@ -57,9 +69,9 @@ export class PrismaStudentsRepository implements StudentsRepository {
       this.env.cacheTtlSeconds,
       async () => {
         const skip = (page - 1) * perPage;
-        const where = {
-          ...(normalizedCategory ? { category: { name: parseCategoryValue(normalizedCategory) as never } } : {}),
-          ...(normalizedStatus ? { status: normalizedStatus as never } : {}),
+        const where: Prisma.StudentWhereInput = {
+          ...(categoryName ? { category: { name: categoryName } } : {}),
+          ...(statusName ? { status: statusName } : {}),
           ...(normalizedSearch
             ? {
                 OR: [
