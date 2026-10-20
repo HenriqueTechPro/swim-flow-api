@@ -35,7 +35,7 @@ import { ParentPresenter } from '../presenters/parent.presenter';
 @ApiBearerAuth('api-bearer')
 @Controller('/api/parents')
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
-@Roles('admin', 'teacher')
+@Roles('admin')
 export class ParentsController {
   constructor(
     private readonly listParents: ListParentsUseCase,
