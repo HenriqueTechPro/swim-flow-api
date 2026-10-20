@@ -16,7 +16,7 @@ import {
   type UpdateExStudentRepositoryInput,
 } from '@/domain/ex-students/application/repositories/ex-students-repository';
 import { AppError } from '@/shared/errors/app-error';
-import { REFERENCE_YEAR } from '@/shared/lib/categories';
+import { formatCategoryLabel } from '@/shared/utils/domain-formatters';
 import type { ExStudentExitReason as PrismaExStudentExitReason } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import {
@@ -26,10 +26,8 @@ import {
   toPrismaExStudentExitReason,
 } from '../mappers/prisma-ex-student-mapper';
 
-const getBirthYearFromDate = (birthDate?: Date | null) => {
-  if (!birthDate) return REFERENCE_YEAR;
-  return Number(birthDate.toISOString().slice(0, 4));
-};
+const getBirthYearFromDate = (birthDate?: Date | null): number | null =>
+  birthDate ? birthDate.getUTCFullYear() : null;
 
 const normalizeSearchTerm = (value: string) =>
   value
@@ -159,6 +157,8 @@ export class PrismaExStudentsRepository implements ExStudentsRepository {
         parent: {
           select: { name: true },
         },
+        category: { select: { name: true } },
+        level: { select: { name: true } },
       },
     });
 
@@ -167,8 +167,8 @@ export class PrismaExStudentsRepository implements ExStudentsRepository {
     }
 
     const birthYear = getBirthYearFromDate(student.birthDate);
-    const categorySnapshot = student.categoryLabel || 'Nao Informada';
-    const levelSnapshot = student.levelLabel || 'Iniciante';
+    const categorySnapshot = formatCategoryLabel(student.category.name);
+    const levelSnapshot = student.level.name;
     const responsible = student.parent?.name || '';
 
     const exStudent = await this.prisma.$transaction(async (tx) => {
