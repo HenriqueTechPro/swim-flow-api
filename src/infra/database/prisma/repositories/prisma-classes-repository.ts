@@ -160,7 +160,8 @@ export class PrismaClassesRepository implements ClassesRepository {
     if (categoryNames.length > 0 && categoryIds.length === 0) {
       return createPaginatedResult([], 0, { page, perPage });
     }
-    const cacheKey = `${buildPaginatedCacheKey('classes', page, perPage)}:${search ?? ''}:${category ?? ''}:${day ?? ''}:${status ?? ''}:${poolId ?? ''}`;
+    const teacherProfileId = params?.teacherProfileId;
+    const cacheKey = `${buildPaginatedCacheKey('classes', page, perPage)}:${search ?? ''}:${category ?? ''}:${day ?? ''}:${status ?? ''}:${poolId ?? ''}:teacher:${teacherProfileId ?? 'admin'}`;
 
     return rememberPaginatedResult(
       this.cache,
@@ -169,6 +170,11 @@ export class PrismaClassesRepository implements ClassesRepository {
       async () => {
         const skip = (page - 1) * perPage;
         const where = {
+          ...(teacherProfileId ? {
+            classTeachers: { some: {
+              teacher: { profileId: teacherProfileId, status: 'Ativo' as const },
+            } },
+          } : {}),
           ...(categoryIds.length > 0
             ? {
                 classCategories: {
