@@ -154,8 +154,10 @@ export class PrismaExStudentsRepository implements ExStudentsRepository {
     const student = await this.prisma.student.findUnique({
       where: { id: input.studentId },
       include: {
-        parent: {
-          select: { name: true },
+        guardians: {
+          where: { isPrimary: true },
+          select: { parentId: true, parent: { select: { name: true } } },
+          take: 1,
         },
         category: { select: { name: true } },
         level: { select: { name: true } },
@@ -169,7 +171,8 @@ export class PrismaExStudentsRepository implements ExStudentsRepository {
     const birthYear = getBirthYearFromDate(student.birthDate);
     const categorySnapshot = formatCategoryLabel(student.category.name);
     const levelSnapshot = student.level.name;
-    const responsible = student.parent?.name || '';
+    const primaryGuardian = student.guardians[0];
+    const responsible = primaryGuardian?.parent.name ?? '';
 
     const exStudent = await this.prisma.$transaction(async (tx) => {
       const created = await tx.exStudent.create({
@@ -184,7 +187,7 @@ export class PrismaExStudentsRepository implements ExStudentsRepository {
           levelSnapshot,
           responsible,
           responsibleSnapshot: responsible,
-          parentId: student.parentId || null,
+          parentId: primaryGuardian?.parentId ?? null,
           phone: student.phone,
           exitDateAt: new Date(input.exitDate),
           exitReason: toPrismaExStudentExitReason(input.exitReason),

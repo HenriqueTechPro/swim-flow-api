@@ -13,9 +13,8 @@ export interface PrismaParentRecord {
   emergencyContact: string;
   emergencyPhone: string;
   status: string;
-  students: Array<{
-    id: string;
-    name: string;
+  studentGuardians: Array<{
+    student: { id: string; name: string };
   }>;
 }
 
@@ -29,8 +28,8 @@ export class PrismaParentMapper {
       birthDate: parent.birthDate
         ? parent.birthDate.toISOString().slice(0, 10)
         : undefined,
-      childrenIds: parent.students.map((student) => student.id),
-      children: parent.students.map((student) => student.name),
+      childrenIds: parent.studentGuardians.map((link) => link.student.id),
+      children: parent.studentGuardians.map((link) => link.student.name),
       phone: parent.phone,
       email: parent.email,
       profession: parent.profession,

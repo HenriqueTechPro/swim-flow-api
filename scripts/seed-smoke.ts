@@ -269,14 +269,10 @@ const main = async () => {
       gender: 'Masculino',
       birthDate: new Date(`${youngerBirthYear}-05-12`),
       categoryId: youngerCategoryId,
-      categoryLabel: youngerCategoryName,
       levelId: inicianteLevelId,
-      levelLabel: 'Iniciante',
-      parentId: parent.id,
       phone: parent.phone,
       status: 'Ativo',
       achievements: 1,
-      lastCompetition: `${SMOKE_PREFIX} Festival Escolar`,
       photo: null,
     },
   })
@@ -287,16 +283,19 @@ const main = async () => {
       gender: 'Feminino',
       birthDate: new Date(`${olderBirthYear}-08-21`),
       categoryId: olderCategoryId,
-      categoryLabel: olderCategoryName,
       levelId: avancadoLevelId,
-      levelLabel: 'Avançado',
-      parentId: parent.id,
       phone: parent.phone,
       status: 'Ativo',
       achievements: 3,
-      lastCompetition: `${SMOKE_PREFIX} Travessia`,
       photo: null,
     },
+  })
+
+  await prisma.studentGuardian.createMany({
+    data: [
+      { studentId: studentOne.id, parentId: parent.id, isPrimary: true },
+      { studentId: studentTwo.id, parentId: parent.id, isPrimary: true },
+    ],
   })
 
   const swimClass = await prisma.swimmingClass.create({

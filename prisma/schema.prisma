@@ -80,6 +80,16 @@ enum SeasonStatus {
   @@map("season_status")
 }
 
+enum GuardianRelationship {
+  MOTHER
+  FATHER
+  GRANDPARENT
+  LEGAL_GUARDIAN
+  OTHER
+
+  @@map("guardian_relationship")
+}
+
 enum CoachRole {
   head_coach
   assistant_coach
@@ -231,6 +241,7 @@ model Profile {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
   authSessions AuthSession[]
+  teacher      Teacher? @relation("TeacherAccount")
 
   @@map("profiles")
 }
@@ -339,7 +350,7 @@ model Parent {
   createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime           @default(now()) @map("updated_at") @db.Timestamptz(6)
   exStudents       ExStudent[]
-  students         Student[]
+  studentGuardians StudentGuardian[]
 
   @@map("parents")
 }
@@ -408,6 +419,8 @@ model Teacher {
   createdAt             DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime               @default(now()) @map("updated_at") @db.Timestamptz(6)
   cpf                   String?
+  profileId             String?                @unique @map("profile_id") @db.Uuid
+  profile               Profile?               @relation("TeacherAccount", fields: [profileId], references: [id], onDelete: SetNull)
   teacherCategories     TeacherCategory[]
   teacherCertifications TeacherCertification[]
   classTeachers         ClassTeacher[]
@@ -426,19 +439,15 @@ model Student {
   birthDate       DateTime?    @map("birth_date") @db.Date
   categoryId      String       @map("category_id") @db.Uuid
   levelId         String       @map("level_id") @db.Uuid
-  parentId        String?      @map("parent_id") @db.Uuid
   phone           String       @default("")
   status          EntityStatus @default(Ativo)
   achievements    Int          @default(0)
   photo           String?
   createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime     @default(now()) @map("updated_at") @db.Timestamptz(6)
-  categoryLabel   String?      @map("category")
-  levelLabel      String?      @map("level")
-  lastCompetition String       @default("") @map("last_competition")
   category        Category     @relation(fields: [categoryId], references: [id])
   level           Level        @relation(fields: [levelId], references: [id])
-  parent          Parent?      @relation(fields: [parentId], references: [id])
+  guardians       StudentGuardian[]
   exStudents      ExStudent[]
   poolResults     PoolResult[]
   openWaterResults OpenWaterResult[]
@@ -451,8 +460,28 @@ model Student {
 
   @@map("students")
   @@index([categoryId, levelId])
-  @@index([parentId])
   @@index([status, createdAt])
+}
+
+// A swimmer can have multiple authorized adults. Only one link may be marked
+// isPrimary=true per swimmer (enforced by a partial UNIQUE index in baseline SQL).
+// The HTTP parentId property is a projection of this relation, not stored twice.
+model StudentGuardian {
+  id                String               @id @default(uuid()) @db.Uuid
+  studentId         String               @map("student_id") @db.Uuid
+  parentId          String               @map("parent_id") @db.Uuid
+  isPrimary         Boolean              @default(false) @map("is_primary")
+  relationship      GuardianRelationship @default(OTHER)
+  canReceiveUpdates Boolean              @default(false) @map("can_receive_updates")
+  createdAt         DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  student           Student              @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  parent            Parent               @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, parentId])
+  @@index([parentId, isPrimary])
+  @@index([studentId, isPrimary])
+  @@map("student_guardians")
 }
 
 model SwimmingClass {
