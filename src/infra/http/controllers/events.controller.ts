@@ -35,7 +35,7 @@ import { EventPresenter } from '../presenters/event.presenter';
 @ApiBearerAuth('api-bearer')
 @Controller('/api/events')
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
-@Roles('admin', 'teacher')
+@Roles('admin')
 export class EventsController {
   constructor(
     private readonly listEvents: ListEventsUseCase,
