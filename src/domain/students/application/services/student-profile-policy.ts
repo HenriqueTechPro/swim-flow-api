@@ -55,6 +55,7 @@ export class StudentProfilePolicy {
       ...input,
       categoryId: category.id,
       levelId: level.id,
+      seasonId: referenceData.activeSeasonId,
     };
   }
 }
