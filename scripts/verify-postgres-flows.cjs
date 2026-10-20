@@ -31,7 +31,7 @@ async function run() {
   const category = await db.category.create({ data: { name: 'Mirim_1' } });
   const level = await db.level.create({ data: { name: 'Iniciante' } });
   const season = await db.season.create({
-    data: { year: 2026, label: 'CI 2026', startsOn: new Date('2026-01-01'), endsOn: new Date('2026-12-31'), status: 'ACTIVE' },
+    data: { year: 2026, label: 'CI 2026', startsOn: new Date('2026-01-01'), endsOn: new Date('2026-12-31'), status: 'PLANNED' },
   });
   const pool = await db.pool.create({ data: { name: 'Piscina CI', lengthMeters: 25 } });
   const classA = await db.swimmingClass.create({ data: { name: 'Turma A', categoryId: category.id, poolId: pool.id } });
