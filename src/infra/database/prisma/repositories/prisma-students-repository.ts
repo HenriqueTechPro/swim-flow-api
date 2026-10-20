@@ -245,6 +245,20 @@ export class PrismaStudentsRepository implements StudentsRepository {
       }
 
       if (
+        classAssignmentPlan.shouldPromoteExistingLink &&
+        classAssignmentPlan.nextClassId
+      ) {
+        await tx.studentClass.updateMany({
+          where: {
+            studentId: id,
+            classId: classAssignmentPlan.nextClassId,
+            toDate: null,
+          },
+          data: { isPrimary: true },
+        });
+      }
+
+      if (
         classAssignmentPlan.shouldCreateNextClassLink &&
         classAssignmentPlan.nextClassId
       ) {
