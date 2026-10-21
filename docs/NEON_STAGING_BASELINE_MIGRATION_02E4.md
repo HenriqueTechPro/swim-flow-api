@@ -16,7 +16,7 @@
 
 ## Por que não executar a baseline como SQL direto
 O arquivo `prisma/migrations/20261020000000_init_neon/migration.sql`
-contém **32 CREATE TABLE**, **25 CREATE TYPE** e constraints/índices
+contém **31 CREATE TABLE**, **24 CREATE TYPE** e constraints/índices
 customizados. Aplicar isso com `run_sql` no console do Neon não registra
 automaticamente o histórico da migração versionada em
 `public._prisma_migrations`. O deploy tem que usar
@@ -59,8 +59,8 @@ O executor interrompe antes de migrar se:
 
 Quando tudo estiver correto, invoca a CLI **Prisma 6 versionada** com
 `migrate deploy`, uma única vez e sem comando SQL interpolado, e confere:
-- 32 tabelas de aplicação;
-- 25 tipos de enumeração;
+- 31 tabelas de aplicação (a tabela `_prisma_migrations` é adicional);
+- 24 tipos de enumeração;
 - uma única entrada concluída em `public._prisma_migrations`;
 - `prisma migrate status` sem migrações pendentes.
 
