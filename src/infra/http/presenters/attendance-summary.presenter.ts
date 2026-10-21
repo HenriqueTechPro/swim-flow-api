@@ -40,7 +40,7 @@ export class AttendanceSummaryPresenter {
     };
   }
 
-  private static studentToHTTP(studentSummary: AttendanceStudentSummary) {
+  private static studentToHTTP(this: void, studentSummary: AttendanceStudentSummary) {
     return {
       studentId: studentSummary.studentId,
       totalClasses: studentSummary.totalClasses,
