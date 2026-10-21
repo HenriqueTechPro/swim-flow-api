@@ -62,6 +62,13 @@ test('pins project, branch, specific direct/pooled hosts, database and TLS', () 
 
 test('checks exact reviewed migration bytes and inventory without Neon access', () => {
   assert.equal(verifyFrozenBaseline(), true);
+  const { readFileSync } = require('node:fs');
+  const { resolve } = require('node:path');
+  const sql = readFileSync(resolve(__dirname, '../prisma/migrations/20261020000000_init_neon/migration.sql'), 'utf8');
+  assert.equal((sql.match(/^CREATE TABLE "/gm) || []).length, 31,
+    'Count only application CREATE TABLE statements in the frozen baseline');
+  assert.equal((sql.match(/^CREATE TYPE "/gm) || []).length, 24,
+    'Count actual CREATE TYPE statements in the frozen baseline');
 });
 
 test('dry-run unit test guarantees the order: baseline, read-only check, Prisma deploy, post checks', async () => {
