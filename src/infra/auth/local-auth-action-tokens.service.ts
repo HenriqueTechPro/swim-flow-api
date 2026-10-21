@@ -111,7 +111,22 @@ export class LocalAuthActionTokensService {
     const tokenHash = digestToken(token);
 
     return this.prisma.$transaction(async (tx) => {
+      // Read the token without locking it, then acquire the identity lock.
+      // Issuance also locks identity first: consistent order prevents deadlocks.
+      const action = await tx.localAuthActionToken.findUnique({
+        where: { tokenHash },
+        select: { userId: true },
+      });
+      if (!action) {
+        throw new UnauthorizedException(invalidAction);
+      }
+      await tx.$queryRaw`
+        SELECT "user_id" FROM "local_auth_identities"
+        WHERE "user_id" = ${action.userId}::uuid FOR UPDATE
+      `;
       const now = new Date();
+      // Re-check the token after acquiring the lock; reissuance may have
+      // consumed it while this transaction waited.
       const consumed = await tx.localAuthActionToken.updateMany({
         where: {
           tokenHash,
@@ -122,13 +137,6 @@ export class LocalAuthActionTokensService {
         data: { usedAt: now },
       });
       if (consumed.count !== 1) {
-        throw new UnauthorizedException(invalidAction);
-      }
-      const action = await tx.localAuthActionToken.findUnique({
-        where: { tokenHash },
-        select: { userId: true },
-      });
-      if (!action) {
         throw new UnauthorizedException(invalidAction);
       }
 
