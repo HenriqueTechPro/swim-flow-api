@@ -270,7 +270,7 @@ export class InMemoryResultsRepository implements ResultsRepository {
 
     focused.forEach((item) => {
       const monthKey = item.date.slice(0, 7);
-      const monthGroup = grouped.get(monthKey) ?? new Map();
+      const monthGroup = grouped.get(monthKey) ?? new Map<string, { studentId: string; studentName: string; bestTimeSeconds: number }>();
       const existing = monthGroup.get(item.studentId);
 
       if (!existing || item.timeInSeconds < existing.bestTimeSeconds) {
