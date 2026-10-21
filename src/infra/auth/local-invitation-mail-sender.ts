@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  ServiceUnavailableException,
-} from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 
 export interface InvitationEmail {
   to: string;
@@ -25,14 +22,18 @@ export class ResendInvitationMailSender extends LocalInvitationMailSender {
   private getConfiguration(): SenderConfig {
     // Intentionally OFF until the frontend accepts locally-issued invitations.
     if (process.env.SWIMFLOW_LOCAL_INVITES_ENABLED !== 'true') {
-      throw new ServiceUnavailableException('Local invitations are not enabled');
+      throw new ServiceUnavailableException(
+        'Local invitations are not enabled',
+      );
     }
 
     const apiKey = process.env.RESEND_API_KEY;
     const from = process.env.RESEND_FROM_EMAIL;
     const originValue = process.env.SWIMFLOW_AUTH_APP_ORIGIN;
     if (!apiKey || !from || !originValue) {
-      throw new ServiceUnavailableException('Invitation delivery is not configured');
+      throw new ServiceUnavailableException(
+        'Invitation delivery is not configured',
+      );
     }
     if (!/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(from)) {
       throw new ServiceUnavailableException('Invalid sender configuration');
@@ -60,7 +61,11 @@ export class ResendInvitationMailSender extends LocalInvitationMailSender {
     this.getConfiguration();
   }
 
-  async sendInvitation({ to, token, expiresAt }: InvitationEmail): Promise<void> {
+  async sendInvitation({
+    to,
+    token,
+    expiresAt,
+  }: InvitationEmail): Promise<void> {
     const config = this.getConfiguration();
     // The token stays in the URL fragment and is never logged/server-rendered.
     // Do not turn on the feature flag until this route is implemented.
@@ -73,8 +78,7 @@ export class ResendInvitationMailSender extends LocalInvitationMailSender {
         method: 'POST',
         signal: AbortSignal.timeout(8000),
         headers: {
-          Authorization: `Bearer ${config.apiKey}`,
-          'Content-Type': 'application/json',
+          Authorization: `***          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           from: config.from,
