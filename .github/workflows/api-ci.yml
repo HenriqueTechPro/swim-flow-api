@@ -46,10 +46,6 @@ jobs:
         run: npm run neon:staging:migrate:test
       - name: Test incremental formatting file selection
         run: npm run format:changed:test
-      - name: Temporary formatter diagnostics (remove before merge)
-        run: |
-          node node_modules/prettier/bin/prettier.cjs --write src/infra/auth/local-password-identity.service.ts src/infra/auth/local-password-identity.service.spec.ts
-          node -e "const fs=require('fs');for(const f of ['src/infra/auth/local-password-identity.service.ts','src/infra/auth/local-password-identity.service.spec.ts']){process.stdout.write('SWIMFORMAT-BEGIN:'+f+'\\n'+fs.readFileSync(f,'utf8')+'SWIMFORMAT-END:'+f+'\\n')}"
       - name: Enforce Prettier only on TypeScript changed by this PR
         if: github.event_name == 'pull_request'
         env:
