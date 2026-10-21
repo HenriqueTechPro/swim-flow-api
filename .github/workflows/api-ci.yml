@@ -36,6 +36,8 @@ jobs:
       - name: Type-aware semantic lint (without legacy formatting errors)
         run: |
           npm run lint:check -- --rule 'prettier/prettier: off'
+      - name: Test Neon preflight without live credentials
+        run: npm run neon:preflight:test
       - name: Test incremental formatting file selection
         run: npm run format:changed:test
       - name: Enforce Prettier only on TypeScript changed by this PR

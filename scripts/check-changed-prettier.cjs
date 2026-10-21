@@ -28,7 +28,7 @@ function changedFiles(base, head) {
     'git',
     [
       'diff', '--name-only', '-z', '--diff-filter=ACMR',
-      base, head, '--', 'src', 'test', 'scripts',
+      `${base}...${head}`, '--', 'src', 'test', 'scripts',
     ],
     { encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 },
   );
