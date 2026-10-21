@@ -6,15 +6,9 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { createClient } from '@supabase/supabase-js';
-import { AuthDirectoryRepository } from '@/domain/auth/application/repositories/auth-directory-repository';
+import { AuthDirectoryRepository, type AuthIdentity } from '@/domain/auth/application/repositories/auth-directory-repository';
 import { EnvService } from '@/infra/env/env.service';
 import { normalizeCorsOrigin } from '@/infra/http/cors/cors.config';
-
-interface SupabaseIdentity {
-  id: string;
-  email: string;
-  fullName: string | null;
-}
 
 @Injectable()
 export class SupabaseAuthService extends AuthDirectoryRepository {
@@ -50,7 +44,7 @@ export class SupabaseAuthService extends AuthDirectoryRepository {
         typeof data.user.user_metadata?.full_name === 'string'
           ? data.user.user_metadata.full_name
           : null,
-    } satisfies SupabaseIdentity;
+    } satisfies AuthIdentity;
   }
 
   async getIdentityFromAccessToken(accessToken: string) {
@@ -78,7 +72,7 @@ export class SupabaseAuthService extends AuthDirectoryRepository {
         typeof data.user.user_metadata?.full_name === 'string'
           ? data.user.user_metadata.full_name
           : null,
-    } satisfies SupabaseIdentity;
+    } satisfies AuthIdentity;
   }
 
   async sendPasswordResetEmail(email: string, redirectTo: string) {
@@ -148,14 +142,14 @@ export class SupabaseAuthService extends AuthDirectoryRepository {
         typeof data.user.user_metadata?.full_name === 'string'
           ? data.user.user_metadata.full_name
           : null,
-    } satisfies SupabaseIdentity;
+    } satisfies AuthIdentity;
   }
 
   async inviteUserByEmail(input: {
     email: string;
     redirectTo: string;
     fullName?: string;
-  }): Promise<SupabaseIdentity> {
+  }): Promise<AuthIdentity> {
     this.assertAllowedRedirectTo(input.redirectTo);
 
     const serviceRoleKey = this.envService.supabaseServiceRoleKey;
@@ -188,7 +182,7 @@ export class SupabaseAuthService extends AuthDirectoryRepository {
         typeof data.user.user_metadata?.full_name === 'string'
           ? data.user.user_metadata.full_name
           : input.fullName?.trim() || null,
-    } satisfies SupabaseIdentity;
+    } satisfies AuthIdentity;
   }
 
   async listUsers() {

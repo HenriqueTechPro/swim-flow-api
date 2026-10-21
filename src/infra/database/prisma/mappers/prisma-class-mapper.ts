@@ -50,9 +50,6 @@ export interface PrismaClassRecord {
 const normalizeStudentStatus = (status: string): 'Ativo' | 'Inativo' =>
   formatEntityStatus(status) === 'Ativo' ? 'Ativo' : 'Inativo';
 
-const getBirthYearFromDate = (birthDate?: Date | null): number | null =>
-  birthDate ? birthDate.getUTCFullYear() : null;
-
 const formatTime = (value: Date) => value.toISOString().slice(11, 16);
 
 const mapRole = (

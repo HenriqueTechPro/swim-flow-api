@@ -32,16 +32,12 @@ describe('AppController (e2e)', () => {
       service: 'swim-flow-nest-api',
       dependency: 'postgresql',
     });
-    const prisma = app.get(PrismaService) as unknown as {
-      $queryRaw: jest.Mock;
-    };
+    const prisma = jest.mocked(app.get(PrismaService));
     expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
   });
 
   it('/health/ready returns safe 503 when PostgreSQL becomes unavailable, without breaking liveness', async () => {
-    const prisma = app.get(PrismaService) as unknown as {
-      $queryRaw: jest.Mock;
-    };
+    const prisma = jest.mocked(app.get(PrismaService));
     prisma.$queryRaw.mockRejectedValueOnce(
       new Error('postgresql://private-secret:password@database.example/swimflow'),
     );

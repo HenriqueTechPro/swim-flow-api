@@ -9,7 +9,6 @@ import {
   createPaginatedResult,
   normalizePaginationParams,
 } from '@/domain/shared/pagination/pagination-utils';
-import { sortGroupedCategories } from '@/shared/lib/categories';
 import { expandTeacherCategorySelection } from '@/shared/lib/teacher-categories';
 import {
   ClassesRepository,

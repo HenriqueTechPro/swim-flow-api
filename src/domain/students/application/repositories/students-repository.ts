@@ -1,7 +1,4 @@
-import type {
-  CreateStudentRequest,
-  UpdateStudentRequest,
-} from '../dtos/student-requests';
+import type { CreateStudentRequest } from '../dtos/student-requests';
 import type { Student } from '../../enterprise/entities/student';
 import type {
   PaginatedResult,

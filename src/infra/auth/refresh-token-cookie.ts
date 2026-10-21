@@ -77,7 +77,12 @@ export function getRefreshTokenFromRequest(
   request: Request,
   envService: EnvService,
 ) {
-  const cookieValue = request.cookies?.[envService.authRefreshCookieName];
+  const cookies: unknown = request.cookies;
+  if (cookies === null || typeof cookies !== 'object') return null;
+  const cookieValue: unknown = Reflect.get(
+    cookies,
+    envService.authRefreshCookieName,
+  );
   return typeof cookieValue === 'string' && cookieValue.length > 0
     ? cookieValue
     : null;

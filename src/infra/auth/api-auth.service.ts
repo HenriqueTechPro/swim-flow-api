@@ -18,7 +18,7 @@ import {
   generateRefreshToken,
   hashRefreshToken,
 } from './refresh-token.helpers';
-import { SupabaseAuthService } from './supabase-auth.service';
+import { AuthDirectoryRepository } from '@/domain/auth/application/repositories/auth-directory-repository';
 
 const unauthorizedAppAccessMessage =
   'User is not authorized for this application';
@@ -28,7 +28,7 @@ export class ApiAuthService extends AuthSessionManager {
   constructor(
     private readonly authSessionsRepository: AuthSessionsRepository,
     private readonly authProfilesRepository: AuthProfilesRepository,
-    private readonly supabaseAuthService: SupabaseAuthService,
+    private readonly authDirectory: AuthDirectoryRepository,
     private readonly jwtService: JwtService,
     private readonly envService: EnvService,
   ) {
@@ -36,7 +36,7 @@ export class ApiAuthService extends AuthSessionManager {
   }
 
   async login(input: LoginRequest): Promise<AuthSessionResult> {
-    const identity = await this.supabaseAuthService.signInWithPassword(
+    const identity = await this.authDirectory.signInWithPassword(
       input.email,
       input.password,
     );
@@ -50,7 +50,7 @@ export class ApiAuthService extends AuthSessionManager {
   async loginWithAccessToken(
     input: AccessTokenLoginRequest,
   ): Promise<AuthSessionResult> {
-    const identity = await this.supabaseAuthService.getIdentityFromAccessToken(
+    const identity = await this.authDirectory.getIdentityFromAccessToken(
       input.accessToken,
     );
 
@@ -63,7 +63,7 @@ export class ApiAuthService extends AuthSessionManager {
       if (this.isUnauthorizedAppAccessError(error)) {
         await Promise.allSettled([
           this.authSessionsRepository.revokeAllForUser(identity.id),
-          this.supabaseAuthService.deleteUser(identity.id),
+          this.authDirectory.deleteUser(identity.id),
         ]);
       }
 
@@ -138,7 +138,7 @@ export class ApiAuthService extends AuthSessionManager {
   }
 
   async requestPasswordReset(input: RequestPasswordResetRequest) {
-    await this.supabaseAuthService.sendPasswordResetEmail(
+    await this.authDirectory.sendPasswordResetEmail(
       input.email,
       input.redirectTo,
     );
@@ -147,7 +147,7 @@ export class ApiAuthService extends AuthSessionManager {
   async confirmPasswordReset(
     input: ConfirmPasswordResetRequest,
   ): Promise<AuthSessionResult> {
-    const identity = await this.supabaseAuthService.confirmPasswordReset({
+    const identity = await this.authDirectory.confirmPasswordReset({
       accessToken: input.accessToken,
       refreshToken: input.refreshToken,
       password: input.password,
@@ -173,7 +173,7 @@ export class ApiAuthService extends AuthSessionManager {
   }
 
   async inviteUser(input: InviteUserRequest) {
-    const invitedIdentity = await this.supabaseAuthService.inviteUserByEmail(input);
+    const invitedIdentity = await this.authDirectory.inviteUserByEmail(input);
 
     await this.authProfilesRepository.getOrCreate({
       userId: invitedIdentity.id,

@@ -23,7 +23,6 @@ import { retryRolledBackTransaction } from '../retry-transaction';
 import {
   EX_STUDENT_EXIT_REASON_LABELS,
   PrismaExStudentMapper,
-  type PrismaExStudentRecord,
   toPrismaExStudentExitReason,
 } from '../mappers/prisma-ex-student-mapper';
 
