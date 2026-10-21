@@ -35,7 +35,7 @@ function fakeDeps(snapshot = {}) {
     verify: async () => {
       calls.push('verify');
       return {
-        application_tables: 32, application_enums: 25,
+        application_tables: 31, application_enums: 24,
         applied_baseline: 1, total_migrations: 1,
       };
     },
@@ -67,7 +67,7 @@ test('checks exact reviewed migration bytes and inventory without Neon access', 
 test('dry-run unit test guarantees the order: baseline, read-only check, Prisma deploy, post checks', async () => {
   const deps = fakeDeps();
   assert.deepEqual(await executeStagingMigration(env, ['--apply'], deps), {
-    applicationTables: 32, applicationEnums: 25, prismaMigrations: 1,
+    applicationTables: 31, applicationEnums: 24, prismaMigrations: 1,
   });
   assert.deepEqual(deps.calls, [
     'frozen-baseline', 'generated-baseline',
@@ -108,14 +108,14 @@ test('failed post-deploy validation never reports success', async () => {
 
 test('post-deploy verification requires one completed baseline and expected schema', () => {
   assert.deepEqual(assertPostMigration({
-    application_tables: 32, application_enums: 25,
+    application_tables: 31, application_enums: 24,
     applied_baseline: 1, total_migrations: 1,
-  }), { applicationTables: 32, applicationEnums: 25, prismaMigrations: 1 });
+  }), { applicationTables: 31, applicationEnums: 24, prismaMigrations: 1 });
   for (const row of [
     null,
-    { application_tables: 32, application_enums: 25, applied_baseline: 0, total_migrations: 1 },
-    { application_tables: 32, application_enums: 25, applied_baseline: 1, total_migrations: 2 },
-    { application_tables: 32, application_enums: 24, applied_baseline: 1, total_migrations: 1 },
+    { application_tables: 31, application_enums: 24, applied_baseline: 0, total_migrations: 1 },
+    { application_tables: 31, application_enums: 24, applied_baseline: 1, total_migrations: 2 },
+    { application_tables: 31, application_enums: 23, applied_baseline: 1, total_migrations: 1 },
   ]) assert.throws(() => assertPostMigration(row), /Unexpected post-migration/);
   assert.match(POST_MIGRATION_QUERY, /_prisma_migrations/);
   assert.match(POST_MIGRATION_QUERY.trim(), /^SELECT/i);
