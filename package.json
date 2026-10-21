@@ -10,6 +10,8 @@
     "seed:smoke": "ts-node --transpile-only scripts/seed-smoke.ts",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format:changed": "node scripts/check-changed-prettier.cjs",
+    "format:changed:test": "node --test scripts/check-changed-prettier.test.cjs",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
