@@ -1,6 +1,10 @@
 'use strict';
 
 const assert = require('node:assert/strict');
+const os = require('node:os');
+const fs = require('node:fs');
+const path = require('node:path');
+const cp = require('node:child_process');
 const { test } = require('node:test');
 const {
   selectChangedTypeScriptFiles,
@@ -54,4 +58,35 @@ test('rejects missing, abbreviated or injected Git refs before executing command
 
 test('skips non-code paths without requiring a formatter invocation', () => {
   assert.deepEqual(selectChangedTypeScriptFiles('docs/review.md\0README.md\0'), []);
+});
+
+test('checks only PR-side changes when main advances independently', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'swim-prettier-git-'));
+  const previousCwd = process.cwd();
+  const git = (...args) => cp.execFileSync('git', args, { cwd: dir, encoding: 'utf8' }).trim();
+  try {
+    git('init', '-q');
+    git('config', 'user.name', 'CI Test');
+    git('config', 'user.email', 'ci@example.invalid');
+    fs.mkdirSync(path.join(dir, 'src'), { recursive: true });
+    fs.writeFileSync(path.join(dir, 'src', 'legacy.ts'), 'export const old = 1;\n');
+    git('add', '.');
+    git('commit', '-qm', 'baseline');
+    const base = git('rev-parse', 'HEAD');
+    git('checkout', '-qb', 'feature');
+    fs.writeFileSync(path.join(dir, 'README.md'), 'docs only\n');
+    git('add', '.');
+    git('commit', '-qm', 'docs update');
+    const head = git('rev-parse', 'HEAD');
+    git('checkout', '-q', '-b', 'base-updated', base);
+    git('rm', '-q', 'src/legacy.ts');
+    git('commit', '-qm', 'base-only deletion');
+    const advancedBase = git('rev-parse', 'HEAD');
+    process.chdir(dir);
+    assert.deepEqual(changedFiles(advancedBase, head), []);
+    assert.deepEqual(changedFiles(base, head), []);
+  } finally {
+    process.chdir(previousCwd);
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });
