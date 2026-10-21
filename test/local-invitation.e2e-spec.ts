@@ -41,7 +41,11 @@ describe('Local invitation acceptance HTTP (e2e)', () => {
     expect(response.body).toEqual({ data: { success: true } });
     expect(JSON.stringify(response.body)).not.toContain(body.token);
     expect(response.headers['set-cookie']).toBeUndefined();
-    expect(redeem).toHaveBeenCalledWith(body.token, 'INVITATION', body.password);
+    expect(redeem).toHaveBeenCalledWith(
+      body.token,
+      'INVITATION',
+      body.password,
+    );
   });
 
   it('rejects malformed/short/oversized passwords before the token service is invoked', async () => {
