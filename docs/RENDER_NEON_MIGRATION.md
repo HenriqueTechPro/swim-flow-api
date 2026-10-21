@@ -52,4 +52,4 @@ This is a clean-database plan: existing test records are intentionally not retai
 - [ ] Verify authenticated read/write flows and CORS/cookies across Vercel + Render
 - [ ] Replace Supabase Auth and Storage in a separate, security-reviewed PR
 
-**Status:** Migration SQL is committed and the PostgreSQL CI gate validates a disposable database. The real Neon DB has **not** been provisioned or migrated. Production rollout and external authentication/storage replacement remain separate stages.
+**Status (21 October 2026):** The versioned SQL is committed and verified by the disposable PostgreSQL CI. A **Neon staging-only** project and database have now been provisioned in AWS us-east-1 (PostgreSQL 17). Read-only inspection of database `swimflow` on branch `staging` found zero user relations/enums and no `_prisma_migrations` table. **No schema migration has been applied to Neon.** This is NOT a production rollout; authentication/storage replacement remains a separate stage. See `docs/NEON_STAGING_VERIFICATION_02E3.md`.
