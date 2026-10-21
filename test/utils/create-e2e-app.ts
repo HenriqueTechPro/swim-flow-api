@@ -13,6 +13,7 @@ export function withDefaultTestOverrides(builder: TestingModuleBuilder) {
   return builder.overrideProvider(PrismaService).useValue({
     $connect: jest.fn(),
     $disconnect: jest.fn(),
+    $queryRaw: jest.fn().mockResolvedValue([{ ok: 1 }]),
   });
 }
 
