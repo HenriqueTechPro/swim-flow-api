@@ -11,6 +11,7 @@ require('ts-node/register/transpile-only');
 require('tsconfig-paths/register');
 const { PrismaClient } = require('@prisma/client');
 const { compare } = require('bcryptjs');
+const { UnauthorizedException, UnprocessableEntityException } = require('@nestjs/common');
 const { LocalPasswordIdentityService } = require('../src/infra/auth/local-password-identity.service');
 const { LocalAuthActionTokensService } = require('../src/infra/auth/local-auth-action-tokens.service');
 
@@ -51,6 +52,12 @@ async function main() {
     ]);
     assert.equal(invitationRace.filter(x => x.status === 'fulfilled').length, 1);
     assert.equal(invitationRace.filter(x => x.status === 'rejected').length, 1);
+    const invitationFailure = invitationRace.find(x => x.status === 'rejected').reason;
+    assert.ok(
+      invitationFailure instanceof UnauthorizedException ||
+      invitationFailure instanceof UnprocessableEntityException,
+      'Unexpected database failure during issuance/redemption race',
+    );
     const accepted = invitationRace[0].status === 'fulfilled'
       ? invitationRace[0].value
       : await actions.redeemWithPassword(invitationRace[1].value.token, 'INVITATION', password);
@@ -85,6 +92,9 @@ async function main() {
     ]);
     assert.equal(concurrency.filter(x => x.status === 'fulfilled').length, 1);
     assert.equal(concurrency.filter(x => x.status === 'rejected').length, 1);
+    const resetFailure = concurrency.find(x => x.status === 'rejected').reason;
+    assert.ok(resetFailure instanceof UnauthorizedException,
+      'Unexpected database failure during simultaneous token redemption');
     const updated = await prisma.localAuthIdentity.findUnique({ where: { userId: id } });
     assert.equal(await compare(newPassword, updated.passwordHash), true);
     assert.equal(await compare(password, updated.passwordHash), false);
