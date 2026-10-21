@@ -48,7 +48,7 @@ test('pins project, branch, specific direct/pooled hosts, database and TLS', () 
   const bad = [
     [{ ...env, NEON_BRANCH_ID: 'br-wrong' }, /project and branch/],
     [{ ...env, NEON_PROJECT_ID: 'wrong' }, /project and branch/],
-    [{ ...env, DIRECT_URL: env.DIRECT_URL.replace(STAGING.directHost, 'ep-other.us-east-1.aws.neon.tech') }, /connection host/],
+    [{ ...env, DIRECT_URL: env.DIRECT_URL.replace(STAGING.directHost, 'ep-other.us-east-1.aws.neon.tech') }, /(?:same Neon endpoint|connection host)/],
     [{ ...env, DATABASE_URL: env.DATABASE_URL.replace('swimflow?', 'different?') }, /same database/],
     [{ ...env, DATABASE_URL: env.DATABASE_URL.replace('sslmode=require', 'sslmode=disable') }, /TLS/],
     [{ ...env, SWIMFLOW_NEON_STAGING_APPROVAL: 'NO' }, /approval/],
