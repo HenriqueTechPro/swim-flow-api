@@ -2,7 +2,9 @@
 -- after prisma migrate deploy. A failure aborts the workflow.
 DO $$
 DECLARE
-  expected_tables integer := 31;
+  -- Initial schema has 31 domain tables; the append-only native Auth
+  -- migration adds two, while _prisma_migrations remains excluded.
+  expected_tables integer := 33;
   found_tables integer;
   missing_indexes text;
   missing_checks text;
