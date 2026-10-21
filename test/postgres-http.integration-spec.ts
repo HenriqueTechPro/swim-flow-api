@@ -132,6 +132,21 @@ describe('NestJS HTTP + actual Prisma repositories + PostgreSQL 16 (disposable)'
     if (app) await app.close();
   });
 
+  it('reports database readiness over the real disposable PostgreSQL connection', async () => {
+    const health = await request(app.getHttpServer()).get('/health').expect(200);
+    expect(health.body.status).toBe('ok');
+
+    const ready = await request(app.getHttpServer())
+      .get('/health/ready')
+      .expect(200)
+      .expect('Cache-Control', 'no-store');
+    expect(ready.body).toEqual({
+      status: 'ready',
+      service: 'swim-flow-nest-api',
+      dependency: 'postgresql',
+    });
+  });
+
   it('denies anonymous requests and denies teachers administrative access using real persisted roles', async () => {
     await request(app.getHttpServer()).get('/api/students').expect(401);
     await request(app.getHttpServer()).get('/api/public/results').expect(401);

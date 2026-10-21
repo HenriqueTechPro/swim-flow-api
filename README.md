@@ -72,16 +72,36 @@ npm run build
 npm run start:prod
 ```
 
-## Railway
+## Deploy planejado: Neon + Render + Vercel
 
-Build command:
+A estrutura definitiva adotada é **PostgreSQL Neon** (banco), **Render** (API)
+e **Vercel** (dashboard). A migração do banco real e a publicação da API
+ainda são etapas operacionais separadas; nada disso acontece automaticamente
+ao fazer merge.
+
+Na API Render, execute o build com:
 
 ```bash
-npm install && npm run prisma:generate && npm run build
+npm ci && npm run prisma:generate && npm run build
 ```
 
-Start command:
+Start: `npm run start:prod` com `NODE_ENV=production` e as variáveis
+`DATABASE_URL` (pooled), `DIRECT_URL` (direct), `JWT_ACCESS_SECRET` e
+`API_CORS_ORIGIN` protegidas no ambiente do serviço.
 
-```bash
-npm run start:prod
-```
+Em banco Neon **vazio e previamente aprovado**, as migrações usam
+`npm run prisma:migrate:deploy`, nunca `db push` no deploy.
+
+A API possui dois endpoints de diagnóstico:
+
+- `GET /health`: processo HTTP respondendo (não consulta o banco);
+- `GET /health/ready`: consulta somente-leitura ao PostgreSQL,
+  retorna **200** se pronto e **503** se o banco estiver indisponível,
+  sem revelar URLs ou credenciais, com `Cache-Control: no-store`.
+
+**Transição:** o serviço ainda requer Supabase para Auth e Storage.
+A retirada desses componentes e a escolha de bucket S3 gratuito ocorrerão
+em PRs futuras, depois dos serviços substitutos testados.
+
+Leia `DEPLOY_CHECKLIST.md` e `docs/RENDER_NEON_MIGRATION.md`
+antes de qualquer conexão real ao Neon.
