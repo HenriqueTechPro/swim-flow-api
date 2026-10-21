@@ -6,6 +6,18 @@ The infrastructure bootstrap prepared the **API runtime** and **Prisma migration
 
 This is a clean-database plan: existing test records are intentionally not retained.
 
+## Neon — PostgreSQL staging deployed (schema only)
+
+**Atualização 21/10/2026:** o projeto `swim-flow-staging`,
+branch `staging`, banco `swimflow` (PostgreSQL 17 em AWS us-east-1),
+já recebeu a baseline de schema **sem dados do Supabase**.
+Uma transação SQL pelo conector Neon aplicou o arquivo de migração
+versionado e registrou `_prisma_migrations` com checksum SHA-256
+idêntico ao arquivo. A execução **não** usou a CLI Prisma; está
+pendente validar `prisma migrate status` com Prisma 6 antes de
+implantar Render. Auditoria: `docs/NEON_STAGING_BASELINE_APPLIED_02E5.md`.
+O banco de produção continua não provisionado.
+
 ## Neon — create an empty PostgreSQL project
 
 1. Create an empty Neon PostgreSQL database. Do not expose its connection strings in Git or the browser.
@@ -21,7 +33,11 @@ This is a clean-database plan: existing test records are intentionally not retai
    ```
 
 5. The initial SQL migration is now **versioned in Git** under `prisma/migrations/20261020000000_init_neon/migration.sql`. It includes Prisma's table/enum/index/foreign-key DDL and separately reviewed PostgreSQL CHECK constraints and partial unique indexes. Run `node scripts/create-neon-baseline.cjs --check` to assert the generated SQL exactly matches the schema and custom SQL files. Never regenerate silently as part of deploy.
-6. On the **empty Neon DB only**, after reviewing the SQL, execute `npm run prisma:migrate:deploy`. Then run `npm run prisma:generate` and `npm run build`.
+6. For a **new, empty Neon database** (not the already initialized staging),
+after reviewing the SQL execute `npm run prisma:migrate:deploy`.
+For staging the initial SQL has already been applied; **do not rerun the
+initial one-shot bootstrap script there**. Check `prisma migrate status`
+with the pinned Prisma 6 runtime before deploying Render.
 7. Use new incremental versioned migrations for future schema modifications (`npm run prisma:migrate:dev -- --name descriptive_change`). Never run `prisma db push` or `prisma migrate dev` as a deploy startup command.
 
 **Important:** A Prisma-generated SQL baseline captures Prisma-managed tables/enums/relations, not arbitrary Supabase SQL constructs (RLS policies, storage buckets, auth.users). Those integrations need separate replacement work. Keep the Supabase environment available during this transitional PR. Generate and review SQL before applying it; do not assume it will reproduce the entire old Supabase environment.
