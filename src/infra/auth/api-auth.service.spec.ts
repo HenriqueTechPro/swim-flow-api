@@ -176,6 +176,21 @@ describe('ApiAuthService', () => {
     expect(authSessionsRepository.create).not.toHaveBeenCalled();
   });
 
+  it('delegates password recovery to the identity provider port', async () => {
+    authDirectory.sendPasswordResetEmail.mockResolvedValue();
+
+    await sut.requestPasswordReset({
+      email: 'swimmer@example.invalid',
+      redirectTo: 'https://app.example.invalid/reset-password',
+    });
+
+    expect(authDirectory.sendPasswordResetEmail).toHaveBeenCalledTimes(1);
+    expect(authDirectory.sendPasswordResetEmail).toHaveBeenCalledWith(
+      'swimmer@example.invalid',
+      'https://app.example.invalid/reset-password',
+    );
+  });
+
   it('stores the invited role when provisioning an invited user', async () => {
     authDirectory.inviteUserByEmail.mockResolvedValue({
       id: 'user-2',
