@@ -5,12 +5,12 @@ import { AuthSessionsRepository } from '@/domain/auth/application/repositories/a
 import { EnvService } from '@/infra/env/env.service';
 import { hashRefreshToken } from './refresh-token.helpers';
 import { ApiAuthService } from './api-auth.service';
-import { SupabaseAuthService } from './supabase-auth.service';
+import { AuthDirectoryRepository } from '@/domain/auth/application/repositories/auth-directory-repository';
 
 describe('ApiAuthService', () => {
   let authSessionsRepository: jest.Mocked<AuthSessionsRepository>;
   let authProfilesRepository: jest.Mocked<AuthProfilesRepository>;
-  let supabaseAuthService: jest.Mocked<SupabaseAuthService>;
+  let authDirectory: jest.Mocked<AuthDirectoryRepository>;
   let jwtService: jest.Mocked<JwtService>;
   let envService: EnvService;
   let sut: ApiAuthService;
@@ -34,7 +34,7 @@ describe('ApiAuthService', () => {
       update: jest.fn(),
     } as jest.Mocked<AuthProfilesRepository>;
 
-    supabaseAuthService = {
+    authDirectory = {
       signInWithPassword: jest.fn(),
       getIdentityFromAccessToken: jest.fn(),
       sendPasswordResetEmail: jest.fn(),
@@ -42,7 +42,7 @@ describe('ApiAuthService', () => {
       inviteUserByEmail: jest.fn(),
       listUsers: jest.fn(),
       deleteUser: jest.fn(),
-    } as unknown as jest.Mocked<SupabaseAuthService>;
+    } as jest.Mocked<AuthDirectoryRepository>;
 
     jwtService = {
       signAsync: jest.fn(),
@@ -57,7 +57,7 @@ describe('ApiAuthService', () => {
     sut = new ApiAuthService(
       authSessionsRepository,
       authProfilesRepository,
-      supabaseAuthService,
+      authDirectory,
       jwtService,
       envService,
     );
@@ -177,7 +177,7 @@ describe('ApiAuthService', () => {
   });
 
   it('stores the invited role when provisioning an invited user', async () => {
-    supabaseAuthService.inviteUserByEmail.mockResolvedValue({
+    authDirectory.inviteUserByEmail.mockResolvedValue({
       id: 'user-2',
       email: 'invitee@example.com',
       fullName: 'Invitee User',
@@ -198,7 +198,7 @@ describe('ApiAuthService', () => {
       role: 'teacher',
     });
 
-    expect(supabaseAuthService.inviteUserByEmail).toHaveBeenCalledWith({
+    expect(authDirectory.inviteUserByEmail).toHaveBeenCalledWith({
       email: 'invitee@example.com',
       fullName: 'Invitee User',
       redirectTo: 'http://localhost:8080/reset-password',
@@ -213,13 +213,13 @@ describe('ApiAuthService', () => {
   });
 
   it('cleans up unauthorized Google sign-ins that are not invited', async () => {
-    supabaseAuthService.getIdentityFromAccessToken.mockResolvedValue({
+    authDirectory.getIdentityFromAccessToken.mockResolvedValue({
       id: 'user-3',
       email: 'oauth-user@example.com',
       fullName: 'OAuth User',
     });
     authProfilesRepository.findByUserId.mockResolvedValue(null);
-    supabaseAuthService.deleteUser.mockResolvedValue();
+    authDirectory.deleteUser.mockResolvedValue();
 
     await expect(
       sut.loginWithAccessToken({
@@ -232,6 +232,6 @@ describe('ApiAuthService', () => {
     expect(authSessionsRepository.revokeAllForUser).toHaveBeenCalledWith(
       'user-3',
     );
-    expect(supabaseAuthService.deleteUser).toHaveBeenCalledWith('user-3');
+    expect(authDirectory.deleteUser).toHaveBeenCalledWith('user-3');
   });
 });
