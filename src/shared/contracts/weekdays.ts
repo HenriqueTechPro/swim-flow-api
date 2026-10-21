@@ -64,7 +64,7 @@ export const getWeekdayLegacyVariants = (value?: string | null) => {
   const weekday = normalizeWeekday(value);
   if (!weekday) return value ? [value] : [];
 
-  const variants = new Set<Weekday | string>([weekday]);
+  const variants = new Set<string>([weekday]);
 
   switch (weekday) {
     case 'Segunda-feira':
