@@ -61,7 +61,8 @@ test('pins project, branch, specific direct/pooled hosts, database and TLS', () 
 });
 
 test('checks exact reviewed migration bytes and inventory without Neon access', () => {
-  assert.equal(verifyFrozenBaseline(), true);
+  // The one-time initial bootstrap must stay blocked after incremental migrations.
+  assert.throws(() => verifyFrozenBaseline(), /initial baseline only/);
   const { readFileSync } = require('node:fs');
   const { resolve } = require('node:path');
   const sql = readFileSync(resolve(__dirname, '../prisma/migrations/20261020000000_init_neon/migration.sql'), 'utf8');
