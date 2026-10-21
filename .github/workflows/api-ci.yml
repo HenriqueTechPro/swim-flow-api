@@ -28,6 +28,7 @@ jobs:
       # Existing Prettier-only debt is tracked separately, to avoid mixing
       # 1,000+ formatting diffs into a security-sensitive refactor.
       - name: Type-aware semantic lint (without legacy formatting errors)
-        run: npm run lint:check -- --rule 'prettier/prettier: off'
+        run: |
+          npm run lint:check -- --rule 'prettier/prettier: off'
       - run: npm run test:unit
       - run: npm run test:e2e
