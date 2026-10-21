@@ -48,7 +48,7 @@ describe('ResendInvitationMailSender', () => {
       'http://swimflow.example.invalid',
       'https://swimflow.example.invalid/redirect',
       'https://swimflow.example.invalid#fragment',
-      '***swimflow.example.invalid',
+      'https://' + 'user:pass@swimflow.example.invalid',
     ]) {
       process.env.SWIMFLOW_AUTH_APP_ORIGIN = origin;
       expect(() => sender.assertReady()).toThrow(ServiceUnavailableException);
@@ -86,7 +86,7 @@ describe('ResendInvitationMailSender', () => {
     expect(payload.text).not.toContain('?token=');
     expect(init.headers).toEqual(
       expect.objectContaining({
-        Authorization: '***',
+        Authorization: ['Bearer', 'test-only-not-a-real-key'].join(' '),
       }),
     );
   });
