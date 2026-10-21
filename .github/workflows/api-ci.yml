@@ -46,10 +46,6 @@ jobs:
         run: npm run neon:staging:migrate:test
       - name: Test incremental formatting file selection
         run: npm run format:changed:test
-      - name: Format preview for PR 35 (temporary)
-        run: |
-          node node_modules/prettier/bin/prettier.cjs --write src/infra/auth/local-admin-invitations.service.ts src/infra/auth/local-invitation-mail-sender.ts src/infra/auth/local-invitation-mail-sender.spec.ts src/infra/auth/auth.module.ts
-          node -e "const fs=require('node:fs'); for(const [key,path] of [['INVITE','src/infra/auth/local-admin-invitations.service.ts'],['MAIL','src/infra/auth/local-invitation-mail-sender.ts'],['TEST','src/infra/auth/local-invitation-mail-sender.spec.ts'],['MODULE','src/infra/auth/auth.module.ts']]) console.log('SF_FMT_'+key+'='+JSON.stringify(fs.readFileSync(path,'utf8')));"
       - name: Enforce Prettier only on TypeScript changed by this PR
         if: github.event_name == 'pull_request'
         env:
