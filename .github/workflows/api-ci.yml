@@ -5,6 +5,9 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   quality:
     runs-on: ubuntu-latest
@@ -17,6 +20,9 @@ jobs:
       JWT_ACCESS_SECRET: ci-only-secret-must-be-at-least-32-characters
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history is needed to compare base/head files from a PR.
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -30,5 +36,14 @@ jobs:
       - name: Type-aware semantic lint (without legacy formatting errors)
         run: |
           npm run lint:check -- --rule 'prettier/prettier: off'
+      - name: Test incremental formatting file selection
+        run: npm run format:changed:test
+      - name: Enforce Prettier only on TypeScript changed by this PR
+        if: github.event_name == 'pull_request'
+        env:
+          FORMAT_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          FORMAT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          npm run format:changed -- "$FORMAT_BASE_SHA" "$FORMAT_HEAD_SHA" --check
       - run: npm run test:unit
       - run: npm run test:e2e
