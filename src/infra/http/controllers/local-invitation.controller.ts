@@ -1,10 +1,4 @@
-import {
-  Body,
-  Controller,
-  Header,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Header, Post, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { LocalAuthActionTokensService } from '@/infra/auth/local-auth-action-tokens.service';
 import { PublicAuthRateLimitGuard } from '@/infra/auth/public-auth-rate-limit.guard';
