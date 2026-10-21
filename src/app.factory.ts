@@ -47,8 +47,13 @@ function applySecurityHeaders(
 }
 
 export function configureApp(app: INestApplication) {
-  const expressApp = app.getHttpAdapter().getInstance();
-  if (typeof expressApp.disable === 'function') {
+  const expressApp: unknown = app.getHttpAdapter().getInstance();
+  if (
+    expressApp !== null &&
+    (typeof expressApp === 'function' || typeof expressApp === 'object') &&
+    'disable' in expressApp &&
+    typeof expressApp.disable === 'function'
+  ) {
     expressApp.disable('x-powered-by');
   }
 
