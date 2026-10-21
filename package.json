@@ -35,7 +35,9 @@
     "neon:staging:migrate": "node scripts/neon-staging-migrate.cjs",
     "neon:staging:migrate:test": "node --test scripts/neon-staging-migrate.test.cjs",
     "render:blueprint:test": "node --test scripts/render-blueprint.test.cjs",
-    "prisma:migrate:status": "prisma migrate status --schema prisma/schema.prisma"
+    "prisma:migrate:status": "prisma migrate status --schema prisma/schema.prisma",
+    "bootstrap:first-admin": "node scripts/bootstrap-first-admin.cjs",
+    "bootstrap:first-admin:test": "node --test scripts/bootstrap-first-admin.test.cjs"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
