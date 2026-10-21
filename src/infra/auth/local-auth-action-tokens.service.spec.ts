@@ -9,6 +9,7 @@ describe('LocalAuthActionTokensService', () => {
   const email = 'coach@example.invalid';
   const basePassword = 'a-very-strong-password';
   let tx: {
+    $queryRaw: jest.Mock;
     localAuthIdentity: { findUnique: jest.Mock; updateMany: jest.Mock };
     localAuthActionToken: {
       findUnique: jest.Mock;
@@ -23,6 +24,7 @@ describe('LocalAuthActionTokensService', () => {
 
   beforeEach(() => {
     tx = {
+      $queryRaw: jest.fn().mockResolvedValue([{ user_id: userId }]),
       localAuthIdentity: {
         findUnique: jest.fn().mockResolvedValue({
           disabledAt: null,
