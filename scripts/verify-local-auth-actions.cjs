@@ -43,9 +43,17 @@ async function main() {
     assert.ok(storedInvite);
     assert.equal(storedInvite.purpose, 'INVITATION');
     assert.equal(storedInvite.tokenHash === invitation.token, false);
-    const accepted = await actions.redeemWithPassword(
-      invitation.token, 'INVITATION', password,
-    );
+    // Two transactions race over the same identity. Exactly one succeeds;
+    // there must be no Postgres deadlock or leaked active session.
+    const invitationRace = await Promise.allSettled([
+      actions.redeemWithPassword(invitation.token, 'INVITATION', password),
+      actions.issueForIdentity(id, 'INVITATION'),
+    ]);
+    assert.equal(invitationRace.filter(x => x.status === 'fulfilled').length, 1);
+    assert.equal(invitationRace.filter(x => x.status === 'rejected').length, 1);
+    const accepted = invitationRace[0].status === 'fulfilled'
+      ? invitationRace[0].value
+      : await actions.redeemWithPassword(invitationRace[1].value.token, 'INVITATION', password);
     assert.equal(accepted.id, id);
     await assert.rejects(() =>
       actions.redeemWithPassword(invitation.token, 'INVITATION', password),
@@ -82,7 +90,7 @@ async function main() {
     assert.equal(await compare(password, updated.passwordHash), false);
     const revoked = await prisma.authSession.findUnique({ where: { id: session.id } });
     assert.ok(revoked.revokedAt);
-    assert.equal(await prisma.localAuthActionToken.count({ where: { userId: id } }), 3);
+    assert.ok(await prisma.localAuthActionToken.count({ where: { userId: id } }) >= 3);
     process.stdout.write('PostgreSQL local action token issuance, replay, concurrency and revocation verified.\n');
   } finally {
     await prisma.profile.deleteMany({ where: { id } });
