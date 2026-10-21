@@ -22,7 +22,9 @@ const recipientEmail = 'ci-guest-' + randomUUID() + '@example.invalid';
 
 function assertDisposableDatabase(): void {
   if (process.env.SWIMFLOW_DISPOSABLE_DB !== 'yes') {
-    throw new Error('Local invitation PostgreSQL integration only runs in disposable CI');
+    throw new Error(
+      'Local invitation PostgreSQL integration only runs in disposable CI',
+    );
   }
   for (const key of ['DATABASE_URL', 'DIRECT_URL']) {
     let url: URL;
@@ -36,9 +38,12 @@ function assertDisposableDatabase(): void {
       !['localhost', '127.0.0.1', '[::1]', '::1'].includes(url.hostname) ||
       url.pathname !== '/swimflow' ||
       (url.port && url.port !== '5432') ||
-      !url.username || !url.password
+      !url.username ||
+      !url.password
     ) {
-      throw new Error('Remote database access is forbidden in this integration test');
+      throw new Error(
+        'Remote database access is forbidden in this integration test',
+      );
     }
   }
 }
@@ -50,14 +55,21 @@ describe('Staging invitation HTTP -> disposable PostgreSQL -> password verificat
   let passwords: LocalPasswordIdentityService;
   let guestId: string | null = null;
   const messages: Array<{ to: string; token: string; expiresAt: Date }> = [];
-  const flagNames = ['SWIMFLOW_LOCAL_INVITATION_API_ENABLED', 'SWIMFLOW_LOCAL_INVITES_ENABLED'] as const;
+  const flagNames = [
+    'SWIMFLOW_LOCAL_INVITATION_API_ENABLED',
+    'SWIMFLOW_LOCAL_INVITES_ENABLED',
+  ] as const;
   const beforeFlags = flagNames.map((key) => process.env[key]);
 
   beforeAll(async () => {
     assertDisposableDatabase();
     const mail = {
       assertReady: () => undefined,
-      sendInvitation: async (message: { to: string; token: string; expiresAt: Date }) => {
+      sendInvitation: async (message: {
+        to: string;
+        token: string;
+        expiresAt: Date;
+      }) => {
         messages.push(message);
       },
     };
@@ -77,7 +89,10 @@ describe('Staging invitation HTTP -> disposable PostgreSQL -> password verificat
           }
           req.user = {
             id: token === 'Bearer admin' ? adminId : teacherId,
-            email: token === 'Bearer admin' ? adminEmail : 'ci-teacher@example.invalid',
+            email:
+              token === 'Bearer admin'
+                ? adminEmail
+                : 'ci-teacher@example.invalid',
             sessionId: 'ci-jwt-guard',
           };
           return true;
@@ -99,7 +114,9 @@ describe('Staging invitation HTTP -> disposable PostgreSQL -> password verificat
         localAuthIdentity: {
           create: {
             email: adminEmail,
-            passwordHash: await passwords.hashPasswordForProvisioning('ci-admin-passphrase-2026'),
+            passwordHash: await passwords.hashPasswordForProvisioning(
+              'ci-admin-passphrase-2026',
+            ),
             emailConfirmedAt: new Date(),
           },
         },
@@ -113,7 +130,9 @@ describe('Staging invitation HTTP -> disposable PostgreSQL -> password verificat
   afterAll(async () => {
     if (prisma) {
       await prisma.profile.deleteMany({
-        where: { id: { in: [adminId, teacherId, ...(guestId ? [guestId] : [])] } },
+        where: {
+          id: { in: [adminId, teacherId, ...(guestId ? [guestId] : [])] },
+        },
       });
     }
     if (app) await app.close();
@@ -124,7 +143,11 @@ describe('Staging invitation HTTP -> disposable PostgreSQL -> password verificat
   });
 
   it('fails closed and enforces admin permission from the actual database', async () => {
-    const payload = { email: recipientEmail, fullName: 'Guest CI', role: 'user' };
+    const payload = {
+      email: recipientEmail,
+      fullName: 'Guest CI',
+      role: 'user',
+    };
     await request(app.getHttpServer())
       .post('/api/auth/local-invitations')
       .set('Authorization', 'Bearer admin')
@@ -138,14 +161,22 @@ describe('Staging invitation HTTP -> disposable PostgreSQL -> password verificat
       .send(payload)
       .expect(403);
     expect(messages).toHaveLength(0);
-    expect(await prisma.localAuthIdentity.count({ where: { email: recipientEmail } })).toBe(0);
+    expect(
+      await prisma.localAuthIdentity.count({
+        where: { email: recipientEmail },
+      }),
+    ).toBe(0);
   });
 
   it('invites through HTTP then accepts locally and signs in with bcrypt on PostgreSQL', async () => {
     const response = await request(app.getHttpServer())
       .post('/api/auth/local-invitations')
       .set('Authorization', 'Bearer admin')
-      .send({ email: recipientEmail.toUpperCase(), fullName: 'CI Guest', role: 'user' })
+      .send({
+        email: recipientEmail.toUpperCase(),
+        fullName: 'CI Guest',
+        role: 'user',
+      })
       .expect(201)
       .expect('Cache-Control', 'no-store');
     expect(response.body).toEqual({ data: { success: true } });
@@ -159,10 +190,14 @@ describe('Staging invitation HTTP -> disposable PostgreSQL -> password verificat
     expect(messages[0].to).toBe(recipientEmail);
     const password = 'new-ci-swimmer-password-2026';
     await actions.redeemWithPassword(messages[0].token, 'INVITATION', password);
-    const validated = await passwords.signInWithPassword(recipientEmail, password);
+    const validated = await passwords.signInWithPassword(
+      recipientEmail,
+      password,
+    );
     expect(validated.id).toBe(guestId);
-    await expect(actions.redeemWithPassword(messages[0].token, 'INVITATION', password))
-      .rejects.toThrow();
+    await expect(
+      actions.redeemWithPassword(messages[0].token, 'INVITATION', password),
+    ).rejects.toThrow();
     await request(app.getHttpServer())
       .post('/api/auth/local-invitations')
       .set('Authorization', 'Bearer admin')
