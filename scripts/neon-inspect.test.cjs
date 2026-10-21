@@ -9,8 +9,9 @@ const env = Object.freeze({
   DIRECT_URL: 'postgresql://test:fictional@ep-pool.us-east-1.aws.neon.tech/swimflow?sslmode=require',
 });
 
-function fixtures({ relations = 0, enums = 0, directDatabase = 'swimflow',
-  pooledDatabase = 'swimflow', failDirect = false, failPooled = false } = {}) {
+function fixtures({ relations = 0, enums = 0, hasPrismaMigrationTable = false,
+  directDatabase = 'swimflow', pooledDatabase = 'swimflow',
+  failDirect = false, failPooled = false } = {}) {
   const calls = [];
   const disconnected = [];
   const clients = (url) => {
@@ -21,7 +22,7 @@ function fixtures({ relations = 0, enums = 0, directDatabase = 'swimflow',
         if (pooled && failPooled) throw new Error('PASSWORD_SHOULD_NEVER_LEAK');
         if (!pooled && failDirect) throw new Error('PASSWORD_SHOULD_NEVER_LEAK');
         return [pooled ? { database: pooledDatabase } :
-          { database: directDatabase, relations, enums }];
+          { database: directDatabase, relations, enums, hasPrismaMigrationTable }];
       },
       $disconnect: async () => { disconnected.push(pooled ? 'pooled' : 'direct'); },
     };
@@ -34,7 +35,7 @@ test('connects direct and pooled Neon URLs with fixed SELECTs, reports empty onl
   const result = await inspectNeonDatabase(env, mock.clients);
   assert.deepEqual(result, {
     direct: 'connected', pooled: 'connected', candidateEmpty: true,
-    userRelations: 0, userEnums: 0,
+    userRelations: 0, userEnums: 0, hasPrismaMigrationTable: false,
   });
   assert.equal(mock.calls.length, 2);
   assert.deepEqual(mock.calls.map(x => x.pooled), [false, true]);
@@ -44,12 +45,14 @@ test('connects direct and pooled Neon URLs with fixed SELECTs, reports empty onl
 });
 
 test('reports nonempty on any existing user relation or enum', async () => {
-  for (const sample of [{ relations: 1 }, { enums: 1 }, { relations: 2, enums: 2 }]) {
+  for (const sample of [{ relations: 1 }, { enums: 1 }, { relations: 2, enums: 2 },
+    { relations: 1, hasPrismaMigrationTable: true }]) {
     const mock = fixtures(sample);
     const result = await inspectNeonDatabase(env, mock.clients);
     assert.equal(result.candidateEmpty, false);
     assert.equal(result.userRelations, sample.relations || 0);
     assert.equal(result.userEnums, sample.enums || 0);
+    assert.equal(result.hasPrismaMigrationTable, sample.hasPrismaMigrationTable || false);
   }
 });
 
