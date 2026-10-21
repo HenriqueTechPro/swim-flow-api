@@ -10,7 +10,10 @@ const INVALID_CREDENTIALS = 'Invalid login credentials';
 let dummyPasswordHash: Promise<string> | undefined;
 
 function getDummyPasswordHash(): Promise<string> {
-  dummyPasswordHash ??= hash('unusable-password-for-missing-local-accounts', BCRYPT_COST);
+  dummyPasswordHash ??= hash(
+    'unusable-password-for-missing-local-accounts',
+    BCRYPT_COST,
+  );
   return dummyPasswordHash;
 }
 
@@ -37,7 +40,8 @@ export class LocalPasswordIdentityService {
       },
     });
 
-    const passwordHash = identity?.passwordHash ?? (await getDummyPasswordHash());
+    const passwordHash =
+      identity?.passwordHash ?? (await getDummyPasswordHash());
     let validPassword = false;
     try {
       validPassword = await compare(password, passwordHash);
