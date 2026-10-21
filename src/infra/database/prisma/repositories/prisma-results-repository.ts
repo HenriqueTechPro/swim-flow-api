@@ -15,7 +15,6 @@ import {
 } from '@/domain/shared/pagination/pagination-utils';
 import type { GenerateRankingRequest } from '@/domain/results/application/dtos/result-ranking';
 import type { PaginatedResult } from '@/domain/shared/pagination/pagination-params';
-import type { Result } from '@/domain/results/enterprise/entities/result';
 import {
   ResultsRepository,
   type CreateResultRepositoryInput,
