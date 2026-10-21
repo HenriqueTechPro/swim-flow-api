@@ -74,6 +74,15 @@ npm run start:prod
 
 ## Deploy planejado: Neon + Render + Vercel
 
+**Render staging está preparado como infraestrutura declarativa**
+em `render.yaml`, sem deploy automático e sem secrets no repositório.
+Para vincular o GitHub ao Render, configurar as variáveis protegidas
+e publicar o Web Service gratuito em Virgínia, siga
+`docs/RENDER_STAGING_SETUP_02E6.md`. Não crie outro banco no Render;
+o PostgreSQL continua no Neon. A versão de staging do Neon contém apenas
+o schema (31 tabelas de aplicação), sem dados importados do Supabase.
+
+
 A estrutura definitiva adotada é **PostgreSQL Neon** (banco), **Render** (API)
 e **Vercel** (dashboard). O schema inicial já foi implantado no **Neon staging**
 em 21/10/2026, com 31 tabelas de aplicação, 24 enums e sem dados importados.
