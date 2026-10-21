@@ -14,6 +14,8 @@ import {
   normalizePaginationParams,
 } from '@/domain/shared/pagination/pagination-utils';
 import type { GenerateRankingRequest } from '@/domain/results/application/dtos/result-ranking';
+import type { PaginatedResult } from '@/domain/shared/pagination/pagination-params';
+import type { Result } from '@/domain/results/enterprise/entities/result';
 import {
   ResultsRepository,
   type CreateResultRepositoryInput,
@@ -294,12 +296,14 @@ export class PrismaResultsRepository implements ResultsRepository {
     ].sort(sortResults);
   }
 
-  async list(params?: ListResultsRepositoryParams) {
+  async list(
+    params?: ListResultsRepositoryParams,
+  ): Promise<PaginatedResult<Result>> {
     const { page, perPage } = normalizePaginationParams(params);
     const cacheKey = `results:v2:list:${JSON.stringify({ ...params, page, perPage })}`;
     const { pool, openWater } = buildWhere(params);
     return this.cache.get(cacheKey).then(async (cached) => {
-      if (cached) return JSON.parse(cached) as Awaited<ReturnType<PrismaResultsRepository['list']>>;
+      if (cached) return JSON.parse(cached) as PaginatedResult<Result>;
 
       // A globally ordered page of a union requires reading at most
       // skip + take from EACH table. Never page each table independently.
