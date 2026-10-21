@@ -68,13 +68,17 @@ export class LocalAuthActionTokensService {
           passwordHash: true,
         },
       });
-      const eligible = identity?.disabledAt === null &&
+      const eligible =
+        identity?.disabledAt === null &&
         (purpose === 'INVITATION'
           ? identity.emailConfirmedAt === null && identity.passwordHash === null
-          : identity.emailConfirmedAt !== null && identity.passwordHash !== null);
+          : identity.emailConfirmedAt !== null &&
+            identity.passwordHash !== null);
 
       if (!eligible) {
-        throw new UnprocessableEntityException('Identity not eligible for this action');
+        throw new UnprocessableEntityException(
+          'Identity not eligible for this action',
+        );
       }
 
       // Invalidate earlier links of the same purpose before issuing a fresh one.
@@ -102,7 +106,8 @@ export class LocalAuthActionTokensService {
     if (typeof token !== 'string' || !tokenPattern.test(token)) {
       throw new UnauthorizedException(invalidAction);
     }
-    const passwordHash = await this.passwords.hashPasswordForProvisioning(password);
+    const passwordHash =
+      await this.passwords.hashPasswordForProvisioning(password);
     const tokenHash = digestToken(token);
 
     return this.prisma.$transaction(async (tx) => {
