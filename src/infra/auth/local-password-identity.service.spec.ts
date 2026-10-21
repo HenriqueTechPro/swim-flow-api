@@ -134,14 +134,10 @@ describe('LocalPasswordIdentityService', () => {
   });
 
   it('rejects passwords outside the 12 to 72 UTF-8 byte range', async () => {
-    for (const value of [
-      'short',
-      'x'.repeat(73),
-      'á'.repeat(37),
-    ]) {
-      await expect(
-        service.hashPasswordForProvisioning(value),
-      ).rejects.toThrow('between 12 and 72');
+    for (const value of ['short', 'x'.repeat(73), 'á'.repeat(37)]) {
+      await expect(service.hashPasswordForProvisioning(value)).rejects.toThrow(
+        'between 12 and 72',
+      );
     }
   });
 });
