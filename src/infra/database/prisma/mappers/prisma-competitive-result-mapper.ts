@@ -46,7 +46,7 @@ const poolCourse = (meters: number | null): Result['courseType'] => {
 };
 
 export class PrismaCompetitiveResultMapper {
-  static pool(row: PoolRecord): Result {
+  static pool(this: void, row: PoolRecord): Result {
     const poolLengthMeters =
       row.poolLengthMeters === null ? null : Number(row.poolLengthMeters);
 
@@ -75,7 +75,7 @@ export class PrismaCompetitiveResultMapper {
     };
   }
 
-  static openWater(row: OpenWaterRecord): Result {
+  static openWater(this: void, row: OpenWaterRecord): Result {
     return {
       id: row.id,
       studentId: row.studentId,
