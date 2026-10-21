@@ -25,5 +25,7 @@ jobs:
       - run: npm run prisma:validate
       - run: npm run prisma:generate
       - run: npm run build
+      - name: Type-aware lint (read-only)
+        run: npm run lint:check
       - run: npm run test:unit
       - run: npm run test:e2e
