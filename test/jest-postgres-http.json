@@ -1,9 +1,15 @@
 {
-  "moduleFileExtensions": ["js", "json", "ts"],
+  "moduleFileExtensions": [
+    "js",
+    "json",
+    "ts"
+  ],
   "rootDir": "..",
   "testEnvironment": "node",
-  "testRegex": "postgres-http\\.integration-spec\\.ts$",
-  "setupFilesAfterEnv": ["<rootDir>/test/setup-e2e.ts"],
+  "testRegex": "postgres-(http|teacher-access)[.]integration-spec[.]ts$",
+  "setupFilesAfterEnv": [
+    "<rootDir>/test/setup-e2e.ts"
+  ],
   "moduleNameMapper": {
     "^@/(.*)$": "<rootDir>/src/$1"
   },
