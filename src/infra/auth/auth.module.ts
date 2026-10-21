@@ -11,6 +11,8 @@ import { PublicAuthRateLimitGuard } from './public-auth-rate-limit.guard';
 import { RolesGuard } from './roles.guard';
 import { LocalPasswordIdentityService } from './local-password-identity.service';
 import { LocalAuthActionTokensService } from './local-auth-action-tokens.service';
+import { LocalAdminInvitationsService } from './local-admin-invitations.service';
+import { LocalInvitationMailSender, ResendInvitationMailSender } from './local-invitation-mail-sender';
 import { SupabaseAuthService } from './supabase-auth.service';
 import { TrustedOriginGuard } from './trusted-origin.guard';
 import { TeacherAttendanceScopeGuard } from './teacher-attendance-scope.guard';
@@ -36,6 +38,8 @@ import { TeacherAttendanceScopeGuard } from './teacher-attendance-scope.guard';
     SupabaseAuthService,
     LocalPasswordIdentityService,
     LocalAuthActionTokensService,
+    LocalAdminInvitationsService,
+    { provide: LocalInvitationMailSender, useClass: ResendInvitationMailSender },
   ],
   exports: [
     AuthSessionManager,
@@ -50,6 +54,7 @@ import { TeacherAttendanceScopeGuard } from './teacher-attendance-scope.guard';
     SupabaseAuthService,
     LocalPasswordIdentityService,
     LocalAuthActionTokensService,
+    LocalAdminInvitationsService,
     JwtModule,
   ],
 })
