@@ -53,9 +53,23 @@ export class LocalAdminInvitationsService {
         // Enforce privileges from the DATABASE, not a user-controlled role.
         const actor = await tx.profile.findUnique({
           where: { id: input.actorUserId },
-          select: { role: true },
+          select: {
+            role: true,
+            localAuthIdentity: {
+              select: {
+                disabledAt: true,
+                emailConfirmedAt: true,
+                passwordHash: true,
+              },
+            },
+          },
         });
-        if (actor?.role !== 'admin') {
+        if (
+          actor?.role !== 'admin' ||
+          actor.localAuthIdentity?.disabledAt !== null ||
+          !actor.localAuthIdentity?.emailConfirmedAt ||
+          !actor.localAuthIdentity?.passwordHash
+        ) {
           throw new ForbiddenException('Administrator access required');
         }
 
