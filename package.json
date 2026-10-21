@@ -33,7 +33,9 @@
     "neon:inspect": "node scripts/neon-inspect.cjs",
     "neon:inspect:test": "node --test scripts/neon-inspect.test.cjs",
     "neon:staging:migrate": "node scripts/neon-staging-migrate.cjs",
-    "neon:staging:migrate:test": "node --test scripts/neon-staging-migrate.test.cjs"
+    "neon:staging:migrate:test": "node --test scripts/neon-staging-migrate.test.cjs",
+    "render:blueprint:test": "node --test scripts/render-blueprint.test.cjs",
+    "prisma:migrate:status": "prisma migrate status --schema prisma/schema.prisma"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
