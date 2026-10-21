@@ -71,7 +71,10 @@ describe('ResendInvitationMailSender', () => {
     const [endpoint, init] = fakeFetch.mock.calls[0] as [string, RequestInit];
     expect(endpoint).toBe('https://api.resend.com/emails');
     expect(init.method).toBe('POST');
-    const payload = JSON.parse(String(init.body)) as {
+    if (typeof init.body !== 'string') {
+      throw new Error('Expected a JSON request body');
+    }
+    const payload = JSON.parse(init.body) as {
       from: string;
       to: string[];
       text: string;
