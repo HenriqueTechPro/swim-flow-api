@@ -13,14 +13,15 @@
 Um preflight **sem alterações na base de dados** com dois modos:
 - `--check` (ou sem opção): valida localmente os dois URLs e encerra sem
   qualquer acesso à rede; verifica protocolo PostgreSQL, host Neon,
-  TLS obrigatório, mesmo projeto/usuário/banco, endpoint pooled para runtime,
+  TLS obrigatório, mesmo projeto/usuário/senha/banco, endpoint pooled para runtime,
   endpoint direto para Prisma Migrate, esquema `public` e proíbe nomes
   de bancos de manutenção (`postgres`, `template0`, `template1`).
 - `--connect`: requer uma decisão explícita de quem opera o projeto.
   Conecta ao endpoint `DIRECT_URL` e executa **um SELECT somente leitura**
-  no `information_schema.tables` do esquema atual. Somente aprova uma
-  base **totalmente vazia**, antes de aplicar a migração baseline inicial.
-  Banco com qualquer tabela é bloqueado; nenhum comando de migração é executado.
+  no catálogo `pg_class` e `pg_type`, examinando relações (tabelas,
+  views e sequências) e enums de todos os esquemas não sistêmicos. Somente
+  aprova uma base **sem esses objetos**, antes da migração baseline inicial.
+  Objetos existentes bloqueiam a operação; nenhuma migração é executada.
 
 Erros do Prisma de conexão/inicialização/desconexão são sanitizados para
 evitar vazamento de senhas ou endereços em logs. A saída não imprime URL,
