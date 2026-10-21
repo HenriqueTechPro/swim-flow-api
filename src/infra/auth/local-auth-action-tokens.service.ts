@@ -49,12 +49,17 @@ export class LocalAuthActionTokensService {
     purpose: LocalActionPurpose,
   ): Promise<IssuedLocalAction> {
     assertPurpose(purpose);
-    const now = new Date();
     const token = randomBytes(32).toString('base64url');
-    const expiresAt = new Date(now.getTime() + durations[purpose]);
     const tokenHash = digestToken(token);
 
-    await this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx) => {
+      // Serialize reissuance per identity; only the newest link stays active.
+      await tx.$queryRaw`
+        SELECT "user_id" FROM "local_auth_identities"
+        WHERE "user_id" = ${userId}::uuid FOR UPDATE
+      `;
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + durations[purpose]);
       const identity = await tx.localAuthIdentity.findUnique({
         where: { userId },
         select: {
@@ -80,9 +85,8 @@ export class LocalAuthActionTokensService {
       await tx.localAuthActionToken.create({
         data: { userId, purpose, tokenHash, expiresAt },
       });
+      return { token, expiresAt };
     });
-
-    return { token, expiresAt };
   }
 
   /**
@@ -100,9 +104,9 @@ export class LocalAuthActionTokensService {
     }
     const passwordHash = await this.passwords.hashPasswordForProvisioning(password);
     const tokenHash = digestToken(token);
-    const now = new Date();
 
     return this.prisma.$transaction(async (tx) => {
+      const now = new Date();
       const consumed = await tx.localAuthActionToken.updateMany({
         where: {
           tokenHash,
