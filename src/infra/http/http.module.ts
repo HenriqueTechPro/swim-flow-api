@@ -6,6 +6,7 @@ import { EnvModule } from '@/infra/env/env.module';
 import { SupabaseManagedUploadsRepository } from '@/infra/supabase/managed-uploads.service';
 import { AttendanceController } from './controllers/attendance.controller';
 import { AuthController } from './controllers/auth.controller';
+import { LocalAdminInvitationController } from './controllers/local-admin-invitation.controller';
 import { ClassesController } from './controllers/classes.controller';
 import { ExStudentsController } from './controllers/ex-students.controller';
 import { EventsController } from './controllers/events.controller';
@@ -25,6 +26,7 @@ import { useCaseProviders } from './use-case.providers';
   controllers: [
     AttendanceController,
     AuthController,
+    LocalAdminInvitationController,
     ClassesController,
     ExStudentsController,
     EventsController,
