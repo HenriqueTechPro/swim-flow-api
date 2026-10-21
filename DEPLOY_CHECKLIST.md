@@ -44,6 +44,14 @@
 
 ## 3. Render — Serviço Web NestJS
 
+**Etapa 02E-6:** o serviço de staging está definido no `render.yaml`.
+A configuração é **somente para staging**, plano free, Virgínia, Node 22,
+sem criar outro PostgreSQL nem aplicar migrations no startup.
+Antes de criar o Web Service, seguir
+`docs/RENDER_STAGING_SETUP_02E6.md` para vincular GitHub ao Render e
+preencher secrets via interface protegida. O Render ainda não foi publicado.
+
+
 - [ ] Conectar repositório `HenriqueTechPro/swim-flow-api`.
 - [ ] Node 22, build `npm ci && npm run prisma:generate && npm run build`.
 - [ ] Start `npm run start:prod`; Render fornece `PORT`, API escuta `0.0.0.0`.
