@@ -18,7 +18,7 @@
 
 ## 2. Neon — PostgreSQL (somente após aprovar a API)
 
-- [ ] Criar banco PostgreSQL **vazio** para esta migração limpa.
+- [x] Criar banco PostgreSQL **vazio em staging** para esta migração limpa (Neon AWS us-east-1; verificação somente leitura em 21/10/2026). O banco de produção ainda não existe.
 - [ ] Obter `DATABASE_URL` **pooled** (conexões de runtime) e `DIRECT_URL`
       **direct** (Prisma Migrate), com TLS/SSL.
 - [ ] Revisar os SQLs da pasta `prisma/migrations` e confirmar ambiente
