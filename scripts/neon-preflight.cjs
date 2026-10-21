@@ -111,12 +111,21 @@ async function run(argv, environment = process.env, createDatabase) {
     const { PrismaClient } = require('@prisma/client');
     return new PrismaClient({ datasources: { db: { url } } });
   });
-  const client = factory(environment.DIRECT_URL);
+  let client;
+  try {
+    client = factory(environment.DIRECT_URL);
+  } catch {
+    throw new Error('Unable to initialize read-only Neon inspection; no changes made');
+  }
   try {
     await inspectEmptyNeonDatabase(client);
     process.stdout.write('Read-only database check: empty schema confirmed.\n');
   } finally {
-    await client.$disconnect();
+    try {
+      await client.$disconnect();
+    } catch {
+      // Never expose network/client errors that may contain credentials.
+    }
   }
 }
 
