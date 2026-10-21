@@ -62,6 +62,10 @@ jobs:
         env:
           SWIMFLOW_DISPOSABLE_DB: 'yes'
         run: node scripts/verify-local-auth-actions.cjs
+      - name: Verify administrator invitations and token reissue on disposable PostgreSQL
+        env:
+          SWIMFLOW_DISPOSABLE_DB: 'yes'
+        run: node scripts/verify-local-admin-invitations.cjs
       - name: Real Prisma repository and PostgreSQL integration scenarios
         env:
           SWIMFLOW_DISPOSABLE_DB: 'yes'
