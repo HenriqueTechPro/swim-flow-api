@@ -6,7 +6,7 @@
   ],
   "rootDir": "..",
   "testEnvironment": "node",
-  "testRegex": "postgres-(http|teacher-access)[.]integration-spec[.]ts$",
+  "testRegex": "postgres-(http|teacher-access|local-invitations)[.]integration-spec[.]ts$",
   "setupFilesAfterEnv": [
     "<rootDir>/test/setup-e2e.ts"
   ],
