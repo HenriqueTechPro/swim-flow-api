@@ -17,11 +17,13 @@ describe('Render and Neon environment parsing', () => {
       ...overrides,
     };
     jest.resetModules();
-    return require('./env').env as {
-      port: number;
-      authSecureCookies: boolean;
-      swaggerEnabled: boolean;
-    };
+    return jest.requireActual<{
+      env: {
+        port: number;
+        authSecureCookies: boolean;
+        swaggerEnabled: boolean;
+      };
+    }>('./env').env;
   }
 
   it('reads explicit false booleans correctly', () => {
