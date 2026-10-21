@@ -1,0 +1,46 @@
+# Swim Flow API — STAGING only (Render + Neon, frontend remains Vercel).
+# This Blueprint creates ONE free Node web service, NOT a Render database.
+# Supply secrets through the Render Dashboard. Never commit their values.
+services:
+  - type: web
+    name: swim-flow-api-staging
+    runtime: node
+    plan: free
+    region: virginia
+    branch: main
+    autoDeployTrigger: off
+    healthCheckPath: /health
+    buildCommand: npm ci && npm run prisma:generate && npm run build
+    startCommand: npm run start:prod
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: SWAGGER_ENABLED
+        value: "false"
+      - key: AUTH_COOKIE_SAME_SITE
+        value: none
+      - key: AUTH_SECURE_COOKIES
+        value: "true"
+      - key: AUTH_COOKIE_PATH
+        value: /api/auth
+      - key: JWT_ACCESS_TTL_SECONDS
+        value: "900"
+      - key: REFRESH_TOKEN_TTL_DAYS
+        value: "7"
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: API_CORS_ORIGIN
+        sync: false
+      # Transitional services: keep until Auth/Storage migration is complete.
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_PUBLISHABLE_KEY
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false

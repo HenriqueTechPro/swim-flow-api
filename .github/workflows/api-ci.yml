@@ -36,6 +36,8 @@ jobs:
       - name: Type-aware semantic lint (without legacy formatting errors)
         run: |
           npm run lint:check -- --rule 'prettier/prettier: off'
+      - name: Validate Render staging Blueprint without deployment
+        run: npm run render:blueprint:test
       - name: Test Neon preflight without live credentials
         run: npm run neon:preflight:test
       - name: Test read-only Neon inspection with synthetic database responses
