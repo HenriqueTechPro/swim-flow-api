@@ -46,13 +46,6 @@ jobs:
         run: npm run neon:staging:migrate:test
       - name: Test incremental formatting file selection
         run: npm run format:changed:test
-      - name: Temporary canonical Prettier hex export for PR 37
-        run: |
-          node node_modules/prettier/bin/prettier.cjs --write src/infra/http/controllers/local-admin-invitation.controller.ts src/infra/http/http.module.ts test/local-admin-invitation.e2e-spec.ts test/postgres-local-invitations.integration-spec.ts
-          node -e "const fs=require('node:fs'); console.log('SF37_HEX_CTRL='+fs.readFileSync('src/infra/http/controllers/local-admin-invitation.controller.ts').toString('hex'));"
-          node -e "const fs=require('node:fs'); console.log('SF37_HEX_HTTP='+fs.readFileSync('src/infra/http/http.module.ts').toString('hex'));"
-          node -e "const fs=require('node:fs'); console.log('SF37_HEX_E2E='+fs.readFileSync('test/local-admin-invitation.e2e-spec.ts').toString('hex'));"
-          node -e "const fs=require('node:fs'); console.log('SF37_HEX_DB='+fs.readFileSync('test/postgres-local-invitations.integration-spec.ts').toString('hex'));"
       - name: Enforce Prettier only on TypeScript changed by this PR
         if: github.event_name == 'pull_request'
         env:
