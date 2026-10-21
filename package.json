@@ -29,7 +29,9 @@
     "prisma:migrate:deploy": "prisma migrate deploy --schema prisma/schema.prisma",
     "lint:check": "eslint \"{src,apps,libs,test}/**/*.ts\"",
     "neon:preflight": "node scripts/neon-preflight.cjs",
-    "neon:preflight:test": "node --test scripts/neon-preflight.test.cjs"
+    "neon:preflight:test": "node --test scripts/neon-preflight.test.cjs",
+    "neon:inspect": "node scripts/neon-inspect.cjs",
+    "neon:inspect:test": "node --test scripts/neon-inspect.test.cjs"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
