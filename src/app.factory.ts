@@ -54,7 +54,9 @@ export function configureApp(app: INestApplication) {
     'disable' in expressApp &&
     typeof expressApp.disable === 'function'
   ) {
-    expressApp.disable('x-powered-by');
+    (expressApp as { disable: (feature: string) => void }).disable(
+      'x-powered-by',
+    );
   }
 
   app.use(express.json({ strict: true }));
