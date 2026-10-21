@@ -94,7 +94,8 @@ export class PublicAuthRateLimitGuard implements CanActivate {
     if (!body || typeof body !== 'object' || !(key in body)) {
       return undefined;
     }
-    return body[key];
+    const fields = body as Record<string, unknown>;
+    return fields[key];
   }
 
   private normalizeValue(value: unknown) {
