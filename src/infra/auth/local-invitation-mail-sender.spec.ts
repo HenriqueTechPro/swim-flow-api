@@ -1,6 +1,4 @@
-import {
-  ServiceUnavailableException,
-} from '@nestjs/common';
+import { ServiceUnavailableException } from '@nestjs/common';
 import { ResendInvitationMailSender } from './local-invitation-mail-sender';
 
 describe('ResendInvitationMailSender', () => {
@@ -35,11 +33,13 @@ describe('ResendInvitationMailSender', () => {
     const mockFetch = jest.fn();
     global.fetch = mockFetch as typeof fetch;
     expect(() => sender.assertReady()).toThrow(ServiceUnavailableException);
-    await expect(sender.sendInvitation({
-      to: 'student@example.invalid',
-      token: 'x'.repeat(43),
-      expiresAt: new Date(),
-    })).rejects.toBeInstanceOf(ServiceUnavailableException);
+    await expect(
+      sender.sendInvitation({
+        to: 'student@example.invalid',
+        token: 'x'.repeat(43),
+        expiresAt: new Date(),
+      }),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
@@ -48,7 +48,7 @@ describe('ResendInvitationMailSender', () => {
       'http://swimflow.example.invalid',
       'https://swimflow.example.invalid/redirect',
       'https://swimflow.example.invalid#fragment',
-      'https://username:password@swimflow.example.invalid',
+      '***swimflow.example.invalid',
     ]) {
       process.env.SWIMFLOW_AUTH_APP_ORIGIN = origin;
       expect(() => sender.assertReady()).toThrow(ServiceUnavailableException);
@@ -84,17 +84,21 @@ describe('ResendInvitationMailSender', () => {
     expect(payload.text).toContain('/auth/accept-local-invitation#token=');
     expect(payload.text).toContain(token);
     expect(payload.text).not.toContain('?token=');
-    expect(init.headers).toEqual(expect.objectContaining({
-      Authorization: 'Bearer test-only-not-a-real-key',
-    }));
+    expect(init.headers).toEqual(
+      expect.objectContaining({
+        Authorization: '***',
+      }),
+    );
   });
 
   it('hides remote provider errors and does not return the response body', async () => {
     global.fetch = jest.fn().mockResolvedValue({ ok: false }) as typeof fetch;
-    await expect(sender.sendInvitation({
-      to: 'student@example.invalid',
-      token: 'a'.repeat(43),
-      expiresAt: new Date(),
-    })).rejects.toThrow('Invitation delivery failed');
+    await expect(
+      sender.sendInvitation({
+        to: 'student@example.invalid',
+        token: 'a'.repeat(43),
+        expiresAt: new Date(),
+      }),
+    ).rejects.toThrow('Invitation delivery failed');
   });
 });
