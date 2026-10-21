@@ -1,4 +1,8 @@
-import { INestApplication, type ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  INestApplication,
+  type ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import request from 'supertest';
 import type { App } from 'supertest/types';
 import { AuthProfilesRepository } from '@/domain/auth/application/repositories/auth-profiles-repository';
@@ -141,7 +145,9 @@ describe('Staged local administrator invitation HTTP gate (e2e)', () => {
       .expect('Cache-Control', 'no-store');
 
     expect(response.body).toEqual({ data: { success: true } });
-    expect(JSON.stringify(response.body)).not.toMatch(/token|athlete@|uuid|http/i);
+    expect(JSON.stringify(response.body)).not.toMatch(
+      /token|athlete@|uuid|http/i,
+    );
     expect(invite).toHaveBeenCalledWith({
       actorUserId: 'ci-admin',
       email: payload.email.toLowerCase(),
