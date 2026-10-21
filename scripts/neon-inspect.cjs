@@ -16,8 +16,16 @@ SELECT
     JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
     WHERE n.nspname NOT LIKE 'pg_%'
       AND n.nspname NOT IN ('information_schema', 'neon', 'neon_monitor')
-      AND c.relkind IN ('r', 'p', 'v', 'm', 'f')
+      AND c.relkind IN ('r', 'p', 'v', 'm', 'f', 'S')
   ) AS "relations",
+  (SELECT EXISTS (
+    SELECT 1
+    FROM pg_catalog.pg_class c
+    JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public'
+      AND c.relname = '_prisma_migrations'
+      AND c.relkind = 'r'
+  )) AS "hasPrismaMigrationTable",
   (SELECT COUNT(*)::integer
     FROM pg_catalog.pg_type t
     JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
@@ -64,10 +72,15 @@ async function inspectNeonDatabase(env, createClient) {
     requireSingleRow(pooledRows, expectedDatabase);
     const relations = requireCount(directRow.relations);
     const enums = requireCount(directRow.enums);
+    if (typeof directRow.hasPrismaMigrationTable !== 'boolean') {
+      throw new Error('Migration-table presence was not verified.');
+    }
     return {
       direct: 'connected',
       pooled: 'connected',
-      candidateEmpty: relations === 0 && enums === 0,
+      candidateEmpty: relations === 0 && enums === 0 &&
+        !directRow.hasPrismaMigrationTable,
+      hasPrismaMigrationTable: directRow.hasPrismaMigrationTable,
       userRelations: relations,
       userEnums: enums,
     };
