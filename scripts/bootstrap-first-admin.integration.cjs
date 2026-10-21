@@ -4,14 +4,10 @@ const assert = require('node:assert/strict');
 const { PrismaClient } = require('@prisma/client');
 const { compare } = require('bcryptjs');
 const { bootstrapFirstAdmin } = require('./bootstrap-first-admin.cjs');
+const { assertDisposablePostgres } = require('./bootstrap-disposable-guard.cjs');
 
 async function main() {
-  const url = new URL(process.env.DIRECT_URL || '');
-  if (process.env.SWIMFLOW_DISPOSABLE_DB !== 'yes' ||
-      !['localhost', '127.0.0.1'].includes(url.hostname) ||
-      url.pathname !== '/swimflow') {
-    throw new Error('Integration test requires disposable local PostgreSQL.');
-  }
+  assertDisposablePostgres(process.env);
   const a = new PrismaClient({ log: [] });
   const b = new PrismaClient({ log: [] });
   const password = 'ci-only-admin-password-02e8b';
