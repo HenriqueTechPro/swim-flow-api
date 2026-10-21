@@ -11,9 +11,19 @@
  */
 const NEON_SUFFIX = '.neon.tech';
 const EMPTY_SCHEMA_SQL = [
-  'SELECT table_name FROM information_schema.tables',
-  "WHERE table_schema = current_schema() AND table_type = 'BASE TABLE'",
-  'ORDER BY table_name',
+  'SELECT 1 AS present FROM pg_class c',
+  'JOIN pg_namespace n ON n.oid = c.relnamespace',
+  "WHERE n.nspname NOT IN ('pg_catalog', 'information_schema')",
+  "AND n.nspname NOT LIKE 'pg_toast%'",
+  "AND n.nspname NOT LIKE 'pg_temp_%'",
+  "AND c.relkind IN ('r', 'p', 'v', 'm', 'S', 'f')",
+  'UNION ALL SELECT 1 AS present FROM pg_type t',
+  'JOIN pg_namespace n ON n.oid = t.typnamespace',
+  "WHERE n.nspname NOT IN ('pg_catalog', 'information_schema')",
+  "AND n.nspname NOT LIKE 'pg_toast%'",
+  "AND n.nspname NOT LIKE 'pg_temp_%'",
+  "AND t.typtype = 'e'",
+  'LIMIT 1',
 ].join(' ');
 
 function invalid(label, reason) {
@@ -71,7 +81,8 @@ function checkNeonConfiguration(environment) {
   if (unpooledHost !== direct.hostname) {
     throw new Error('Neon URLs point to different endpoints/projects');
   }
-  if (pooled.username !== direct.username || pooled.pathname !== direct.pathname) {
+  if (pooled.username !== direct.username || pooled.password !== direct.password ||
+      pooled.pathname !== direct.pathname) {
     throw new Error('Neon URLs must target the same database and user');
   }
   // Never return any URL or secret from the public result.
