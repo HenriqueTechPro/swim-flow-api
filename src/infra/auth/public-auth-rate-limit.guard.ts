@@ -77,16 +77,24 @@ export class PublicAuthRateLimitGuard implements CanActivate {
     switch (handlerName) {
       case 'login':
       case 'requestPasswordReset': {
-        const email = this.normalizeValue(request.body?.email);
+        const email = this.normalizeValue(this.readBodyValue(request, 'email'));
         return `${handlerName}:${ip}:${email ?? 'anonymous'}`;
       }
       case 'confirmPasswordReset': {
-        const accessToken = this.normalizeValue(request.body?.accessToken);
+        const accessToken = this.normalizeValue(this.readBodyValue(request, 'accessToken'));
         return `${handlerName}:${ip}:${accessToken ?? 'anonymous'}`;
       }
       default:
         return `${handlerName}:${ip}`;
     }
+  }
+
+  private readBodyValue(request: Request, key: 'email' | 'accessToken'): unknown {
+    const body: unknown = request.body;
+    if (!body || typeof body !== 'object' || !(key in body)) {
+      return undefined;
+    }
+    return body[key];
   }
 
   private normalizeValue(value: unknown) {
