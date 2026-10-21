@@ -30,17 +30,23 @@ export class LocalAdminInvitationsService {
   ) {}
 
   /** Internal-only workflow; controllers remain on Supabase until cutover. */
-  async invite(input: CreateLocalInvitation): Promise<{ id: string; email: string }> {
+  async invite(
+    input: CreateLocalInvitation,
+  ): Promise<{ id: string; email: string }> {
     // Refuse BEFORE any write if delivery/known frontend is not configured.
     this.mail.assertReady();
 
-    const email = typeof input.email === 'string' ? input.email.trim().toLowerCase() : '';
-    const fullName = typeof input.fullName === 'string' ? input.fullName.trim() : '';
+    const email =
+      typeof input.email === 'string' ? input.email.trim().toLowerCase() : '';
+    const fullName =
+      typeof input.fullName === 'string' ? input.fullName.trim() : '';
     if (!EMAIL_PATTERN.test(email) || email.length > 320) {
       throw new UnprocessableEntityException('Invalid invitation email');
     }
-    if (fullName.length > 120 ||
-        !['user', 'teacher', 'admin'].includes(input.role)) {
+    if (
+      fullName.length > 120 ||
+      !['user', 'teacher', 'admin'].includes(input.role)
+    ) {
       throw new UnprocessableEntityException('Invalid invitation profile');
     }
     const token = randomBytes(32).toString('base64url');
@@ -84,11 +90,15 @@ export class LocalAdminInvitationsService {
           },
         });
         if (existing) {
-          if (existing.disabledAt !== null ||
-              existing.emailConfirmedAt !== null ||
-              existing.passwordHash !== null ||
-              existing.profile?.role !== input.role) {
-            throw new ConflictException('Invitation cannot be issued for this account');
+          if (
+            existing.disabledAt !== null ||
+            existing.emailConfirmedAt !== null ||
+            existing.passwordHash !== null ||
+            existing.profile?.role !== input.role
+          ) {
+            throw new ConflictException(
+              'Invitation cannot be issued for this account',
+            );
           }
           // Reissue is allowed only for the SAME pending account and role.
           return { id: existing.userId, alreadyPending: true };
@@ -117,8 +127,10 @@ export class LocalAdminInvitationsService {
         return { id, alreadyPending: false };
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError &&
-          error.code === 'P2002') {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
         throw new ConflictException('Invitation already exists');
       }
       throw error;
@@ -128,7 +140,10 @@ export class LocalAdminInvitationsService {
     let deliveryExpiry = expiresAt;
     if (result.alreadyPending) {
       // Reuses 02E-9A's transaction/identity lock to invalidate older links.
-      const renewed = await this.tokens.issueForIdentity(result.id, 'INVITATION');
+      const renewed = await this.tokens.issueForIdentity(
+        result.id,
+        'INVITATION',
+      );
       deliveryToken = renewed.token;
       deliveryExpiry = renewed.expiresAt;
     }
