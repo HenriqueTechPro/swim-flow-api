@@ -46,6 +46,10 @@ jobs:
         run: npm run neon:staging:migrate:test
       - name: Test incremental formatting file selection
         run: npm run format:changed:test
+      - name: Format patch preview (temporary)
+        run: |
+          node node_modules/prettier/bin/prettier.cjs --write src/infra/auth/local-auth-action-tokens.service.ts src/infra/auth/local-auth-action-tokens.service.spec.ts
+          node -e "const fs=require('node:fs'); for(const [key,path] of [['SERVICE','src/infra/auth/local-auth-action-tokens.service.ts'],['SPEC','src/infra/auth/local-auth-action-tokens.service.spec.ts']]) console.log('SWIMFLOW_PRETTIER_'+key+'='+JSON.stringify(fs.readFileSync(path,'utf8')));"
       - name: Enforce Prettier only on TypeScript changed by this PR
         if: github.event_name == 'pull_request'
         env:
