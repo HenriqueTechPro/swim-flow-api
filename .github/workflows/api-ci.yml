@@ -46,13 +46,6 @@ jobs:
         run: npm run neon:staging:migrate:test
       - name: Test incremental formatting file selection
         run: npm run format:changed:test
-      - name: Canonical code formatting snapshot (temporary)
-        run: |
-          node node_modules/prettier/bin/prettier.cjs --write src/infra/auth/public-auth-rate-limit.guard.ts src/infra/http/controllers/local-invitation.controller.ts src/infra/http/http.module.ts test/local-invitation.e2e-spec.ts
-          node -e "const fs=require('node:fs'); console.log('SF_HEX_RATE='+fs.readFileSync('src/infra/auth/public-auth-rate-limit.guard.ts').toString('hex'));"
-          node -e "const fs=require('node:fs'); console.log('SF_HEX_CTRL='+fs.readFileSync('src/infra/http/controllers/local-invitation.controller.ts').toString('hex'));"
-          node -e "const fs=require('node:fs'); console.log('SF_HEX_MODULE='+fs.readFileSync('src/infra/http/http.module.ts').toString('hex'));"
-          node -e "const fs=require('node:fs'); console.log('SF_HEX_E2E='+fs.readFileSync('test/local-invitation.e2e-spec.ts').toString('hex'));"
       - name: Enforce Prettier only on TypeScript changed by this PR
         if: github.event_name == 'pull_request'
         env:
