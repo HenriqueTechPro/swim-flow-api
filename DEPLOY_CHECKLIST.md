@@ -1,8 +1,9 @@
 # Swim Flow API — Checklist de deploy (Render + Neon + Vercel)
 
-> Etapa 02D-7: preparação da API. Este documento **não** significa que
-> Neon/Render já estejam provisionados ou que dados tenham sido migrados.
-> Ainda usamos Supabase para Auth e Storage até PRs próprias de substituição.
+> Atualizado em 21/10/2026: o **schema inicial já foi aplicado ao Neon
+> staging**, preservando o banco sem registros de aplicação. A API no Render
+> ainda não foi publicada e o banco de produção não existe.
+> Supabase Auth e Storage continuam temporariamente ativos.
 
 ## 1. Antes do deploy: checks sem acessar serviços externos
 
@@ -18,21 +19,27 @@
 
 ## 2. Neon — PostgreSQL (somente após aprovar a API)
 
-- [x] Criar banco PostgreSQL **vazio em staging** para esta migração limpa (Neon AWS us-east-1; verificação somente leitura em 21/10/2026). O banco de produção ainda não existe.
+- [x] Criar banco PostgreSQL staging em Neon AWS us-east-1, sem importar dados legados (21/10/2026).
 - [ ] Obter `DATABASE_URL` **pooled** (conexões de runtime) e `DIRECT_URL`
       **direct** (Prisma Migrate), com TLS/SSL.
 - [ ] Revisar os SQLs da pasta `prisma/migrations` e confirmar ambiente
       correto antes de escrever. Os testes CI são protegidos para banco
       descartável local; **nunca** executar ferramentas de verificação
       destrutivas sobre Neon.
-- [ ] No contexto correto e especificamente autorizado, usar
-      `npm run neon:staging:migrate -- --apply` para a **primeira baseline
-      do staging**, com host, projeto, branch e banco validados; este
-      comando chama Prisma Migrate Deploy e verifica o histórico.
-      Veja `docs/NEON_STAGING_BASELINE_MIGRATION_02E4.md`.
-      Para outras branches/ambientes, usar um procedimento separado
-      revisado antes de qualquer escrita.
-- [ ] Confirmar `prisma migrate status`, constraints e índices.
+- [x] Aplicar a baseline SQL versionada `20261020000000_init_neon`
+      ao staging em transação, com pré-verificação de banco vazio.
+      A operação foi realizada via conector Neon (não pela CLI Prisma),
+      registrando `_prisma_migrations` com o checksum SHA-256 exato
+      da migração original. Ver `docs/NEON_STAGING_BASELINE_APPLIED_02E5.md`.
+- [ ] Em um runtime seguro e com URLs privadas, executar
+      `prisma migrate status` da mesma versão Prisma 6 para confirmar
+      reconhecimento do histórico antes de conectar Render staging.
+      Não executar novamente o executor **de primeira baseline** no banco
+      agora ocupado. Em migrações posteriores, utilizar Prisma Migrate CLI.
+- [x] Confirmar via queries Neon as constraints, FKs, índices,
+      enumerações, tabelas e checksum no histórico Prisma.
+- [ ] Confirmar `prisma migrate status` pela CLI Prisma 6 em ambiente
+      seguro conectado ao staging (ainda não executado).
 - [ ] Não usar `prisma db push` ou `prisma migrate dev` no deploy.
 
 ## 3. Render — Serviço Web NestJS

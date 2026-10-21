@@ -75,9 +75,12 @@ npm run start:prod
 ## Deploy planejado: Neon + Render + Vercel
 
 A estrutura definitiva adotada é **PostgreSQL Neon** (banco), **Render** (API)
-e **Vercel** (dashboard). A migração do banco real e a publicação da API
-ainda são etapas operacionais separadas; nada disso acontece automaticamente
-ao fazer merge.
+e **Vercel** (dashboard). O schema inicial já foi implantado no **Neon staging**
+em 21/10/2026, com 31 tabelas de aplicação, 24 enums e sem dados importados.
+A API ainda não foi publicada no Render e o banco de produção não existe.
+A implantação de serviços não acontece automaticamente ao fazer merge.
+Veja `docs/NEON_STAGING_BASELINE_APPLIED_02E5.md` para a evidência e para
+a diferença entre o SQL transacional aplicado e o comando Prisma CLI pendente.
 
 Na API Render, execute o build com:
 
@@ -89,8 +92,10 @@ Start: `npm run start:prod` com `NODE_ENV=production` e as variáveis
 `DATABASE_URL` (pooled), `DIRECT_URL` (direct), `JWT_ACCESS_SECRET` e
 `API_CORS_ORIGIN` protegidas no ambiente do serviço.
 
-Em banco Neon **vazio e previamente aprovado**, as migrações usam
+Em bancos Neon **novos e vazios**, migrações futuras seguem
 `npm run prisma:migrate:deploy`, nunca `db push` no deploy.
+No staging já inicializado, **não reaplique a baseline**; antes de conectar
+Render, valide o histórico com `prisma migrate status` usando Prisma 6.
 
 A API possui dois endpoints de diagnóstico:
 
