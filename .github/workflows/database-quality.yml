@@ -52,6 +52,8 @@ jobs:
         run: npm run prisma:migrate:deploy
       - name: Verify concrete SQL constraints and nullability
         run: node node_modules/prisma/build/index.js db execute --file test/sql/neon-baseline-verification.sql --schema prisma/schema.prisma
+      - name: Verify staged local identity schema and security constraints
+        run: node node_modules/prisma/build/index.js db execute --file test/sql/local-auth-foundation-verification.sql --schema prisma/schema.prisma
       - name: Real Prisma repository and PostgreSQL integration scenarios
         env:
           SWIMFLOW_DISPOSABLE_DB: 'yes'
