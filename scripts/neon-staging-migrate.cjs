@@ -80,13 +80,13 @@ function runNode(args) {
 }
 
 function assertPostMigration(row) {
-  if (!row || Number(row.application_tables) !== 32 ||
-      Number(row.application_enums) !== 25 ||
+  if (!row || Number(row.application_tables) !== 31 ||
+      Number(row.application_enums) !== 24 ||
       Number(row.applied_baseline) !== 1 ||
       Number(row.total_migrations) !== 1) {
     throw new Error('Unexpected post-migration schema or Prisma history; investigate privately.');
   }
-  return { applicationTables: 32, applicationEnums: 25, prismaMigrations: 1 };
+  return { applicationTables: 31, applicationEnums: 24, prismaMigrations: 1 };
 }
 
 const POST_MIGRATION_QUERY = `
