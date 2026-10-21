@@ -28,6 +28,7 @@ test('rejects local/Supabase/plaintext credentials and unsafe migration target',
     { DATABASE_URL: valid.DATABASE_URL.replace('-pooler.', '.') },
     { DIRECT_URL: valid.DIRECT_URL.replace('ep-project-123.', 'ep-other-321.') },
     { DIRECT_URL: valid.DIRECT_URL.replace('app:', 'different:') },
+    { DIRECT_URL: valid.DIRECT_URL.replace('mock-secret', 'other-secret') },
     { DIRECT_URL: valid.DIRECT_URL.replace('swimflow', 'otherschema') },
     { DIRECT_URL: 'not-a-connection-url' },
     { DIRECT_URL: undefined },
@@ -79,7 +80,9 @@ test('explicit --connect uses direct URL and read-only catalog query', async () 
     assert.equal(url, valid.DIRECT_URL);
     return db;
   });
-  assert.match(statement, /^SELECT table_name FROM information_schema.tables/);
+  assert.match(statement, /^SELECT 1 AS present FROM pg_class/);
+  assert.match(statement, /UNION ALL SELECT 1 AS present FROM pg_type/);
+  assert.match(statement, /pg_namespace/);
   assert.doesNotMatch(statement, /\b(?:INSERT|UPDATE|DELETE|DROP|CREATE)\b/i);
   assert.equal(disconnected, 1);
 });
