@@ -1,6 +1,5 @@
 import {
   CanActivate,
-  ExecutionContext,
   Injectable,
   ServiceUnavailableException,
 } from '@nestjs/common';
@@ -12,7 +11,7 @@ import {
  */
 @Injectable()
 export class LocalAdminInvitationRolloutGuard implements CanActivate {
-  canActivate(_context: ExecutionContext): boolean {
+  canActivate(): boolean {
     if (
       process.env.SWIMFLOW_LOCAL_INVITATION_API_ENABLED !== 'true' ||
       process.env.SWIMFLOW_LOCAL_INVITES_ENABLED !== 'true'
