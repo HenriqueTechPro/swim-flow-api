@@ -58,6 +58,10 @@ jobs:
         env:
           SWIMFLOW_DISPOSABLE_DB: 'yes'
         run: node scripts/bootstrap-first-admin.integration.cjs
+      - name: Verify invitation and password-reset token security on disposable PostgreSQL
+        env:
+          SWIMFLOW_DISPOSABLE_DB: 'yes'
+        run: node scripts/verify-local-auth-actions.cjs
       - name: Real Prisma repository and PostgreSQL integration scenarios
         env:
           SWIMFLOW_DISPOSABLE_DB: 'yes'

@@ -10,6 +10,7 @@ import { PermissionsGuard } from './permissions.guard';
 import { PublicAuthRateLimitGuard } from './public-auth-rate-limit.guard';
 import { RolesGuard } from './roles.guard';
 import { LocalPasswordIdentityService } from './local-password-identity.service';
+import { LocalAuthActionTokensService } from './local-auth-action-tokens.service';
 import { SupabaseAuthService } from './supabase-auth.service';
 import { TrustedOriginGuard } from './trusted-origin.guard';
 import { TeacherAttendanceScopeGuard } from './teacher-attendance-scope.guard';
@@ -34,6 +35,7 @@ import { TeacherAttendanceScopeGuard } from './teacher-attendance-scope.guard';
     TrustedOriginGuard,
     SupabaseAuthService,
     LocalPasswordIdentityService,
+    LocalAuthActionTokensService,
   ],
   exports: [
     AuthSessionManager,
@@ -47,6 +49,7 @@ import { TeacherAttendanceScopeGuard } from './teacher-attendance-scope.guard';
     TrustedOriginGuard,
     SupabaseAuthService,
     LocalPasswordIdentityService,
+    LocalAuthActionTokensService,
     JwtModule,
   ],
 })
