@@ -78,7 +78,8 @@ export class ResendInvitationMailSender extends LocalInvitationMailSender {
         method: 'POST',
         signal: AbortSignal.timeout(8000),
         headers: {
-          Authorization: `***          'Content-Type': 'application/json',
+          Authorization: ['Bearer', config.apiKey].join(' '),
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           from: config.from,
