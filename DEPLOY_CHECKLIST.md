@@ -25,8 +25,13 @@
       correto antes de escrever. Os testes CI são protegidos para banco
       descartável local; **nunca** executar ferramentas de verificação
       destrutivas sobre Neon.
-- [ ] No contexto correto e autorizado: `npm run prisma:migrate:deploy`,
-      **uma vez**, somente após validação da conexão e do banco de destino.
+- [ ] No contexto correto e especificamente autorizado, usar
+      `npm run neon:staging:migrate -- --apply` para a **primeira baseline
+      do staging**, com host, projeto, branch e banco validados; este
+      comando chama Prisma Migrate Deploy e verifica o histórico.
+      Veja `docs/NEON_STAGING_BASELINE_MIGRATION_02E4.md`.
+      Para outras branches/ambientes, usar um procedimento separado
+      revisado antes de qualquer escrita.
 - [ ] Confirmar `prisma migrate status`, constraints e índices.
 - [ ] Não usar `prisma db push` ou `prisma migrate dev` no deploy.
 
