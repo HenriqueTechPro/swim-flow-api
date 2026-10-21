@@ -91,7 +91,9 @@ async function main() {
     const result = await inspectNeonDatabase(process.env, (url) =>
       new PrismaClient({
         datasources: { db: { url } },
-        log: ['error'],
+        // Do not emit Prisma engine connection errors to CLI logs:
+        // they may include private hostnames or database identifiers.
+        log: [],
       }),
     );
     // No hostname, username, database name, password or connection string.
