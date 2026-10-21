@@ -12,7 +12,8 @@ type RateLimitedHandler =
   | 'loginWithGoogle'
   | 'refresh'
   | 'requestPasswordReset'
-  | 'confirmPasswordReset';
+  | 'confirmPasswordReset'
+  | 'acceptLocalInvitation';
 
 interface RateLimitWindow {
   limit: number;
@@ -30,6 +31,7 @@ const RATE_LIMIT_WINDOWS: Record<RateLimitedHandler, RateLimitWindow> = {
   refresh: { limit: 30, windowMs: 60_000 },
   requestPasswordReset: { limit: 3, windowMs: 15 * 60_000 },
   confirmPasswordReset: { limit: 5, windowMs: 15 * 60_000 },
+  acceptLocalInvitation: { limit: 5, windowMs: 15 * 60_000 },
 };
 
 @Injectable()
