@@ -86,7 +86,7 @@ export class ResendPasswordResetMailSender extends PasswordResetMailSender {
             `Abra: ${link.toString()}`,
             `Este link expira em ${expiresAt.toISOString()}.`,
             'Se você não solicitou esta mudança, ignore esta mensagem.',
-          ].join('\\n'),
+          ].join('\n'),
         }),
       });
     } catch {
