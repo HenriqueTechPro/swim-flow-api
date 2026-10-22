@@ -1,0 +1,84 @@
+# One-time staging admin bootstrap. MANUAL ONLY; never runs for push/PR/merge.
+# Requires environment "swimflow-neon-staging" with branch main restriction.
+# All account values (including email and display name) come from protected
+# environment secrets, not dispatch inputs, which are recorded in run metadata.
+name: Bootstrap first Swim Flow staging administrator (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type BOOTSTRAP_SWIM_FLOW_STAGING_ADMIN_ONCE to create exactly one initial admin in Neon staging'
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  # Serializes with the manual local-auth migration workflow.
+  group: swimflow-neon-staging-local-auth-schema
+  cancel-in-progress: false
+
+jobs:
+  first-staging-administrator:
+    name: Bootstrap one staging administrator
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' &&
+          github.repository == 'HenriqueTechPro/swim-flow-api' &&
+          github.ref == 'refs/heads/main' &&
+          github.run_attempt == 1 &&
+          inputs.confirmation == 'BOOTSTRAP_SWIM_FLOW_STAGING_ADMIN_ONCE' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: swimflow-neon-staging
+    env:
+      NEON_PROJECT_ID: raspy-breeze-33258358
+      NEON_BRANCH_ID: br-gentle-wildflower-b7qrnd74
+      SWIMFLOW_BOOTSTRAP_ADMIN_APPROVAL: BOOTSTRAP_SWIM_FLOW_STAGING_ADMIN_ONCE
+    steps:
+      - name: Check exact repository, branch and explicit approval
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = "HenriqueTechPro/swim-flow-api"
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$GITHUB_RUN_ATTEMPT" = "1"
+          test "$CONFIRMATION" = "BOOTSTRAP_SWIM_FLOW_STAGING_ADMIN_ONCE"
+      - name: Checkout reviewed main commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install locked dependencies without any live database or admin secrets
+        run: npm ci
+      - name: Generate Prisma client using offline placeholder URLs
+        env:
+          DATABASE_URL: postgresql://offline:offline@localhost:5432/swimflow?schema=public
+          DIRECT_URL: postgresql://offline:offline@localhost:5432/swimflow?schema=public
+        run: |
+          npm run prisma:validate
+          npm run prisma:generate
+      - name: Offline audit of the bootstrap bridge
+        run: node --test scripts/bootstrap-first-admin-github.test.cjs
+      - name: Bootstrap one administrator exactly once
+        env:
+          DATABASE_URL: ${{ secrets.SWIMFLOW_STAGING_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.SWIMFLOW_STAGING_DIRECT_URL }}
+          SWIMFLOW_STAGING_FIRST_ADMIN_EMAIL: ${{ secrets.SWIMFLOW_STAGING_FIRST_ADMIN_EMAIL }}
+          SWIMFLOW_STAGING_FIRST_ADMIN_NAME: ${{ secrets.SWIMFLOW_STAGING_FIRST_ADMIN_NAME }}
+          SWIMFLOW_STAGING_FIRST_ADMIN_PASSWORD: ${{ secrets.SWIMFLOW_STAGING_FIRST_ADMIN_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The Node bridge checks the exact staging target, TLS and schema,
+          # then passes password to bootstrap-first-admin.cjs via stdin only.
+          # Never run the command under shell tracing (set -x).
+          node scripts/bootstrap-first-admin-github.cjs --apply
