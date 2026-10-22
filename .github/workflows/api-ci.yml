@@ -48,6 +48,8 @@ jobs:
         run: npm run neon:local-auth:staging:test
       - name: Audit manual Neon staging workflow safety boundaries
         run: node --test scripts/neon-local-auth-dispatch.test.cjs
+      - name: Audit one-time staging administrator workflow and stdin isolation
+        run: node --test scripts/bootstrap-first-admin-github.test.cjs
       - name: Test incremental formatting file selection
         run: npm run format:changed:test
       - name: Enforce Prettier only on TypeScript changed by this PR
