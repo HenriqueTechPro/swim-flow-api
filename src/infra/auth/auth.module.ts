@@ -14,7 +14,7 @@ import { LocalAuthActionTokensService } from './local-auth-action-tokens.service
 import { LocalAdminInvitationsService } from './local-admin-invitations.service';
 import { LocalPasswordResetService } from './local-password-reset.service';
 import {
-  LocalPasswordResetMailSender,
+  PasswordResetMailSender,
   ResendPasswordResetMailSender,
 } from './local-password-reset-mail-sender';
 import {
@@ -49,7 +49,7 @@ import { TeacherAttendanceScopeGuard } from './teacher-attendance-scope.guard';
     LocalAdminInvitationsService,
     LocalPasswordResetService,
     {
-      provide: LocalPasswordResetMailSender,
+      provide: PasswordResetMailSender,
       useClass: ResendPasswordResetMailSender,
     },
     {
