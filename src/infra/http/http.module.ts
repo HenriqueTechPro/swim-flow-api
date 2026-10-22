@@ -11,6 +11,7 @@ import { ClassesController } from './controllers/classes.controller';
 import { ExStudentsController } from './controllers/ex-students.controller';
 import { EventsController } from './controllers/events.controller';
 import { ParentsController } from './controllers/parents.controller';
+import { LocalAdminInvitationController } from './controllers/local-admin-invitation.controller';
 import { PublicResultsController } from './controllers/public-results.controller';
 import { PoolsController } from './controllers/pools.controller';
 import { ProfileController } from './controllers/profile.controller';
@@ -31,6 +32,7 @@ import { useCaseProviders } from './use-case.providers';
     ExStudentsController,
     EventsController,
     ParentsController,
+    LocalAdminInvitationController,
     PublicResultsController,
     PoolsController,
     ProfileController,
