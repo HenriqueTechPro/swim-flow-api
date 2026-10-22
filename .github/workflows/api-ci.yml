@@ -44,6 +44,8 @@ jobs:
         run: npm run neon:inspect:test
       - name: Test guarded Prisma staging migration without real Neon credentials
         run: npm run neon:staging:migrate:test
+      - name: Verify incremental local auth staging runner without Neon credentials
+        run: npm run neon:local-auth:staging:test
       - name: Test incremental formatting file selection
         run: npm run format:changed:test
       - name: Enforce Prettier only on TypeScript changed by this PR
