@@ -13,6 +13,8 @@ import { LocalPasswordIdentityService } from './local-password-identity.service'
 import { LocalAuthActionTokensService } from './local-auth-action-tokens.service';
 import { LocalAdminInvitationsService } from './local-admin-invitations.service';
 import { LocalPasswordResetService } from './local-password-reset.service';
+import { LocalPasswordResetOriginGuard } from './local-password-reset-origin.guard';
+import { LocalPasswordResetRolloutGuard } from './local-password-reset-rollout.guard';
 import {
   PasswordResetMailSender,
   ResendPasswordResetMailSender,
@@ -50,6 +52,8 @@ import { TeacherAttendanceScopeGuard } from './teacher-attendance-scope.guard';
     LocalAdminInvitationsService,
     LocalAdminInvitationRolloutGuard,
     LocalPasswordResetService,
+    LocalPasswordResetOriginGuard,
+    LocalPasswordResetRolloutGuard,
     {
       provide: PasswordResetMailSender,
       useClass: ResendPasswordResetMailSender,
@@ -75,6 +79,8 @@ import { TeacherAttendanceScopeGuard } from './teacher-attendance-scope.guard';
     LocalAdminInvitationsService,
     LocalAdminInvitationRolloutGuard,
     LocalPasswordResetService,
+    LocalPasswordResetOriginGuard,
+    LocalPasswordResetRolloutGuard,
     JwtModule,
   ],
 })
