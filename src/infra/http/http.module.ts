@@ -7,6 +7,7 @@ import { SupabaseManagedUploadsRepository } from '@/infra/supabase/managed-uploa
 import { AttendanceController } from './controllers/attendance.controller';
 import { AuthController } from './controllers/auth.controller';
 import { LocalInvitationController } from './controllers/local-invitation.controller';
+import { LocalPasswordResetController } from './controllers/local-password-reset.controller';
 import { ClassesController } from './controllers/classes.controller';
 import { ExStudentsController } from './controllers/ex-students.controller';
 import { EventsController } from './controllers/events.controller';
@@ -28,6 +29,7 @@ import { useCaseProviders } from './use-case.providers';
     AttendanceController,
     AuthController,
     LocalInvitationController,
+    LocalPasswordResetController,
     ClassesController,
     ExStudentsController,
     EventsController,
