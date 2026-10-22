@@ -59,6 +59,11 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
       - name: Validate schema and generate Prisma 6 client
+        # Prisma requires URLs to parse schema.prisma, but no network access
+        # is performed by validate/generate. Real Neon secrets stay absent.
+        env:
+          DATABASE_URL: postgresql://offline:offline@localhost:5432/swimflow?schema=public
+          DIRECT_URL: postgresql://offline:offline@localhost:5432/swimflow?schema=public
         run: |
           npm run prisma:validate
           npm run prisma:generate
