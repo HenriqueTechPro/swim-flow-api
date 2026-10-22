@@ -32,9 +32,8 @@ jobs:
     environment:
       name: swimflow-neon-staging
     env:
-      # These values must only be entered as environment secrets in GitHub.
-      DATABASE_URL: ${{ secrets.SWIMFLOW_STAGING_DATABASE_URL }}
-      DIRECT_URL: ${{ secrets.SWIMFLOW_STAGING_DIRECT_URL }}
+      # Non-secret, fixed staging target. Credentials are step-scoped below:
+      # never expose them to npm ci, package lifecycle scripts or codegen.
       NEON_PROJECT_ID: raspy-breeze-33258358
       NEON_BRANCH_ID: br-gentle-wildflower-b7qrnd74
       SWIMFLOW_LOCAL_AUTH_STAGING_APPROVAL: APPLY_SWIM_FLOW_LOCAL_AUTH_STAGING
@@ -48,8 +47,6 @@ jobs:
           test "$GITHUB_REPOSITORY" = "HenriqueTechPro/swim-flow-api"
           test "$GITHUB_REF" = "refs/heads/main"
           test "$CONFIRMATION" = "APPLY_SWIM_FLOW_LOCAL_AUTH_STAGING"
-          test -n "$DATABASE_URL"
-          test -n "$DIRECT_URL"
       - name: Checkout immutable main commit
         uses: actions/checkout@v4
         with:
@@ -68,6 +65,17 @@ jobs:
       - name: Verify reviewed migrations without database access
         run: npm run neon:local-auth:staging -- --check
       - name: Validate strict Neon TLS and pooled/direct URLs
-        run: npm run neon:preflight
+        env:
+          DATABASE_URL: ${{ secrets.SWIMFLOW_STAGING_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.SWIMFLOW_STAGING_DIRECT_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$DATABASE_URL"
+          test -n "$DIRECT_URL"
+          npm run neon:preflight
       - name: Apply only the reviewed incremental migration using Prisma CLI
+        env:
+          DATABASE_URL: ${{ secrets.SWIMFLOW_STAGING_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.SWIMFLOW_STAGING_DIRECT_URL }}
         run: npm run neon:local-auth:staging -- --apply
