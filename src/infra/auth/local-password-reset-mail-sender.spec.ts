@@ -8,7 +8,9 @@ describe('ResendPasswordResetMailSender', () => {
     'RESEND_FROM_EMAIL',
     'SWIMFLOW_AUTH_APP_ORIGIN',
   ] as const;
-  const previous = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
+  const previous = Object.fromEntries(
+    keys.map((key) => [key, process.env[key]]),
+  );
   const sender = new ResendPasswordResetMailSender();
   let originalFetch: typeof fetch;
 
