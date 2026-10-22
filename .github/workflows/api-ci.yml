@@ -46,6 +46,8 @@ jobs:
         run: npm run neon:staging:migrate:test
       - name: Verify incremental local auth staging runner without Neon credentials
         run: npm run neon:local-auth:staging:test
+      - name: Audit manual Neon staging workflow safety boundaries
+        run: node --test scripts/neon-local-auth-dispatch.test.cjs
       - name: Test incremental formatting file selection
         run: npm run format:changed:test
       - name: Enforce Prettier only on TypeScript changed by this PR
