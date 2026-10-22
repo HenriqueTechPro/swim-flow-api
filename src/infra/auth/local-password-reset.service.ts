@@ -4,9 +4,7 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { PrismaService } from '@/infra/database/prisma/prisma.service';
-import {
-  LocalAuthActionTokensService,
-} from './local-auth-action-tokens.service';
+import { LocalAuthActionTokensService } from './local-auth-action-tokens.service';
 import { PasswordResetMailSender } from './local-password-reset-mail-sender';
 
 const EMAIL_PATTERN = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
