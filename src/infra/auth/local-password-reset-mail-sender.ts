@@ -6,7 +6,7 @@ export interface PasswordResetEmail {
   expiresAt: Date;
 }
 
-export abstract class LocalPasswordResetMailSender {
+export abstract class PasswordResetMailSender {
   abstract assertReady(): void;
   abstract sendReset(message: PasswordResetEmail): Promise<void>;
 }
@@ -23,16 +23,20 @@ interface ResetSenderConfig {
  * a URL fragment, never in a server access-log query string.
  */
 @Injectable()
-export class ResendPasswordResetMailSender extends LocalPasswordResetMailSender {
+export class ResendPasswordResetMailSender extends PasswordResetMailSender {
   private getConfiguration(): ResetSenderConfig {
     if (process.env.SWIMFLOW_LOCAL_PASSWORD_RESET_ENABLED !== 'true') {
-      throw new ServiceUnavailableException('Local password reset is not enabled');
+      throw new ServiceUnavailableException(
+        'Local password reset is not enabled',
+      );
     }
     const apiKey = process.env.RESEND_API_KEY;
     const from = process.env.RESEND_FROM_EMAIL;
     const originValue = process.env.SWIMFLOW_AUTH_APP_ORIGIN;
     if (!apiKey || !from || !originValue) {
-      throw new ServiceUnavailableException('Password reset delivery is not configured');
+      throw new ServiceUnavailableException(
+        'Password reset delivery is not configured',
+      );
     }
     if (!/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(from)) {
       throw new ServiceUnavailableException('Invalid sender configuration');
@@ -77,7 +81,12 @@ export class ResendPasswordResetMailSender extends LocalPasswordResetMailSender 
           from: config.from,
           to: [to],
           subject: 'Redefinição de senha — Swim Flow',
-          text: `Recebemos uma solicitação para redefinir sua senha no Swim Flow. Abra: ${link.toString()}\nEste link expira em ${expiresAt.toISOString()}.\nSe você não solicitou esta mudança, ignore esta mensagem.`,
+          text: [
+            'Recebemos uma solicitação para redefinir sua senha no Swim Flow.',
+            `Abra: ${link.toString()}`,
+            `Este link expira em ${expiresAt.toISOString()}.`,
+            'Se você não solicitou esta mudança, ignore esta mensagem.',
+          ].join('\\n'),
         }),
       });
     } catch {
