@@ -3,8 +3,10 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { PrismaService } from '@/infra/database/prisma/prisma.service';
-import { LocalAuthActionTokensService } from './local-auth-action-tokens.service';
-import { LocalPasswordResetMailSender } from './local-password-reset-mail-sender';
+import {
+  LocalAuthActionTokensService,
+} from './local-auth-action-tokens.service';
+import { PasswordResetMailSender } from './local-password-reset-mail-sender';
 import { LocalPasswordResetService } from './local-password-reset.service';
 
 describe('LocalPasswordResetService', () => {
@@ -38,7 +40,7 @@ describe('LocalPasswordResetService', () => {
     service = new LocalPasswordResetService(
       { localAuthIdentity: { findUnique } } as unknown as PrismaService,
       { issueForIdentity } as unknown as LocalAuthActionTokensService,
-      { assertReady, sendReset } as unknown as LocalPasswordResetMailSender,
+      { assertReady, sendReset } as unknown as PasswordResetMailSender,
     );
   });
 
@@ -80,8 +82,15 @@ describe('LocalPasswordResetService', () => {
   });
 
   it('rejects invalid email shape without attempting database access', async () => {
-    for (const invalid of ['', 'not-an-email', 'x'.repeat(321), '<a@example.invalid>']) {
-      await expect(service.request(invalid)).resolves.toEqual({ success: true });
+    for (const invalid of [
+      '',
+      'not-an-email',
+      'x'.repeat(321),
+      '<a@example.invalid>',
+    ]) {
+      await expect(service.request(invalid)).resolves.toEqual({
+        success: true,
+      });
     }
     expect(findUnique).not.toHaveBeenCalled();
     expect(sendReset).not.toHaveBeenCalled();
@@ -113,7 +122,9 @@ describe('LocalPasswordResetService', () => {
 
   it('propagates unexpected database failures instead of pretending delivery succeeded', async () => {
     findUnique.mockRejectedValue(new Error('database unavailable'));
-    await expect(service.request(email)).rejects.toThrow('database unavailable');
+    await expect(service.request(email)).rejects.toThrow(
+      'database unavailable',
+    );
     expect(sendReset).not.toHaveBeenCalled();
   });
 });
