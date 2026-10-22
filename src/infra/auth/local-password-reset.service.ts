@@ -9,7 +9,7 @@ import {
 } from './local-auth-action-tokens.service';
 import { PasswordResetMailSender } from './local-password-reset-mail-sender';
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_PATTERN = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
 
 /**
  * Internal-only preparation for provider-independent password recovery.
