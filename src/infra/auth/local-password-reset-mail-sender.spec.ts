@@ -1,5 +1,7 @@
 import { ServiceUnavailableException } from '@nestjs/common';
-import { ResendPasswordResetMailSender } from './local-password-reset-mail-sender';
+import {
+  ResendPasswordResetMailSender,
+} from './local-password-reset-mail-sender';
 
 describe('ResendPasswordResetMailSender', () => {
   const keys = [
@@ -63,24 +65,27 @@ describe('ResendPasswordResetMailSender', () => {
     }
   });
 
-  it('sends a fixed reset link with token in URL fragment, not query', async () => {
-    const mock = jest.fn().mockResolvedValue({ ok: true });
-    global.fetch = mock as typeof fetch;
-    await sender.sendReset(sample());
-    expect(mock).toHaveBeenCalledTimes(1);
-    const [url, init] = mock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe('https://api.resend.com/emails');
-    expect(init.method).toBe('POST');
-    if (typeof init.body !== 'string') throw new Error('Missing email body');
-    const body = JSON.parse(init.body) as { to: string[]; text: string };
-    expect(body.to).toEqual(['swimmer@example.invalid']);
-    expect(body.text).toContain('/auth/reset-local-password#token=');
-    expect(body.text).toContain(sample().token);
-    expect(body.text).not.toContain('?token=');
-    expect(init.headers).toEqual(expect.objectContaining({
-      Authorization: 'Bearer not-a-real-key',
-    }));
-  });
+  it(
+    'sends a fixed reset link with token in URL fragment, not query',
+    async () => {
+      const mock = jest.fn().mockResolvedValue({ ok: true });
+      global.fetch = mock as typeof fetch;
+      await sender.sendReset(sample());
+      expect(mock).toHaveBeenCalledTimes(1);
+      const [url, init] = mock.mock.calls[0] as [string, RequestInit];
+      expect(url).toBe('https://api.resend.com/emails');
+      expect(init.method).toBe('POST');
+      if (typeof init.body !== 'string') throw new Error('Missing email body');
+      const body = JSON.parse(init.body) as { to: string[]; text: string };
+      expect(body.to).toEqual(['swimmer@example.invalid']);
+      expect(body.text).toContain('/auth/reset-local-password#token=');
+      expect(body.text).toContain(sample().token);
+      expect(body.text).not.toContain('?token=');
+      expect(init.headers).toEqual(expect.objectContaining({
+        Authorization: 'Bearer not-a-real-key',
+      }));
+    },
+  );
 
   it('returns only a generic error for provider failures', async () => {
     global.fetch = jest.fn().mockResolvedValue({
