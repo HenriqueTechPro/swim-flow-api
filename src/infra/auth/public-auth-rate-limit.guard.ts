@@ -13,7 +13,9 @@ type RateLimitedHandler =
   | 'refresh'
   | 'requestPasswordReset'
   | 'confirmPasswordReset'
-  | 'acceptLocalInvitation';
+  | 'acceptLocalInvitation'
+  | 'requestLocalPasswordReset'
+  | 'confirmLocalPasswordReset';
 
 interface RateLimitWindow {
   limit: number;
@@ -32,6 +34,8 @@ const RATE_LIMIT_WINDOWS: Record<RateLimitedHandler, RateLimitWindow> = {
   requestPasswordReset: { limit: 3, windowMs: 15 * 60_000 },
   confirmPasswordReset: { limit: 5, windowMs: 15 * 60_000 },
   acceptLocalInvitation: { limit: 5, windowMs: 15 * 60_000 },
+  requestLocalPasswordReset: { limit: 3, windowMs: 15 * 60_000 },
+  confirmLocalPasswordReset: { limit: 5, windowMs: 15 * 60_000 },
 };
 
 @Injectable()
