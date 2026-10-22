@@ -80,5 +80,5 @@ jobs:
           set -euo pipefail
           # The Node bridge checks the exact staging target, TLS and schema,
           # then passes password to bootstrap-first-admin.cjs via stdin only.
-          # Never run the command under shell tracing (set -x).
+          # Keep shell tracing disabled; do not log secret inputs.
           node scripts/bootstrap-first-admin-github.cjs --apply
