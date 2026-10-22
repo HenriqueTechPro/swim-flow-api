@@ -7,8 +7,8 @@ antecipar o corte de autenticação nem expor endpoints incompletos.
 ### Situação do projeto
 - PRs #31–35 incorporadas à main: identidade local, bcrypt, tokens de
   uso único e convites administrativos internos.
-- PRs #36 (aceite de convite) e #37 (rota administrativa) ainda abertas
-  e dependentes de revisão/merge manual do responsável.
+- PRs #36 (aceite de convite) e #37 (rota administrativa) já
+  integradas à `main`, após testes e revisão.
 - Dashboard já possui tela de aceite de convite (PR #13 integrada).
 - Banco Neon staging **ainda não tem** a migração incremental das
   tabelas de identidade; não conectar fluxos locais ao Neon antes
@@ -41,7 +41,8 @@ antecipar o corte de autenticação nem expor endpoints incompletos.
   login foi modificado.
 
 ## Requisitos obrigatórios para habilitar mais tarde
-1. Integrar as PRs #36 e #37 após reviews sem findings.
+1. Revalidar os contratos dos endpoints de convite das PRs #36/#37
+   já integradas à API e a tela de aceite do dashboard.
 2. Rodar a migration incremental de identidade no Neon staging
    por Prisma 6 e revisar o histórico, sem alterar a baseline.
 3. Construir um endpoint novo de solicitação com rate limiting,
