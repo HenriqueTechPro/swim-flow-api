@@ -1,7 +1,13 @@
-import { Injectable, ServiceUnavailableException, UnprocessableEntityException } from '@nestjs/common';
+import {
+  Injectable,
+  ServiceUnavailableException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { PrismaService } from '@/infra/database/prisma/prisma.service';
-import { LocalAuthActionTokensService } from './local-auth-action-tokens.service';
-import { LocalPasswordResetMailSender } from './local-password-reset-mail-sender';
+import {
+  LocalAuthActionTokensService,
+} from './local-auth-action-tokens.service';
+import { PasswordResetMailSender } from './local-password-reset-mail-sender';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -15,7 +21,7 @@ export class LocalPasswordResetService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly tokens: LocalAuthActionTokensService,
-    private readonly mail: LocalPasswordResetMailSender,
+    private readonly mail: PasswordResetMailSender,
   ) {}
 
   async request(emailInput: string): Promise<{ success: true }> {
