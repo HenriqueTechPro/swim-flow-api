@@ -1,0 +1,4 @@
+# Prisma migration checksums depend on exact versioned bytes.
+# Force LF checkouts on Windows even if core.autocrlf=true.
+# Never reformat existing migration SQL or regenerate Prisma history.
+prisma/migrations/**/migration.sql text eol=lf

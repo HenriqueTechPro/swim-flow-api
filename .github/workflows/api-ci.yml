@@ -31,6 +31,8 @@ jobs:
       - run: npm run prisma:validate
       - run: npm run prisma:generate
       - run: npm run build
+      - name: Verify Render production entrypoint and immutable Prisma SQL bytes
+        run: node --test scripts/render-entrypoint.test.cjs
       # Existing Prettier-only debt is tracked separately, to avoid mixing
       # 1,000+ formatting diffs into a security-sensitive refactor.
       - name: Type-aware semantic lint (without legacy formatting errors)
