@@ -46,6 +46,11 @@ jobs:
         run: npm run neon:staging:migrate:test
       - name: Test incremental formatting file selection
         run: npm run format:changed:test
+      - name: Show reset foundation formatting diff (temporary)
+        if: github.event_name == 'pull_request'
+        run: |
+          npx prettier --write src/infra/auth/local-password-reset*.ts
+          git diff -- src/infra/auth/local-password-reset*.ts
       - name: Enforce Prettier only on TypeScript changed by this PR
         if: github.event_name == 'pull_request'
         env:
