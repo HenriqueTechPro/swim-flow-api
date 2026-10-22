@@ -12,7 +12,8 @@ type RateLimitedHandler =
   | 'loginWithGoogle'
   | 'refresh'
   | 'requestPasswordReset'
-  | 'confirmPasswordReset';
+  | 'confirmPasswordReset'
+  | 'acceptLocalInvitation';
 
 interface RateLimitWindow {
   limit: number;
@@ -30,6 +31,7 @@ const RATE_LIMIT_WINDOWS: Record<RateLimitedHandler, RateLimitWindow> = {
   refresh: { limit: 30, windowMs: 60_000 },
   requestPasswordReset: { limit: 3, windowMs: 15 * 60_000 },
   confirmPasswordReset: { limit: 5, windowMs: 15 * 60_000 },
+  acceptLocalInvitation: { limit: 5, windowMs: 15 * 60_000 },
 };
 
 @Injectable()
@@ -81,7 +83,9 @@ export class PublicAuthRateLimitGuard implements CanActivate {
         return `${handlerName}:${ip}:${email ?? 'anonymous'}`;
       }
       case 'confirmPasswordReset': {
-        const accessToken = this.normalizeValue(this.readBodyValue(request, 'accessToken'));
+        const accessToken = this.normalizeValue(
+          this.readBodyValue(request, 'accessToken'),
+        );
         return `${handlerName}:${ip}:${accessToken ?? 'anonymous'}`;
       }
       default:
@@ -89,7 +93,10 @@ export class PublicAuthRateLimitGuard implements CanActivate {
     }
   }
 
-  private readBodyValue(request: Request, key: 'email' | 'accessToken'): unknown {
+  private readBodyValue(
+    request: Request,
+    key: 'email' | 'accessToken',
+  ): unknown {
     const body: unknown = request.body;
     if (!body || typeof body !== 'object' || !(key in body)) {
       return undefined;
