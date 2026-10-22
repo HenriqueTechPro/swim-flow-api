@@ -12,6 +12,11 @@ import { RolesGuard } from './roles.guard';
 import { LocalPasswordIdentityService } from './local-password-identity.service';
 import { LocalAuthActionTokensService } from './local-auth-action-tokens.service';
 import { LocalAdminInvitationsService } from './local-admin-invitations.service';
+import { LocalPasswordResetService } from './local-password-reset.service';
+import {
+  PasswordResetMailSender,
+  ResendPasswordResetMailSender,
+} from './local-password-reset-mail-sender';
 import { LocalAdminInvitationRolloutGuard } from './local-admin-invitation-rollout.guard';
 import {
   LocalInvitationMailSender,
@@ -44,6 +49,11 @@ import { TeacherAttendanceScopeGuard } from './teacher-attendance-scope.guard';
     LocalAuthActionTokensService,
     LocalAdminInvitationsService,
     LocalAdminInvitationRolloutGuard,
+    LocalPasswordResetService,
+    {
+      provide: PasswordResetMailSender,
+      useClass: ResendPasswordResetMailSender,
+    },
     {
       provide: LocalInvitationMailSender,
       useClass: ResendInvitationMailSender,
@@ -64,6 +74,7 @@ import { TeacherAttendanceScopeGuard } from './teacher-attendance-scope.guard';
     LocalAuthActionTokensService,
     LocalAdminInvitationsService,
     LocalAdminInvitationRolloutGuard,
+    LocalPasswordResetService,
     JwtModule,
   ],
 })
