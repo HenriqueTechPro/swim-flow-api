@@ -2,17 +2,20 @@
 
 ## Estado confirmado
 
-- PRs #28 e #29 integradas ao repositório `HenriqueTechPro/swim-flow-api`;
-  Codex concluiu ambas sem apontamentos.
+- PR #44 integrada à `main`: build NestJS gera `dist/main.js`, como exige
+  `npm run start:prod`. PR #43 (bootstrap manual de admin) continua opcional
+  e **não é pré-requisito** para publicar e testar o health check.
 - Banco Neon **staging**: projeto `swim-flow-staging`, branch `staging`,
   database `swimflow`, PostgreSQL 17, AWS `us-east-1` (Virgínia).
-- Schema inicial presente: 31 tabelas de aplicação, 24 enums e histórico
-  `_prisma_migrations` registrado com checksum; os registros de aplicação
-  permaneceram vazios após a implantação, sem importação do Supabase.
-- O schema foi aplicado por transação SQL versionada com registro manual
-  compatível com Prisma, **não pela CLI Prisma Migrate**. É obrigatório
-  executar `prisma migrate status` num runtime seguro e confirmar
-  consistência antes de habilitar o app para usuários.
+- Staging validado em 22/10/2026: **33 tabelas de aplicação, 24 enums e duas
+  migrações Prisma**; registros de aplicação ainda vazios, sem importar dados
+  do Supabase. O histórico `_prisma_migrations` foi consultado em leitura.
+- A primeira baseline foi aplicada via transação SQL versionada e registro
+  Prisma; depois, a migração incremental de identidade foi aplicada.
+  A CLI Prisma 6 confirmou `2 migrations found` e
+  `Database schema is up to date!` em 22/10/2026.
+- A API local, inicializada com o comando padrão `npm run start:prod`,
+  respondeu HTTP 200 em `/health` e `/health/ready` (Neon online).
 - Frontend existente na Vercel: `swim-flow-dash`, domínio publicado
   `https://swim-flow-dash.vercel.app`.
 - Render **ainda não conectado/implantado** nesta etapa. Conectar conta
@@ -51,6 +54,8 @@
    A criação inicial pode iniciar o **primeiro build/deploy** mesmo
    com `autoDeployTrigger: off`. A opção `off` bloqueia futuros
    deploys automáticos em commits, não dispensa validação inicial.
+   Se desejar controlar também mudanças do Blueprint, em suas configurações
+   use **Auto Sync = No** e sincronize manualmente após revisão.
 6. No Render, confirme **Environment**, **Deploys** e **Logs**
    (cuidado ao compartilhar logs; podem conter dados sensíveis).
 7. Acesse `https://<dominio-real-do-servico>.onrender.com/health`
@@ -120,7 +125,7 @@ Não confundir `/health` (processo) com `/health/ready`
   a migração de banco não removeu esses provedores.
 - Não executar `prisma migrate deploy`, `prisma db push` ou seeds
   automaticamente no build/start do Render.
-- Há uma verificação de consistência Prisma CLI ainda pendente.
+- A verificação Prisma CLI no staging **já foi concluída** (22/10/2026).
 - O Render pode exigir autorização GitHub ou escolha do workspace
   para habilitar a integração; isso deve ser resolvido na conta.
 
@@ -135,6 +140,6 @@ Não confundir `/health` (processo) com `/health/ready`
 - [ ] API quality gate + PostgreSQL baseline gate desta PR aprovados.
 - [ ] Revisão Codex, merge manual.
 - [ ] Render conectado ao GitHub e secrets configurados pelo responsável.
-- [ ] `prisma migrate status` confirmado com credenciais Neon em ambiente privado.
+- [x] `prisma migrate status` confirmado com credenciais Neon em ambiente privado (22/10/2026).
 - [ ] Build/deploy Render saudável; /health e /health/ready em 200.
 - [ ] Integração dashboard Vercel e fluxos críticos testados.
