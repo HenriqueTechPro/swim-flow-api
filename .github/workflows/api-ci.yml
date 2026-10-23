@@ -55,11 +55,6 @@ jobs:
         run: node --test scripts/neon-local-auth-dispatch.test.cjs
       - name: Test incremental formatting file selection
         run: npm run format:changed:test
-      # Temporary formatter preview, removed before merge.
-      - name: Preview canonical Prettier for 02E-16A policy
-        run: |
-          ./node_modules/.bin/prettier --write src/domain/uploads/application/services/private-media-upload-policy.ts src/domain/uploads/application/services/private-media-upload-policy.spec.ts
-          git --no-pager diff -- src/domain/uploads/application/services/private-media-upload-policy.ts src/domain/uploads/application/services/private-media-upload-policy.spec.ts
       - name: Enforce Prettier only on TypeScript changed by this PR
         if: github.event_name == 'pull_request'
         env:
