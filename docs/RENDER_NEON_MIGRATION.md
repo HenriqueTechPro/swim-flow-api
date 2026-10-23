@@ -13,9 +13,9 @@ branch `staging`, banco `swimflow` (PostgreSQL 17 em AWS us-east-1),
 já recebeu a baseline de schema **sem dados do Supabase**.
 Uma transação SQL pelo conector Neon aplicou o arquivo de migração
 versionado e registrou `_prisma_migrations` com checksum SHA-256
-idêntico ao arquivo. A execução **não** usou a CLI Prisma; está
-pendente validar `prisma migrate status` com Prisma 6 antes de
-implantar Render. Auditoria: `docs/NEON_STAGING_BASELINE_APPLIED_02E5.md`.
+idêntico ao arquivo. A execução **não** usou a CLI Prisma; foi
+validado via `npm run prisma:migrate:status` com Prisma 6 em 22/10/2026:
+**2 migrations found; Database schema is up to date!**. Auditoria: `docs/NEON_STAGING_BASELINE_APPLIED_02E5.md`.
 O banco de produção continua não provisionado.
 
 ## Neon — create an empty PostgreSQL project
@@ -36,8 +36,8 @@ O banco de produção continua não provisionado.
 6. For a **new, empty Neon database** (not the already initialized staging),
 after reviewing the SQL execute `npm run prisma:migrate:deploy`.
 For staging the initial SQL has already been applied; **do not rerun the
-initial one-shot bootstrap script there**. Check `prisma migrate status`
-with the pinned Prisma 6 runtime before deploying Render.
+initial one-shot bootstrap script there**. A consulta `prisma migrate status`
+já foi concluída com Prisma 6 em 22/10/2026, sem reaplicar migrações.
 7. Use new incremental versioned migrations for future schema modifications (`npm run prisma:migrate:dev -- --name descriptive_change`). Never run `prisma db push` or `prisma migrate dev` as a deploy startup command.
 
 **Important:** A Prisma-generated SQL baseline captures Prisma-managed tables/enums/relations, not arbitrary Supabase SQL constructs (RLS policies, storage buckets, auth.users). Those integrations need separate replacement work. Keep the Supabase environment available during this transitional PR. Generate and review SQL before applying it; do not assume it will reproduce the entire old Supabase environment.
@@ -68,4 +68,4 @@ with the pinned Prisma 6 runtime before deploying Render.
 - [ ] Verify authenticated read/write flows and CORS/cookies across Vercel + Render
 - [ ] Replace Supabase Auth and Storage in a separate, security-reviewed PR
 
-**Status (21 October 2026):** The versioned SQL is committed and verified by the disposable PostgreSQL CI. A **Neon staging-only** project and database have now been provisioned in AWS us-east-1 (PostgreSQL 17). Read-only inspection of database `swimflow` on branch `staging` found zero user relations/enums and no `_prisma_migrations` table. **No schema migration has been applied to Neon.** This is NOT a production rollout; authentication/storage replacement remains a separate stage. See `docs/NEON_STAGING_VERIFICATION_02E3.md`.
+**Status (22 October 2026):** The initial baseline and the incremental local-auth foundation migration are now both applied to **Neon staging** (33 application tables and 2 Prisma migrations). Prisma 6 CLI confirmed the migration history is up to date; the NestJS API passed both local health endpoints. The earlier `docs/NEON_STAGING_VERIFICATION_02E3.md` describes a historical pre-migration snapshot, **not** the current state. Render staging has not yet been deployed; production remains unprovisioned. Supabase Auth/Storage migration is separate.
