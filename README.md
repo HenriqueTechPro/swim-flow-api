@@ -4,7 +4,7 @@ API do Swim Flow construída com NestJS, Prisma e Swagger.
 
 ## Requisitos
 
-- Node 20+
+- Node 22 (mesma versão usada no CI e Render)
 - Banco PostgreSQL acessível via `DATABASE_URL`
 
 ## Variáveis de ambiente
@@ -80,16 +80,19 @@ Para vincular o GitHub ao Render, configurar as variáveis protegidas
 e publicar o Web Service gratuito em Virgínia, siga
 `docs/RENDER_STAGING_SETUP_02E6.md`. Não crie outro banco no Render;
 o PostgreSQL continua no Neon. A versão de staging do Neon contém apenas
-o schema (31 tabelas de aplicação), sem dados importados do Supabase.
+o schema (33 tabelas de aplicação, duas migrações Prisma), sem dados importados do Supabase.
 
 
 A estrutura definitiva adotada é **PostgreSQL Neon** (banco), **Render** (API)
 e **Vercel** (dashboard). O schema inicial já foi implantado no **Neon staging**
-em 21/10/2026, com 31 tabelas de aplicação, 24 enums e sem dados importados.
+entre 21 e 22/10/2026, com 33 tabelas de aplicação, 24 enums e duas migrações aplicadas, sem dados importados.
+Em 22/10/2026, o Prisma 6 confirmou `Database schema is up to date!`,
+e a API local respondeu HTTP 200 em `/health` e `/health/ready` usando o Neon.
 A API ainda não foi publicada no Render e o banco de produção não existe.
 A implantação de serviços não acontece automaticamente ao fazer merge.
-Veja `docs/NEON_STAGING_BASELINE_APPLIED_02E5.md` para a evidência e para
-a diferença entre o SQL transacional aplicado e o comando Prisma CLI pendente.
+Veja `docs/NEON_STAGING_BASELINE_APPLIED_02E5.md` para a evidência
+histórica da baseline SQL, e `docs/RENDER_STAGING_SETUP_02E6.md` para
+o procedimento atualizado de deploy.
 
 Na API Render, execute o build com:
 
@@ -106,12 +109,9 @@ Em bancos Neon **novos e vazios**, migrações futuras seguem
 No staging já inicializado, **não reaplique a baseline**; antes de conectar
 Render, valide o histórico com `prisma migrate status` usando Prisma 6.
 
-Se a conexão local ao Neon falhar com `P1001` por uma rota IPv6 indisponível,
-use `npm run prisma:migrate:status:ipv4` para consultar o histórico por IPv4.
-Esse comando exige uma `DIRECT_URL` Neon direta com `sslmode=require`, resolve
-o endereço a cada execução e identifica o endpoint pela opção de conexão do
-Neon. Ele executa somente `migrate status`, sem aplicar migrações, alterar o
-`.env` ou modificar a configuração de rede do sistema.
+No Windows, preferir corrigir a conectividade de rede quando houver erro
+`P1001`; o Prisma e a API usam normalmente os hostnames DNS do Neon,
+sem fixar IPs nem executar wrappers IPv4. Não desative TLS.
 
 A API possui dois endpoints de diagnóstico:
 
