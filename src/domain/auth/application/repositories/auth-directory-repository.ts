@@ -30,10 +30,18 @@ export interface DirectoryInvitation {
 }
 
 export abstract class AuthDirectoryRepository {
-  abstract signInWithPassword(email: string, password: string): Promise<AuthIdentity>;
+  abstract signInWithPassword(
+    email: string,
+    password: string,
+  ): Promise<AuthIdentity>;
   abstract getIdentityFromAccessToken(accessToken: string): Promise<AuthIdentity>;
-  abstract sendPasswordResetEmail(email: string, redirectTo: string): Promise<void>;
-  abstract confirmPasswordReset(input: PasswordResetConfirmation): Promise<AuthIdentity>;
+  abstract sendPasswordResetEmail(
+    email: string,
+    redirectTo: string,
+  ): Promise<void>;
+  abstract confirmPasswordReset(
+    input: PasswordResetConfirmation,
+  ): Promise<AuthIdentity>;
   abstract inviteUserByEmail(input: DirectoryInvitation): Promise<AuthIdentity>;
   abstract listUsers(): Promise<AuthDirectoryUser[]>;
   abstract deleteUser(userId: string): Promise<void>;
