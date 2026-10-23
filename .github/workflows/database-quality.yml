@@ -78,6 +78,10 @@ jobs:
           VITE_SUPABASE_URL: https://example.supabase.co
           VITE_SUPABASE_PUBLISHABLE_KEY: ci-placeholder
         run: node scripts/verify-postgres-concurrency.cjs
+      - name: Atomic refresh token, JWT and logout security on disposable PostgreSQL
+        env:
+          SWIMFLOW_DISPOSABLE_DB: 'yes'
+        run: node scripts/verify-auth-session-rotation.cjs
       - name: HTTP end-to-end with real NestJS repositories and PostgreSQL
         env:
           SWIMFLOW_DISPOSABLE_DB: 'yes'
