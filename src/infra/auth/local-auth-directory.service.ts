@@ -20,10 +20,7 @@ export class LocalAuthDirectoryService extends AuthDirectoryRepository {
     super();
   }
 
-  signInWithPassword(
-    email: string,
-    password: string,
-  ): Promise<AuthIdentity> {
+  signInWithPassword(email: string, password: string): Promise<AuthIdentity> {
     if (!this.envService.localPasswordLoginEnabled) {
       return Promise.reject(
         new ServiceUnavailableException('Local password login is not enabled'),
