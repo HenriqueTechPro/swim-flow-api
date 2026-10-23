@@ -34,6 +34,22 @@ merge ou deploy. O CLI só realiza escrita mediante ação manual explícita.
   `admin` ainda pendente com o mesmo nome/e-mail e nenhuma sessão;
   invalida tokens anteriores e gera convite novo. Não reabre admin ativo.
 
+## Validação de envio — sem criar administrador
+
+Antes do bootstrap, a API fornece um teste totalmente independente do Neon:
+`npm run resend:smoke`. Esse comando envia **uma única mensagem neutra**
+sem token, senha ou link, exclusivamente ao destinatário informado
+na variável local `SWIMFLOW_RESEND_SMOKE_TO`.
+O remetente é fixo em `onboarding@resend.dev` e o domínio de testes
+do Resend aceita apenas o e-mail cadastrado na conta do remetente.
+O teste exige uma autorização manual explícita, não lê variáveis de banco,
+não emite convites e não retorna o segredo nem o endereço do destinatário.
+
+Veja `docs/RESEND_STAGING_DELIVERY_SMOKE_02E9R.md` para os comandos seguros
+de execução em PowerShell. Executar primeiro o teste de CI sem credenciais:
+`npm run resend:smoke:test`. Depois, verificar a entrega real na sua
+caixa de entrada e no painel Resend.
+
 ## Pré-requisitos ANTES de executar
 
 **NÃO executar este processo ainda.** Primeiro implementar e testar no
