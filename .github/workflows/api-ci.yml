@@ -55,6 +55,11 @@ jobs:
         run: node --test scripts/neon-local-auth-dispatch.test.cjs
       - name: Test incremental formatting file selection
         run: npm run format:changed:test
+      # Temporary diagnostics for PR #47 only; removed after committing formatting.
+      - name: Show Prettier formatting diff for review
+        run: |
+          ./node_modules/.bin/prettier --write src/infra/auth/supabase-auth.service.ts src/infra/env/env.spec.ts src/infra/env/env.ts src/infra/supabase/managed-uploads.service.ts
+          git --no-pager diff -- src/infra/auth/supabase-auth.service.ts src/infra/env/env.spec.ts src/infra/env/env.ts src/infra/supabase/managed-uploads.service.ts
       - name: Enforce Prettier only on TypeScript changed by this PR
         if: github.event_name == 'pull_request'
         env:
