@@ -18,6 +18,7 @@ describe('ApiAuthService', () => {
   beforeEach(() => {
     authSessionsRepository = {
       create: jest.fn(),
+      rotateRefreshSession: jest.fn(),
       findActiveById: jest.fn(),
       findByRefreshTokenHash: jest.fn(),
       findActiveByRefreshTokenHash: jest.fn(),
@@ -86,7 +87,7 @@ describe('ApiAuthService', () => {
       fullName: 'User Example',
       avatarUrl: null,
     });
-    authSessionsRepository.create.mockResolvedValue({
+    authSessionsRepository.rotateRefreshSession.mockResolvedValue({
       id: 'session-2',
       userId: 'user-1',
       email: 'user@example.com',
@@ -106,10 +107,18 @@ describe('ApiAuthService', () => {
       ipAddress: '10.0.0.1',
     });
 
-    expect(authSessionsRepository.revoke).toHaveBeenCalledWith(
+    expect(authSessionsRepository.rotateRefreshSession).toHaveBeenCalledWith(
       'session-1',
-      'session-2',
+      hashRefreshToken(refreshToken),
+      expect.objectContaining({
+        userId: 'user-1',
+        email: 'user@example.com',
+        userAgent: 'new-agent',
+        ipAddress: '10.0.0.1',
+      }),
     );
+    expect(authSessionsRepository.create).not.toHaveBeenCalled();
+    expect(authSessionsRepository.revoke).not.toHaveBeenCalled();
     expect(authSessionsRepository.revokeAllForUser).not.toHaveBeenCalled();
     expect(result.accessToken).toBe('signed-access-token');
     expect(result.user).toEqual({
@@ -120,6 +129,62 @@ describe('ApiAuthService', () => {
       fullName: 'User Example',
       avatarUrl: null,
     });
+  });
+
+  it('does not sign a JWT when another request rotated the same token first', async () => {
+    const refreshToken = 'concurrent-original-token';
+    authSessionsRepository.findByRefreshTokenHash.mockResolvedValue({
+      id: 'session-1',
+      userId: 'user-1',
+      email: 'user@example.com',
+      refreshTokenHash: hashRefreshToken(refreshToken),
+      expiresAt: new Date(Date.now() + 60_000),
+      revokedAt: null,
+      replacedBySessionId: null,
+      userAgent: null,
+      ipAddress: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    authProfilesRepository.findByUserId.mockResolvedValue({
+      id: 'user-1',
+      role: 'admin',
+      permissions: ['auth:invite'],
+      fullName: 'Administrator',
+      avatarUrl: null,
+    });
+    authSessionsRepository.rotateRefreshSession.mockResolvedValue(null);
+
+    await expect(sut.refresh(refreshToken)).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
+    expect(authSessionsRepository.rotateRefreshSession).toHaveBeenCalledTimes(1);
+    expect(jwtService.signAsync).not.toHaveBeenCalled();
+    expect(authSessionsRepository.create).not.toHaveBeenCalled();
+  });
+
+  it('revokes only the current session on logout and does not create another', async () => {
+    const token = 'logout-token';
+    authSessionsRepository.findActiveByRefreshTokenHash.mockResolvedValue({
+      id: 'session-logout',
+      userId: 'user-1',
+      email: 'user@example.com',
+      refreshTokenHash: hashRefreshToken(token),
+      expiresAt: new Date(Date.now() + 60_000),
+      revokedAt: null,
+      replacedBySessionId: null,
+      userAgent: null,
+      ipAddress: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await sut.logout(token);
+    expect(authSessionsRepository.revoke).toHaveBeenCalledWith(
+      'session-logout',
+    );
+    expect(authSessionsRepository.revokeAllForUser).not.toHaveBeenCalled();
+    expect(jwtService.signAsync).not.toHaveBeenCalled();
   });
 
   it('revokes the session family when a rotated refresh token is replayed', async () => {
