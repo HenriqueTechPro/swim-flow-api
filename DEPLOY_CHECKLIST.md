@@ -49,11 +49,12 @@ A configuração é **somente para staging**, plano free, Virgínia, Node 22,
 sem criar outro PostgreSQL nem aplicar migrations no startup.
 Antes de criar o Web Service, seguir
 `docs/RENDER_STAGING_SETUP_02E6.md` para vincular GitHub ao Render e
-preencher secrets via interface protegida. O Render ainda não foi publicado.
+preencher secrets via interface protegida. O Render staging foi publicado
+e validado em 23/10/2026: `/health` e `/health/ready` em HTTP 200.
 
 
-- [ ] Conectar repositório `HenriqueTechPro/swim-flow-api`.
-- [ ] Node 22, build `npm ci --include=dev && npm run prisma:generate && npm run build`.
+- [x] Conectar repositório `HenriqueTechPro/swim-flow-api`.
+- [x] Node 22, build `npm ci --include=dev && npm run prisma:generate && npm run build`.
 - [ ] Start `npm run start:prod`; Render fornece `PORT`, API escuta `0.0.0.0`.
 - [ ] `NODE_ENV=production`.
 - [ ] Configurar `DATABASE_URL` e `DIRECT_URL` como segredos, **somente no backend**.
@@ -63,14 +64,14 @@ preencher secrets via interface protegida. O Render ainda não foi publicado.
 - [ ] Ajustar `API_CORS_ORIGIN` à(s) origem(ns) exata(s) da Vercel;
       habilitar credenciais somente para essas origens.
 - [ ] Configurar `SWAGGER_ENABLED=false` em produção.
-- [ ] Staging Neon-only: **não** configurar variáveis Supabase no Render.
-      A API inicializa e a conectividade PostgreSQL pode ser verificada,
-      mas endpoints legados de Auth/Storage retornam 503 até o cutover.
-      O login e os uploads devem ser testados apenas após os adaptadores
-      PostgreSQL/S3 estarem plenamente substituídos e validados.
-- [ ] Confirmar `GET /health` retorna 200 **no Render** (processo vivo).
-      No ambiente local, ambos os endpoints já retornaram HTTP 200.
-- [ ] Confirmar `GET /health/ready` retorna 200 **no Render** (round-trip PostgreSQL).
+- [x] Staging Neon-only: **não** configurar variáveis Supabase no Render.
+      O login local é preparado na etapa 02E-9O, mas fica **desativado
+      por padrão**. Configurar `SWIMFLOW_LOCAL_PASSWORD_LOGIN_ENABLED=false`
+      (ou omitir) até criar o primeiro administrador e validar o fluxo.
+      Endpoints legados de Google, convite, reset e uploads permanecem
+      indisponíveis; não utilizar dados reais.
+- [x] Confirmar `GET /health` retorna 200 **no Render** (23/10/2026).
+- [x] Confirmar `GET /health/ready` retorna 200 **no Render** (23/10/2026).
 - [ ] Sob indisponibilidade de PostgreSQL, `/health/ready` deve retornar
       503 sem detalhes de conexão; `/health` permanece diagnóstico de processo.
 - [ ] Para a verificação automática de vida do Render, preferir
