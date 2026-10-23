@@ -6,7 +6,10 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { createClient } from '@supabase/supabase-js';
-import { AuthDirectoryRepository, type AuthIdentity } from '@/domain/auth/application/repositories/auth-directory-repository';
+import {
+  AuthDirectoryRepository,
+  type AuthIdentity,
+} from '@/domain/auth/application/repositories/auth-directory-repository';
 import { EnvService } from '@/infra/env/env.service';
 import { normalizeCorsOrigin } from '@/infra/http/cors/cors.config';
 
@@ -118,10 +121,13 @@ export class SupabaseAuthService extends AuthDirectoryRepository {
 
     const supabase = this.createAdminClient();
 
-    const { data, error } = await supabase.auth.admin.inviteUserByEmail(input.email, {
-      redirectTo: input.redirectTo,
-      data: input.fullName ? { full_name: input.fullName } : undefined,
-    });
+    const { data, error } = await supabase.auth.admin.inviteUserByEmail(
+      input.email,
+      {
+        redirectTo: input.redirectTo,
+        data: input.fullName ? { full_name: input.fullName } : undefined,
+      },
+    );
 
     if (error || !data.user?.email) {
       throw new InternalServerErrorException('Unable to send invitation');
