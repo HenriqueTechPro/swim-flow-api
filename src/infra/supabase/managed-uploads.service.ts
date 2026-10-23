@@ -22,9 +22,7 @@ const contentTypeExtensionMap: Record<string, string> = {
 };
 
 @Injectable()
-export class SupabaseManagedUploadsRepository
-  implements ManagedUploadsRepository
-{
+export class SupabaseManagedUploadsRepository implements ManagedUploadsRepository {
   constructor(private readonly envService: EnvService) {}
 
   async createSignedUpload(
@@ -39,16 +37,12 @@ export class SupabaseManagedUploadsRepository
       );
     }
 
-    const supabase = createClient(
-      supabaseUrl,
-      supabaseServiceRoleKey,
-      {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-        },
+    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
       },
-    );
+    });
 
     const path = this.buildPath(userId, input);
     const { data, error } = await supabase.storage
