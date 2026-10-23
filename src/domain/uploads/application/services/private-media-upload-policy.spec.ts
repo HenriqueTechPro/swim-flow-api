@@ -23,9 +23,7 @@ const input: PrivateMediaUploadInput = {
 describe('Private media policies (S3-compatible storage, no live bucket)', () => {
   it('generates a non-PII key and never interpolates the browser filename', () => {
     const key = createPrivateMediaObjectKey(actorId, input, objectId);
-    expect(key).toBe(
-      `private/students/${resourceId}/${objectId}.png`,
-    );
+    expect(key).toBe(`private/students/${resourceId}/${objectId}.png`);
     expect(key).not.toContain('secret-name');
     expect(key).not.toContain('..');
     expect(key).not.toContain(actorId);
@@ -36,10 +34,14 @@ describe('Private media policies (S3-compatible storage, no live bucket)', () =>
     ['student-photo', 'students'],
     ['teacher-photo', 'teachers'],
     ['parent-photo', 'parents'],
-  ] as const)('uses the %s scope only with an explicit existing entity ID', (target, segment) => {
-    expect(createPrivateMediaObjectKey(actorId, { ...input, target }, objectId))
-      .toBe(`private/${segment}/${resourceId}/${objectId}.png`);
-  });
+  ] as const)(
+    'uses the %s scope only with an explicit existing entity ID',
+    (target, segment) => {
+      expect(
+        createPrivateMediaObjectKey(actorId, { ...input, target }, objectId),
+      ).toBe(`private/${segment}/${resourceId}/${objectId}.png`);
+    },
+  );
 
   it('restricts avatar scope to the signed-in profile, with randomized names', () => {
     const avatar: PrivateMediaUploadInput = {
@@ -48,10 +50,12 @@ describe('Private media policies (S3-compatible storage, no live bucket)', () =>
       fileName: 'staff.jpeg',
       fileSizeBytes: 1024,
     };
-    expect(createPrivateMediaObjectKey(actorId, avatar, objectId))
-      .toBe(`private/profiles/${actorId}/${objectId}.jpg`);
-    expect(createPrivateMediaObjectKey(actorId, avatar))
-      .toMatch(/^private\/profiles\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.jpg$/);
+    expect(createPrivateMediaObjectKey(actorId, avatar, objectId)).toBe(
+      `private/profiles/${actorId}/${objectId}.jpg`,
+    );
+    expect(createPrivateMediaObjectKey(actorId, avatar)).toMatch(
+      /^private\/profiles\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.jpg$/,
+    );
   });
 
   it.each([
@@ -61,8 +65,9 @@ describe('Private media policies (S3-compatible storage, no live bucket)', () =>
     ['image/webp', 'webp'],
     ['image/gif', 'gif'],
   ])('accepts %s with extension %s', (contentType, extension) => {
-    expect(createPrivateMediaObjectKey(actorId, { ...input, contentType }, objectId))
-      .toMatch(new RegExp(`\\.${extension}$`));
+    expect(
+      createPrivateMediaObjectKey(actorId, { ...input, contentType }, objectId),
+    ).toMatch(new RegExp(`\\.${extension}$`));
   });
 
   it.each([
@@ -72,33 +77,56 @@ describe('Private media policies (S3-compatible storage, no live bucket)', () =>
     'image/png; charset=utf-8',
     '',
   ])('rejects a potentially unsafe or unsupported MIME: %s', (contentType) => {
-    expect(() => validatePrivateMediaUpload(actorId, { ...input, contentType }))
-      .toThrow(new PrivateMediaUploadPolicyError('invalid-content-type'));
+    expect(() =>
+      validatePrivateMediaUpload(actorId, { ...input, contentType }),
+    ).toThrow(new PrivateMediaUploadPolicyError('invalid-content-type'));
   });
 
-  it.each([0, -1, 0.1, NaN, Infinity, MAX_PRIVATE_IMAGE_BYTES + 1])
-  ('rejects invalid sizes without allocating content: %s', (fileSizeBytes) => {
-    expect(() => validatePrivateMediaUpload(actorId, { ...input, fileSizeBytes }))
-      .toThrow(new PrivateMediaUploadPolicyError('invalid-file-size'));
-  });
+  it.each([0, -1, 0.1, NaN, Infinity, MAX_PRIVATE_IMAGE_BYTES + 1])(
+    'rejects invalid sizes without allocating content: %s',
+    (fileSizeBytes) => {
+      expect(() =>
+        validatePrivateMediaUpload(actorId, { ...input, fileSizeBytes }),
+      ).toThrow(new PrivateMediaUploadPolicyError('invalid-file-size'));
+    },
+  );
 
   it('accepts exactly 5 MB (the current frontend maximum)', () => {
-    expect(validatePrivateMediaUpload(actorId, {
-      ...input, fileSizeBytes: MAX_PRIVATE_IMAGE_BYTES,
-    })).toBe('png');
+    expect(
+      validatePrivateMediaUpload(actorId, {
+        ...input,
+        fileSizeBytes: MAX_PRIVATE_IMAGE_BYTES,
+      }),
+    ).toBe('png');
   });
 
   it('rejects ID traversal, arbitrary strings and avatar cross-profile writes', () => {
-    expect(() => createPrivateMediaObjectKey('../private', input, objectId))
-      .toThrow(new PrivateMediaUploadPolicyError('invalid-identity'));
-    expect(() => createPrivateMediaObjectKey(actorId, {
-      ...input, resourceId: '../another-profile',
-    }, objectId)).toThrow(new PrivateMediaUploadPolicyError('invalid-resource'));
-    expect(() => createPrivateMediaObjectKey(actorId, {
-      ...input, target: 'profile-avatar',
-    }, objectId)).toThrow(new PrivateMediaUploadPolicyError('invalid-resource'));
-    expect(() => createPrivateMediaObjectKey(actorId, input, '../../escape'))
-      .toThrow(new PrivateMediaUploadPolicyError('invalid-resource'));
+    expect(() =>
+      createPrivateMediaObjectKey('../private', input, objectId),
+    ).toThrow(new PrivateMediaUploadPolicyError('invalid-identity'));
+    expect(() =>
+      createPrivateMediaObjectKey(
+        actorId,
+        {
+          ...input,
+          resourceId: '../another-profile',
+        },
+        objectId,
+      ),
+    ).toThrow(new PrivateMediaUploadPolicyError('invalid-resource'));
+    expect(() =>
+      createPrivateMediaObjectKey(
+        actorId,
+        {
+          ...input,
+          target: 'profile-avatar',
+        },
+        objectId,
+      ),
+    ).toThrow(new PrivateMediaUploadPolicyError('invalid-resource'));
+    expect(() =>
+      createPrivateMediaObjectKey(actorId, input, '../../escape'),
+    ).toThrow(new PrivateMediaUploadPolicyError('invalid-resource'));
   });
 
   it('sets brief signed URL TTLs for private access and upload', () => {
