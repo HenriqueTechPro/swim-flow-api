@@ -81,7 +81,9 @@ export class ApiAuthService extends AuthSessionManager {
 
     const refreshTokenHash = hashRefreshToken(refreshToken);
     const currentSession =
-      await this.authSessionsRepository.findByRefreshTokenHash(refreshTokenHash);
+      await this.authSessionsRepository.findByRefreshTokenHash(
+        refreshTokenHash,
+      );
 
     if (!currentSession) {
       throw new UnauthorizedException('Refresh token is invalid or expired');
@@ -90,7 +92,9 @@ export class ApiAuthService extends AuthSessionManager {
     const now = new Date();
     if (currentSession.revokedAt) {
       if (currentSession.replacedBySessionId) {
-        await this.authSessionsRepository.revokeAllForUser(currentSession.userId);
+        await this.authSessionsRepository.revokeAllForUser(
+          currentSession.userId,
+        );
       }
 
       throw new UnauthorizedException('Refresh token is invalid or expired');
@@ -134,9 +138,10 @@ export class ApiAuthService extends AuthSessionManager {
       return;
     }
 
-    const session = await this.authSessionsRepository.findActiveByRefreshTokenHash(
-      hashRefreshToken(refreshToken),
-    );
+    const session =
+      await this.authSessionsRepository.findActiveByRefreshTokenHash(
+        hashRefreshToken(refreshToken),
+      );
 
     if (!session) {
       return;
