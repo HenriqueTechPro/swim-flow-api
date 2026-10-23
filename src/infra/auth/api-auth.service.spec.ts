@@ -158,7 +158,9 @@ describe('ApiAuthService', () => {
     await expect(sut.refresh(refreshToken)).rejects.toBeInstanceOf(
       UnauthorizedException,
     );
-    expect(authSessionsRepository.rotateRefreshSession).toHaveBeenCalledTimes(1);
+    expect(authSessionsRepository.rotateRefreshSession).toHaveBeenCalledTimes(
+      1,
+    );
     expect(jwtService.signAsync).not.toHaveBeenCalled();
     expect(authSessionsRepository.create).not.toHaveBeenCalled();
   });
@@ -237,7 +239,9 @@ describe('ApiAuthService', () => {
       UnauthorizedException,
     );
 
-    expect(authSessionsRepository.revokeAllForUser).toHaveBeenCalledWith('user-1');
+    expect(authSessionsRepository.revokeAllForUser).toHaveBeenCalledWith(
+      'user-1',
+    );
     expect(authSessionsRepository.create).not.toHaveBeenCalled();
   });
 
