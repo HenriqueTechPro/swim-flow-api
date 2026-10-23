@@ -55,6 +55,11 @@ jobs:
         run: node --test scripts/neon-local-auth-dispatch.test.cjs
       - name: Test incremental formatting file selection
         run: npm run format:changed:test
+      # Temporary, read-only diff preview; removed after committing formatting.
+      - name: Preview Prettier changes for modified auth port
+        run: |
+          ./node_modules/.bin/prettier --write src/domain/auth/application/repositories/auth-directory-repository.ts
+          git --no-pager diff -- src/domain/auth/application/repositories/auth-directory-repository.ts
       - name: Enforce Prettier only on TypeScript changed by this PR
         if: github.event_name == 'pull_request'
         env:
