@@ -1,7 +1,7 @@
 /**
  * Identity-provider port. The application never depends on Supabase SDK types.
- * The current adapter is SupabaseAuthService; replacing it will not require
- * changing ApiAuthService or domain use cases.
+ * The active adapter is LocalAuthDirectoryService, backed by PostgreSQL.
+ * Auth is cut over one verified workflow at a time without changing use cases.
  */
 export interface AuthIdentity {
   id: string;
