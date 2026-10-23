@@ -1,7 +1,4 @@
-import {
-  UnauthorizedException,
-  type ExecutionContext,
-} from '@nestjs/common';
+import { UnauthorizedException, type ExecutionContext } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthSessionsRepository } from '@/domain/auth/application/repositories/auth-sessions-repository';
 import { EnvService } from '@/infra/env/env.service';
