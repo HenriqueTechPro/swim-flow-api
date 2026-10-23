@@ -63,8 +63,11 @@ preencher secrets via interface protegida. O Render ainda não foi publicado.
 - [ ] Ajustar `API_CORS_ORIGIN` à(s) origem(ns) exata(s) da Vercel;
       habilitar credenciais somente para essas origens.
 - [ ] Configurar `SWAGGER_ENABLED=false` em produção.
-- [ ] Temporariamente manter os valores do Supabase **somente enquanto**
-      seus fluxos Auth/Storage ainda não tiverem substitutos revisados.
+- [ ] Staging Neon-only: **não** configurar variáveis Supabase no Render.
+      A API inicializa e a conectividade PostgreSQL pode ser verificada,
+      mas endpoints legados de Auth/Storage retornam 503 até o cutover.
+      O login e os uploads devem ser testados apenas após os adaptadores
+      PostgreSQL/S3 estarem plenamente substituídos e validados.
 - [ ] Confirmar `GET /health` retorna 200 **no Render** (processo vivo).
       No ambiente local, ambos os endpoints já retornaram HTTP 200.
 - [ ] Confirmar `GET /health/ready` retorna 200 **no Render** (round-trip PostgreSQL).
