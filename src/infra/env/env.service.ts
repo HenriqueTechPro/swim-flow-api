@@ -27,6 +27,10 @@ export class EnvService {
     return env.jwtAccessTtlSeconds;
   }
 
+  get localPasswordLoginEnabled() {
+    return env.localPasswordLoginEnabled;
+  }
+
   get refreshTokenTtlDays() {
     return env.refreshTokenTtlDays;
   }
