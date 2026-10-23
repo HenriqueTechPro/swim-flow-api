@@ -13,11 +13,12 @@ Copie `.env.example` para `.env` e preencha:
 
 ```env
 DATABASE_URL=
-VITE_SUPABASE_URL=
-VITE_SUPABASE_PUBLISHABLE_KEY=
-SUPABASE_SECRET_KEY=
-# Legacy fallback if you still use the old JWT-based admin key:
-SUPABASE_SERVICE_ROLE_KEY=
+# Supabase Auth/Storage are optional legacy providers during migration.
+# Do not configure them for Neon-only staging; legacy routes return HTTP 503.
+# VITE_SUPABASE_URL=
+# VITE_SUPABASE_PUBLISHABLE_KEY=
+# SUPABASE_SECRET_KEY=
+# SUPABASE_SERVICE_ROLE_KEY=
 JWT_ACCESS_SECRET=
 REFRESH_TOKEN_TTL_DAYS=7
 AUTH_REFRESH_COOKIE_NAME=swim_flow_refresh_token
@@ -35,7 +36,7 @@ SWAGGER_PATH=docs
 Notas importantes de auth e CORS:
 
 - `API_CORS_ORIGIN` aceita multiplas origens separadas por virgula.
-- Para operacoes administrativas do Supabase, como convites e listagem de acessos, prefira `SUPABASE_SECRET_KEY`. A API ainda aceita `SUPABASE_SERVICE_ROLE_KEY` como fallback legado.
+- Para operações **legadas** do Supabase, ambas as variáveis públicas precisam estar disponíveis e ações administrativas também exigem `SUPABASE_SECRET_KEY`. Sem credenciais, operações legadas respondem HTTP 503, sem impedir `/health` e `/health/ready`.
 - Em `localhost`, o padrao `AUTH_COOKIE_SAME_SITE=lax` e `AUTH_SECURE_COOKIES=false` funciona bem para front e API em portas diferentes.
 - Se frontend e API ficarem em dominios diferentes em producao, use `AUTH_COOKIE_SAME_SITE=none` junto com `AUTH_SECURE_COOKIES=true`.
 - So configure `AUTH_COOKIE_DOMAIN` em producao quando voce realmente precisar compartilhar o cookie entre subdominios.
@@ -125,9 +126,12 @@ A API possui dois endpoints de diagnóstico:
   retorna **200** se pronto e **503** se o banco estiver indisponível,
   sem revelar URLs ou credenciais, com `Cache-Control: no-store`.
 
-**Transição:** o serviço ainda requer Supabase para Auth e Storage.
-A retirada desses componentes e a escolha de bucket S3 gratuito ocorrerão
-em PRs futuras, depois dos serviços substitutos testados.
+**Transição:** staging Neon-only agora pode iniciar **sem Supabase**,
+mas o adaptador legado ainda existe e suas rotas de login, Google,
+convite, recuperação de senha e upload retornam HTTP 503 quando não
+configuradas. Essas funções só serão liberadas após a migração completa
+para identidade PostgreSQL e armazenamento S3-compatible. Não expor
+este ambiente como pronto para usuários reais.
 
 Leia `DEPLOY_CHECKLIST.md` e `docs/RENDER_NEON_MIGRATION.md`
 antes de qualquer conexão real ao Neon.

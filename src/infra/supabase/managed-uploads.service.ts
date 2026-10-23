@@ -22,9 +22,7 @@ const contentTypeExtensionMap: Record<string, string> = {
 };
 
 @Injectable()
-export class SupabaseManagedUploadsRepository
-  implements ManagedUploadsRepository
-{
+export class SupabaseManagedUploadsRepository implements ManagedUploadsRepository {
   constructor(private readonly envService: EnvService) {}
 
   async createSignedUpload(
@@ -32,22 +30,19 @@ export class SupabaseManagedUploadsRepository
     input: CreateManagedUploadRequest,
   ): Promise<ManagedUploadResult> {
     const supabaseServiceRoleKey = this.envService.supabaseServiceRoleKey;
-    if (!supabaseServiceRoleKey) {
+    const supabaseUrl = this.envService.supabaseUrl;
+    if (!supabaseServiceRoleKey || !supabaseUrl) {
       throw new ServiceUnavailableException(
         'Managed uploads are not configured',
       );
     }
 
-    const supabase = createClient(
-      this.envService.supabaseUrl,
-      supabaseServiceRoleKey,
-      {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-        },
+    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
       },
-    );
+    });
 
     const path = this.buildPath(userId, input);
     const { data, error } = await supabase.storage

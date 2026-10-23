@@ -5,20 +5,23 @@ Render, PostgreSQL no Neon e imagens em bucket S3-compatible com
 camada de upload assinada. O Supabase será removido por completo,
 mas **não basta apagar as variáveis do Blueprint**.
 
-## Por que o Render ainda pede Supabase?
+## Staging Neon-only sem Supabase (22/10/2026)
 
-O `render.yaml` atual possui variáveis temporárias
-`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` e
-`SUPABASE_SECRET_KEY`. O backend realmente usa
-`SupabaseAuthService` para login, login via Google, convites,
-listagem/exclusão de usuários e recuperação de senha.
-`SupabaseManagedUploadsRepository` usa Supabase Storage para
-assinatura de uploads de fotos.
+O primeiro deploy no Render revelou que as variáveis legadas
+`VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` eram exigidas no
+bootstrap. O staging agora pode iniciar sem elas, permitindo validar
+`/health` e `/health/ready` apenas com PostgreSQL Neon.
 
-A API **falha na validação das variáveis obrigatórias** se
-retirarmos essas variáveis antes de substituir os adaptadores. Isso
-não significa que o PostgreSQL dependa do Supabase; apenas que a
-camada atual de identidade e imagens ainda o utiliza.
+**Isto não conclui a migração de autenticação nem de imagens**.
+O backend ainda possui `SupabaseAuthService` e
+`SupabaseManagedUploadsRepository`. Quando não configurados,
+seus fluxos de login, Google OAuth, convites, recuperação de senha,
+administração de usuários e uploads falham explicitamente com
+HTTP 503 (serviço indisponível). Nenhuma credencial falsa é usada,
+e nenhuma rota legada é habilitada acidentalmente.
+
+O objetivo definitivo permanece remover o SDK e os adaptadores
+legados após validar as substituições locais de Auth e S3-compatible.
 
 ## Etapa 02E-7: fundação para Auth no próprio PostgreSQL (esta PR)
 

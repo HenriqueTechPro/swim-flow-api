@@ -42,11 +42,17 @@ test('Render only runs NestJS build/start, not a database mutation or seed', () 
 test('secrets are prompted for initial setup and never committed', () => {
   for (const key of [
     'DATABASE_URL', 'DIRECT_URL', 'API_CORS_ORIGIN',
-    'VITE_SUPABASE_URL', 'VITE_SUPABASE_PUBLISHABLE_KEY',
-    'SUPABASE_SECRET_KEY',
   ]) {
     assert.match(readEnvVarBlock(key), /^        sync: false$/m, key);
     assert.doesNotMatch(readEnvVarBlock(key), /\bvalue:|generateValue:/, key);
+  }
+  // The initial staging service must not require any legacy provider key.
+  for (const key of [
+    'VITE_SUPABASE_URL',
+    'VITE_SUPABASE_PUBLISHABLE_KEY',
+    'SUPABASE_SECRET_KEY',
+  ]) {
+    assert.equal(readEnvVarBlock(key), '', key);
   }
   assert.match(readEnvVarBlock('JWT_ACCESS_SECRET'), /^        generateValue: true$/m);
   assert.match(readEnvVarBlock('NODE_ENV'), /^        value: production$/m);

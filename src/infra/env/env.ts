@@ -38,12 +38,16 @@ const loadEnvFile = (filepath: string) => {
 loadEnvFile(resolve(appRoot, '.env'));
 loadEnvFile(resolve(appRoot, '.env.local'));
 
-const booleanFromEnv = z.enum(['true', 'false']).transform((value) => value === 'true');
+const booleanFromEnv = z
+  .enum(['true', 'false'])
+  .transform((value) => value === 'true');
 
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
-  VITE_SUPABASE_URL: z.string().url(),
-  VITE_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
+  // Legacy adapters are optional during the Neon/Render staging rollout.
+  // Missing credentials disable legacy auth/storage operations (HTTP 503).
+  VITE_SUPABASE_URL: optionalNonEmptyString.pipe(z.string().url().optional()),
+  VITE_SUPABASE_PUBLISHABLE_KEY: optionalNonEmptyString,
   SUPABASE_SECRET_KEY: optionalNonEmptyString,
   SUPABASE_SERVICE_ROLE_KEY: optionalNonEmptyString,
   JWT_ACCESS_SECRET: z
@@ -52,7 +56,10 @@ const envSchema = z.object({
     .default(defaultDevelopmentJwtAccessSecret),
   JWT_ACCESS_TTL_SECONDS: z.coerce.number().int().positive().default(900),
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(7),
-  AUTH_REFRESH_COOKIE_NAME: z.string().min(1).default('swim_flow_refresh_token'),
+  AUTH_REFRESH_COOKIE_NAME: z
+    .string()
+    .min(1)
+    .default('swim_flow_refresh_token'),
   AUTH_COOKIE_SAME_SITE: z.enum(['lax', 'strict', 'none']).default('lax'),
   AUTH_COOKIE_DOMAIN: z
     .string()
@@ -71,7 +78,9 @@ const envSchema = z.object({
   CACHE_TTL_SECONDS: z.coerce.number().default(30),
   NEST_API_PORT: z.coerce.number().int().min(1).max(65535).default(3334),
   PORT: z.coerce.number().int().min(1).max(65535).optional(),
-  SWAGGER_ENABLED: booleanFromEnv.default(process.env.NODE_ENV !== 'production' ? 'true' : 'false'),
+  SWAGGER_ENABLED: booleanFromEnv.default(
+    process.env.NODE_ENV !== 'production' ? 'true' : 'false',
+  ),
   SWAGGER_PATH: z.string().default('docs'),
 });
 
