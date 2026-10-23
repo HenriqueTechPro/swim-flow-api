@@ -42,8 +42,10 @@ const booleanFromEnv = z.enum(['true', 'false']).transform((value) => value === 
 
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
-  VITE_SUPABASE_URL: z.string().url(),
-  VITE_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
+  // Legacy adapters are optional during the Neon/Render staging rollout.
+  // Missing credentials disable legacy auth/storage operations (HTTP 503).
+  VITE_SUPABASE_URL: optionalNonEmptyString.pipe(z.string().url().optional()),
+  VITE_SUPABASE_PUBLISHABLE_KEY: optionalNonEmptyString,
   SUPABASE_SECRET_KEY: optionalNonEmptyString,
   SUPABASE_SERVICE_ROLE_KEY: optionalNonEmptyString,
   JWT_ACCESS_SECRET: z
