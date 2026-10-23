@@ -78,7 +78,19 @@ e validado em 23/10/2026: `/health` e `/health/ready` em HTTP 200.
       `/health` em vez de executar consultas frequentes no Neon.
 - [ ] Testar primeiro acesso após período ocioso (cold start) no plano gratuito.
 
-## 4. Vercel — Frontend
+## 4. Convite seguro do primeiro administrador
+
+- [ ] Revisar PR de bootstrap por convite, testes e revisão de segurança.
+- [ ] Criar/validar tela HTTPS `/auth/accept-local-invitation` e
+      integração ao POST `/api/auth/local-invitations/accept`.
+- [ ] Preparar Resend, domínio remetente verificado, origins corretas e
+      procedimento de reemissão protegido, sem registrar tokens.
+- [ ] Executar bootstrap manual **somente depois** da integração completa.
+      A identidade começa sem senha e sem e-mail confirmado.
+- [ ] Ativar `SWIMFLOW_LOCAL_PASSWORD_LOGIN_ENABLED=true` apenas depois
+      de aceitar o convite e validar login/refresh/logout.
+
+## 5. Vercel — Frontend
 
 - [ ] Manter `HenriqueTechPro/swim-flow-dash` na Vercel.
 - [ ] Configurar `VITE_API_URL=https://<domínio-da-api-no-render>`.
@@ -88,7 +100,7 @@ e validado em 23/10/2026: `/health` e `/health/ready` em HTTP 200.
       e resultados com **dados fictícios**.
 - [ ] Não usar `DIRECT_URL`/`DATABASE_URL` nem tokens privados no Vite.
 
-## 5. Posteriormente: retirar os legados Supabase
+## 6. Posteriormente: retirar os legados Supabase
 
 - [ ] Substituir login, convite e recuperação de senha do Supabase Auth por
       fluxos apropriados e auditados da API.
