@@ -1,7 +1,7 @@
 # Swim Flow API — Checklist de deploy (Render + Neon + Vercel)
 
-> Atualizado em 21/10/2026: o **schema inicial já foi aplicado ao Neon
-> staging**, preservando o banco sem registros de aplicação. A API no Render
+> Atualizado em 22/10/2026: **33 tabelas de aplicação e duas migrações**
+> Prisma estão aplicadas ao Neon staging, sem registros de aplicação. A API no Render
 > ainda não foi publicada e o banco de produção não existe.
 > Supabase Auth e Storage continuam temporariamente ativos.
 
@@ -20,7 +20,7 @@
 ## 2. Neon — PostgreSQL (somente após aprovar a API)
 
 - [x] Criar banco PostgreSQL staging em Neon AWS us-east-1, sem importar dados legados (21/10/2026).
-- [ ] Obter `DATABASE_URL` **pooled** (conexões de runtime) e `DIRECT_URL`
+- [x] Obter `DATABASE_URL` **pooled** (conexões de runtime) e `DIRECT_URL`
       **direct** (Prisma Migrate), com TLS/SSL.
 - [ ] Revisar os SQLs da pasta `prisma/migrations` e confirmar ambiente
       correto antes de escrever. Os testes CI são protegidos para banco
@@ -31,15 +31,15 @@
       A operação foi realizada via conector Neon (não pela CLI Prisma),
       registrando `_prisma_migrations` com o checksum SHA-256 exato
       da migração original. Ver `docs/NEON_STAGING_BASELINE_APPLIED_02E5.md`.
-- [ ] Em um runtime seguro e com URLs privadas, executar
-      `prisma migrate status` da mesma versão Prisma 6 para confirmar
-      reconhecimento do histórico antes de conectar Render staging.
-      Não executar novamente o executor **de primeira baseline** no banco
-      agora ocupado. Em migrações posteriores, utilizar Prisma Migrate CLI.
+- [x] Em 22/10/2026, executar `npm run prisma:migrate:status` com Prisma 6
+      e credenciais privadas no Windows: **2 migrations found** e
+      **Database schema is up to date!**. Não executar novamente o executor
+      **de primeira baseline** no banco agora ocupado. Em migrações
+      posteriores, utilizar Prisma Migrate CLI.
 - [x] Confirmar via queries Neon as constraints, FKs, índices,
       enumerações, tabelas e checksum no histórico Prisma.
-- [ ] Confirmar `prisma migrate status` pela CLI Prisma 6 em ambiente
-      seguro conectado ao staging (ainda não executado).
+- [x] Confirmar `prisma migrate status` pela CLI Prisma 6 em ambiente
+      seguro conectado ao staging (concluído em 22/10/2026).
 - [ ] Não usar `prisma db push` ou `prisma migrate dev` no deploy.
 
 ## 3. Render — Serviço Web NestJS
@@ -65,8 +65,9 @@ preencher secrets via interface protegida. O Render ainda não foi publicado.
 - [ ] Configurar `SWAGGER_ENABLED=false` em produção.
 - [ ] Temporariamente manter os valores do Supabase **somente enquanto**
       seus fluxos Auth/Storage ainda não tiverem substitutos revisados.
-- [ ] Confirmar `GET /health` retorna 200 (processo vivo).
-- [ ] Confirmar `GET /health/ready` retorna 200 (round-trip PostgreSQL).
+- [ ] Confirmar `GET /health` retorna 200 **no Render** (processo vivo).
+      No ambiente local, ambos os endpoints já retornaram HTTP 200.
+- [ ] Confirmar `GET /health/ready` retorna 200 **no Render** (round-trip PostgreSQL).
 - [ ] Sob indisponibilidade de PostgreSQL, `/health/ready` deve retornar
       503 sem detalhes de conexão; `/health` permanece diagnóstico de processo.
 - [ ] Para a verificação automática de vida do Render, preferir
