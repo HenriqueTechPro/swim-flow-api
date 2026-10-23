@@ -64,5 +64,7 @@ jobs:
           npm run format:changed -- "$FORMAT_BASE_SHA" "$FORMAT_HEAD_SHA" --check
       - name: Guarded first admin bootstrap tests
         run: npm run bootstrap:first-admin:test
+      - name: Resend isolated delivery tests (network mocked, no account access)
+        run: npm run resend:smoke:test
       - run: npm run test:unit
       - run: npm run test:e2e
