@@ -106,7 +106,9 @@ Se a importação de Blueprint falhar por permissão de GitHub:
 - Render → **New → Web Service → Git Provider → Connect**;
 - Repositório `HenriqueTechPro/swim-flow-api`, branch `main`;
 - Runtime Node, plano `Free`, região `Virginia`;
-- Build: `npm ci && npm run prisma:generate && npm run build`;
+- Build: `npm ci --include=dev && npm run prisma:generate && npm run build`;
+  `--include=dev` é obrigatório mesmo com `NODE_ENV=production`, pois
+  `@nestjs/cli` e TypeScript são devDependencies necessárias para compilar;
 - Start: `npm run start:prod`;
 - Health Check Path: `/health`;
 - Environment: preencher as mesmas variáveis da tabela acima;
