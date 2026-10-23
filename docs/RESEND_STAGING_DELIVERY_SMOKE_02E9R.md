@@ -42,7 +42,7 @@ npm run resend:smoke:test
 
 # A chave é lida sem ecoar o valor e sem registrá-la no histórico do terminal.
 $secureKey = Read-Host "Cole a API Key do Resend" -AsSecureString
-$env:RESEND_API_KEY = (New-Object System.Net.NetworkCredential("", $secureKey)).Password
+$env:RESEND_API_KEY = ([System.Net.NetworkCredential]::new("", $secureKey)).Password
 Remove-Variable secureKey
 
 # O destino deve ser o MESMO e-mail da conta Resend.
