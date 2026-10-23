@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import {
   AuthSessionsRepository,
   type CreateAuthSessionRepositoryInput,
@@ -34,6 +35,22 @@ function toDomain(session: {
   };
 }
 
+// Only verified, enabled local identities may use previously issued
+// access and refresh tokens. Orphaned Supabase sessions are rejected.
+const activeLocalIdentitySession: Prisma.AuthSessionWhereInput = {
+  profile: {
+    is: {
+      localAuthIdentity: {
+        is: {
+          disabledAt: null,
+          emailConfirmedAt: { not: null },
+          passwordHash: { not: null },
+        },
+      },
+    },
+  },
+};
+
 @Injectable()
 export class PrismaAuthSessionsRepository implements AuthSessionsRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -59,6 +76,7 @@ export class PrismaAuthSessionsRepository implements AuthSessionsRepository {
         id,
         revokedAt: null,
         expiresAt: { gt: new Date() },
+        ...activeLocalIdentitySession,
       },
     });
 
@@ -71,6 +89,7 @@ export class PrismaAuthSessionsRepository implements AuthSessionsRepository {
     const session = await this.prisma.authSession.findFirst({
       where: {
         refreshTokenHash,
+        ...activeLocalIdentitySession,
       },
     });
 
@@ -85,6 +104,7 @@ export class PrismaAuthSessionsRepository implements AuthSessionsRepository {
         refreshTokenHash,
         revokedAt: null,
         expiresAt: { gt: new Date() },
+        ...activeLocalIdentitySession,
       },
     });
 

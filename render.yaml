@@ -27,6 +27,9 @@ services:
         value: /api/auth
       - key: JWT_ACCESS_TTL_SECONDS
         value: "900"
+      # Enabled manually only after reviewed first-admin bootstrap and auth tests.
+      - key: SWIMFLOW_LOCAL_PASSWORD_LOGIN_ENABLED
+        value: "false"
       - key: REFRESH_TOKEN_TTL_DAYS
         value: "7"
       - key: JWT_ACCESS_SECRET

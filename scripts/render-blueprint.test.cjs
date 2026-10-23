@@ -57,6 +57,7 @@ test('secrets are prompted for initial setup and never committed', () => {
   assert.match(readEnvVarBlock('JWT_ACCESS_SECRET'), /^        generateValue: true$/m);
   assert.match(readEnvVarBlock('NODE_ENV'), /^        value: production$/m);
   assert.match(readEnvVarBlock('NODE_VERSION'), /^        value: "22"$/m);
+  assert.match(readEnvVarBlock('SWIMFLOW_LOCAL_PASSWORD_LOGIN_ENABLED'), /^        value: "false"$/m);
 });
 
 test('cross-site refresh cookie safety and disabled production Swagger', () => {

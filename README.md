@@ -20,6 +20,7 @@ DATABASE_URL=
 # SUPABASE_SECRET_KEY=
 # SUPABASE_SERVICE_ROLE_KEY=
 JWT_ACCESS_SECRET=
+SWIMFLOW_LOCAL_PASSWORD_LOGIN_ENABLED=false
 REFRESH_TOKEN_TTL_DAYS=7
 AUTH_REFRESH_COOKIE_NAME=swim_flow_refresh_token
 AUTH_COOKIE_SAME_SITE=lax
@@ -89,7 +90,9 @@ e **Vercel** (dashboard). O schema inicial já foi implantado no **Neon staging*
 entre 21 e 22/10/2026, com 33 tabelas de aplicação, 24 enums e duas migrações aplicadas, sem dados importados.
 Em 22/10/2026, o Prisma 6 confirmou `Database schema is up to date!`,
 e a API local respondeu HTTP 200 em `/health` e `/health/ready` usando o Neon.
-A API ainda não foi publicada no Render e o banco de produção não existe.
+O staging da API está publicado em
+`https://swim-flow-api-staging.onrender.com`, com `/health` e
+`/health/ready` verificados em 23/10/2026. O banco de produção não existe.
 A implantação de serviços não acontece automaticamente ao fazer merge.
 Veja `docs/NEON_STAGING_BASELINE_APPLIED_02E5.md` para a evidência
 histórica da baseline SQL, e `docs/RENDER_STAGING_SETUP_02E6.md` para
@@ -126,12 +129,15 @@ A API possui dois endpoints de diagnóstico:
   retorna **200** se pronto e **503** se o banco estiver indisponível,
   sem revelar URLs ou credenciais, com `Cache-Control: no-store`.
 
-**Transição:** staging Neon-only agora pode iniciar **sem Supabase**,
-mas o adaptador legado ainda existe e suas rotas de login, Google,
-convite, recuperação de senha e upload retornam HTTP 503 quando não
-configuradas. Essas funções só serão liberadas após a migração completa
-para identidade PostgreSQL e armazenamento S3-compatible. Não expor
-este ambiente como pronto para usuários reais.
+**Transição 02E-9O:** o endpoint `POST /api/auth/login` utiliza a
+identidade local PostgreSQL, mas exige
+`SWIMFLOW_LOCAL_PASSWORD_LOGIN_ENABLED=true`, **desativado por padrão**.
+Só habilite após o provisionamento seguro do primeiro administrador e
+testes de autenticação em staging. Enquanto isso, login retorna 503.
+Google OAuth, convites e recuperação de senha nos endpoints antigos
+continuam indisponíveis até sua migração; uploads ainda usam o adapter
+Supabase e retornam 503 sem credenciais. Não liberar usuários reais.
+Procedimento: `docs/LOCAL_PASSWORD_CUTOVER_02E9O.md`.
 
 Leia `DEPLOY_CHECKLIST.md` e `docs/RENDER_NEON_MIGRATION.md`
 antes de qualquer conexão real ao Neon.

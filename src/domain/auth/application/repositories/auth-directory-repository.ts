@@ -1,7 +1,7 @@
 /**
  * Identity-provider port. The application never depends on Supabase SDK types.
- * The current adapter is SupabaseAuthService; replacing it will not require
- * changing ApiAuthService or domain use cases.
+ * The active adapter is LocalAuthDirectoryService, backed by PostgreSQL.
+ * Auth is cut over one verified workflow at a time without changing use cases.
  */
 export interface AuthIdentity {
   id: string;
@@ -30,10 +30,20 @@ export interface DirectoryInvitation {
 }
 
 export abstract class AuthDirectoryRepository {
-  abstract signInWithPassword(email: string, password: string): Promise<AuthIdentity>;
-  abstract getIdentityFromAccessToken(accessToken: string): Promise<AuthIdentity>;
-  abstract sendPasswordResetEmail(email: string, redirectTo: string): Promise<void>;
-  abstract confirmPasswordReset(input: PasswordResetConfirmation): Promise<AuthIdentity>;
+  abstract signInWithPassword(
+    email: string,
+    password: string,
+  ): Promise<AuthIdentity>;
+  abstract getIdentityFromAccessToken(
+    accessToken: string,
+  ): Promise<AuthIdentity>;
+  abstract sendPasswordResetEmail(
+    email: string,
+    redirectTo: string,
+  ): Promise<void>;
+  abstract confirmPasswordReset(
+    input: PasswordResetConfirmation,
+  ): Promise<AuthIdentity>;
   abstract inviteUserByEmail(input: DirectoryInvitation): Promise<AuthIdentity>;
   abstract listUsers(): Promise<AuthDirectoryUser[]>;
   abstract deleteUser(userId: string): Promise<void>;

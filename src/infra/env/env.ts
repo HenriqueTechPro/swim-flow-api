@@ -55,6 +55,7 @@ const envSchema = z.object({
     .min(32)
     .default(defaultDevelopmentJwtAccessSecret),
   JWT_ACCESS_TTL_SECONDS: z.coerce.number().int().positive().default(900),
+  SWIMFLOW_LOCAL_PASSWORD_LOGIN_ENABLED: booleanFromEnv.default('false'),
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(7),
   AUTH_REFRESH_COOKIE_NAME: z
     .string()
@@ -112,6 +113,7 @@ export const env = {
     null,
   jwtAccessSecret: parsedEnv.JWT_ACCESS_SECRET,
   jwtAccessTtlSeconds: parsedEnv.JWT_ACCESS_TTL_SECONDS,
+  localPasswordLoginEnabled: parsedEnv.SWIMFLOW_LOCAL_PASSWORD_LOGIN_ENABLED,
   refreshTokenTtlDays: parsedEnv.REFRESH_TOKEN_TTL_DAYS,
   authRefreshCookieName: parsedEnv.AUTH_REFRESH_COOKIE_NAME,
   authCookieSameSite: parsedEnv.AUTH_COOKIE_SAME_SITE,

@@ -22,6 +22,7 @@ describe('Render and Neon environment parsing', () => {
         port: number;
         authSecureCookies: boolean;
         swaggerEnabled: boolean;
+        localPasswordLoginEnabled: boolean;
         supabaseUrl: string | undefined;
         supabasePublishableKey: string | undefined;
       };
@@ -43,6 +44,23 @@ describe('Render and Neon environment parsing', () => {
 
   it('rejects invalid legacy Supabase URLs when explicitly configured', () => {
     expect(() => loadEnv({ VITE_SUPABASE_URL: 'not-a-valid-url' })).toThrow();
+  });
+
+  it('disables local password login unless explicitly opted in', () => {
+    expect(
+      loadEnv({ SWIMFLOW_LOCAL_PASSWORD_LOGIN_ENABLED: undefined })
+        .localPasswordLoginEnabled,
+    ).toBe(false);
+    expect(
+      loadEnv({ SWIMFLOW_LOCAL_PASSWORD_LOGIN_ENABLED: 'true' })
+        .localPasswordLoginEnabled,
+    ).toBe(true);
+  });
+
+  it('rejects malformed rollout flags', () => {
+    expect(() =>
+      loadEnv({ SWIMFLOW_LOCAL_PASSWORD_LOGIN_ENABLED: 'yes' }),
+    ).toThrow();
   });
 
   it('reads explicit false booleans correctly', () => {
