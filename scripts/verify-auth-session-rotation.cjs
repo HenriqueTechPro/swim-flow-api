@@ -102,7 +102,7 @@ async function run() {
       'a losing concurrent request must not leave an orphan session');
 
     await assert.rejects(
-      () => isAllowed(await access(old.id)),
+      async () => isAllowed(await access(old.id)),
       (error) => error?.status === 401,
     );
     assert.equal(await isAllowed(await access(successor.id)), true);
@@ -115,7 +115,7 @@ async function run() {
     // Logout revokes the current access token without changing its signature.
     await firstRepo.revoke(successor.id);
     await assert.rejects(
-      () => isAllowed(await access(successor.id)),
+      async () => isAllowed(await access(successor.id)),
       (error) => error?.status === 401,
     );
     process.stdout.write(
