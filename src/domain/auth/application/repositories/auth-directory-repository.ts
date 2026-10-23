@@ -34,7 +34,9 @@ export abstract class AuthDirectoryRepository {
     email: string,
     password: string,
   ): Promise<AuthIdentity>;
-  abstract getIdentityFromAccessToken(accessToken: string): Promise<AuthIdentity>;
+  abstract getIdentityFromAccessToken(
+    accessToken: string,
+  ): Promise<AuthIdentity>;
   abstract sendPasswordResetEmail(
     email: string,
     redirectTo: string,
