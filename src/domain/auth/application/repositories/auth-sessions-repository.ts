@@ -14,6 +14,16 @@ export abstract class AuthSessionsRepository {
     input: CreateAuthSessionRepositoryInput,
   ): Promise<AuthSession>;
   abstract findActiveById(id: string): Promise<AuthSession | null>;
+  /**
+   * Atomically consume the old refresh session and persist the replacement.
+   * Return null if the old session was already rotated, revoked or expired.
+   * The operation MUST lock the old row before creating the successor.
+   */
+  abstract rotateRefreshSession(
+    sessionId: string,
+    currentRefreshTokenHash: string,
+    replacement: CreateAuthSessionRepositoryInput,
+  ): Promise<AuthSession | null>;
   abstract findByRefreshTokenHash(
     refreshTokenHash: string,
   ): Promise<AuthSession | null>;

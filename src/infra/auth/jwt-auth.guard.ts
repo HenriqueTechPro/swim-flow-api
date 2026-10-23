@@ -50,7 +50,13 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Invalid access token');
     }
 
-    if (!payload.sub || !payload.sessionId) {
+    if (
+      !payload ||
+      typeof payload.sub !== 'string' ||
+      payload.sub.length === 0 ||
+      typeof payload.sessionId !== 'string' ||
+      payload.sessionId.length === 0
+    ) {
       throw new UnauthorizedException('Invalid access token');
     }
 
@@ -62,10 +68,12 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Session is invalid or expired');
     }
 
+    // Session storage is authoritative for identity. Do not trust stale
+    // signed email claims after an email change or account migration.
     request.user = {
-      id: payload.sub,
-      email: payload.email ?? null,
-      sessionId: payload.sessionId,
+      id: session.userId,
+      email: session.email,
+      sessionId: session.id,
     };
 
     return true;

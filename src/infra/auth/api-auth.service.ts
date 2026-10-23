@@ -107,16 +107,24 @@ export class ApiAuthService extends AuthSessionManager {
     );
 
     const nextRefreshToken = generateRefreshToken();
-    const nextSession = await this.authSessionsRepository.create({
-      userId: currentSession.userId,
-      email: currentSession.email,
-      refreshTokenHash: hashRefreshToken(nextRefreshToken),
-      expiresAt: this.getRefreshTokenExpiresAt(),
-      userAgent: context.userAgent ?? currentSession.userAgent,
-      ipAddress: context.ipAddress ?? currentSession.ipAddress,
-    });
+    const nextSession = await this.authSessionsRepository.rotateRefreshSession(
+      currentSession.id,
+      refreshTokenHash,
+      {
+        userId: currentSession.userId,
+        email: currentSession.email,
+        refreshTokenHash: hashRefreshToken(nextRefreshToken),
+        expiresAt: this.getRefreshTokenExpiresAt(),
+        userAgent: context.userAgent ?? currentSession.userAgent,
+        ipAddress: context.ipAddress ?? currentSession.ipAddress,
+      },
+    );
 
-    await this.authSessionsRepository.revoke(currentSession.id, nextSession.id);
+    if (!nextSession) {
+      // A parallel request consumed this refresh token first. Never mint
+      // another JWT or issue an additional refresh token from it.
+      throw new UnauthorizedException('Refresh token is invalid or expired');
+    }
 
     return this.buildAuthResult(profile, nextSession.id, nextRefreshToken);
   }

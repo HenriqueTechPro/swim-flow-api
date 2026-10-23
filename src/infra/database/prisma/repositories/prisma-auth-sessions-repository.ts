@@ -70,6 +70,70 @@ export class PrismaAuthSessionsRepository implements AuthSessionsRepository {
     return toDomain(session);
   }
 
+  async rotateRefreshSession(
+    sessionId: string,
+    currentRefreshTokenHash: string,
+    replacement: CreateAuthSessionRepositoryInput,
+  ): Promise<AuthSession | null> {
+    // Lock the prior row FIRST. Under concurrent refresh calls, only one
+    // request can observe an unrevoked session and create its successor.
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`
+        SELECT "id" FROM "auth_sessions"
+        WHERE "id" = ${sessionId}::uuid FOR UPDATE
+      `;
+
+      const current = await tx.authSession.findFirst({
+        where: {
+          id: sessionId,
+          refreshTokenHash: currentRefreshTokenHash,
+          revokedAt: null,
+          expiresAt: { gt: new Date() },
+          ...activeLocalIdentitySession,
+        },
+      });
+
+      if (
+        !current ||
+        current.userId !== replacement.userId ||
+        current.email !== replacement.email
+      ) {
+        return null;
+      }
+
+      const next = await tx.authSession.create({
+        data: {
+          userId: current.userId,
+          email: current.email,
+          refreshTokenHash: replacement.refreshTokenHash,
+          expiresAt: replacement.expiresAt,
+          userAgent: replacement.userAgent ?? null,
+          ipAddress: replacement.ipAddress ?? null,
+        },
+      });
+      // This update and the insert above are ONE transaction. If the
+      // conditional update fails, the successor insert must roll back.
+      const consumed = await tx.authSession.updateMany({
+        where: {
+          id: current.id,
+          refreshTokenHash: currentRefreshTokenHash,
+          revokedAt: null,
+          expiresAt: { gt: new Date() },
+          ...activeLocalIdentitySession,
+        },
+        data: {
+          revokedAt: new Date(),
+          replacedBySessionId: next.id,
+        },
+      });
+      if (consumed.count !== 1) {
+        throw new Error('Refresh session changed during rotation');
+      }
+
+      return toDomain(next);
+    }, { maxWait: 10000, timeout: 20000 });
+  }
+
   async findActiveById(id: string): Promise<AuthSession | null> {
     const session = await this.prisma.authSession.findFirst({
       where: {

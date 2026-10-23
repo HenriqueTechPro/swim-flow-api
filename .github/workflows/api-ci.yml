@@ -55,6 +55,11 @@ jobs:
         run: node --test scripts/neon-local-auth-dispatch.test.cjs
       - name: Test incremental formatting file selection
         run: npm run format:changed:test
+      # Temporary output-only formatter preview (removed before merge).
+      - name: Preview exact Prettier changes for auth audit files
+        run: |
+          ./node_modules/.bin/prettier --write src/infra/auth/api-auth.service.spec.ts src/infra/auth/api-auth.service.ts src/infra/auth/jwt-auth.guard.spec.ts src/infra/auth/role-permissions-guards.spec.ts src/infra/database/prisma/repositories/prisma-auth-sessions-repository.ts
+          git --no-pager diff -- src/infra/auth/api-auth.service.spec.ts src/infra/auth/api-auth.service.ts src/infra/auth/jwt-auth.guard.spec.ts src/infra/auth/role-permissions-guards.spec.ts src/infra/database/prisma/repositories/prisma-auth-sessions-repository.ts
       - name: Enforce Prettier only on TypeScript changed by this PR
         if: github.event_name == 'pull_request'
         env:
