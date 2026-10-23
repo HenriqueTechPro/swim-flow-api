@@ -2,7 +2,7 @@
 
 ## Scope and current limitations
 
-The infrastructure bootstrap prepared the **API runtime** and **Prisma migration tooling**. Etapa 02D-1 adds a reviewed, versioned initial migration, generated from the canonical database schema. It does **not** migrate user data or remove the existing Supabase Auth/Storage integration. Until a separate authentication/storage migration is completed, Supabase credentials remain required by the current API. Do not disconnect Supabase yet.
+The infrastructure bootstrap prepared the **API runtime** and **Prisma migration tooling**. Etapa 02D-1 adds a reviewed, versioned initial migration, generated from the canonical database schema. It does **not** migrate user data or remove the existing Supabase Auth/Storage integration. The staging API can now boot **without** Supabase credentials for health/readiness verification; legacy Auth/Storage operations fail closed with HTTP 503. Do not enable those workflows for real users until providers are replaced and tested.
 
 This is a clean-database plan: existing test records are intentionally not retained.
 
@@ -51,7 +51,7 @@ já foi concluída com Prisma 6 em 22/10/2026, sem reaplicar migrações.
 - Render provides `PORT`; it now takes precedence over `NEST_API_PORT`. The API binds to `0.0.0.0`.
 - Set `DATABASE_URL`, `DIRECT_URL`, a random `JWT_ACCESS_SECRET` (at least 32 characters), `API_CORS_ORIGIN` with the exact dashboard origin, and the other required settings shown in `.env.example`.
 - For HTTPS frontend/API on different sites, test cookie behavior carefully. `AUTH_COOKIE_SAME_SITE=none` requires `AUTH_SECURE_COOKIES=true`. Cross-origin cookie support depends on browser privacy policies.
-- While legacy authentication/storage remains, configure the necessary Supabase environment values securely in Render only.
+- For Neon-only staging, do not configure Supabase environment variables. Legacy Supabase auth and upload routes return 503 until fully replaced; this stage validates only the API runtime and Neon readiness.
 - Set `SWAGGER_ENABLED=false` in production unless intentionally exposing API documentation.
 - Health checks and first-request cold starts should be tested before real usage. Avoid wake-up ping loops.
 
