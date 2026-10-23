@@ -45,7 +45,8 @@ já foi concluída com Prisma 6 em 22/10/2026, sem reaplicar migrações.
 ## Render — API service
 
 - Deploy as a Node web service connected to the API repository and branch.
-- Recommended build command: `npm ci && npm run prisma:generate && npm run build`.
+- Recommended build command: `npm ci --include=dev && npm run prisma:generate && npm run build`.
+  Explicitly install devDependencies for the build even under `NODE_ENV=production`: `@nestjs/cli` and TypeScript are required for `nest build`.
 - Start command: `npm run start:prod`. Set `NODE_ENV=production`.
 - Render provides `PORT`; it now takes precedence over `NEST_API_PORT`. The API binds to `0.0.0.0`.
 - Set `DATABASE_URL`, `DIRECT_URL`, a random `JWT_ACCESS_SECRET` (at least 32 characters), `API_CORS_ORIGIN` with the exact dashboard origin, and the other required settings shown in `.env.example`.
