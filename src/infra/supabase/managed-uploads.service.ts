@@ -32,14 +32,15 @@ export class SupabaseManagedUploadsRepository
     input: CreateManagedUploadRequest,
   ): Promise<ManagedUploadResult> {
     const supabaseServiceRoleKey = this.envService.supabaseServiceRoleKey;
-    if (!supabaseServiceRoleKey) {
+    const supabaseUrl = this.envService.supabaseUrl;
+    if (!supabaseServiceRoleKey || !supabaseUrl) {
       throw new ServiceUnavailableException(
         'Managed uploads are not configured',
       );
     }
 
     const supabase = createClient(
-      this.envService.supabaseUrl,
+      supabaseUrl,
       supabaseServiceRoleKey,
       {
         auth: {
