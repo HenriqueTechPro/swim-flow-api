@@ -132,8 +132,11 @@ A API possui dois endpoints de diagnóstico:
 **Transição 02E-9O:** o endpoint `POST /api/auth/login` utiliza a
 identidade local PostgreSQL, mas exige
 `SWIMFLOW_LOCAL_PASSWORD_LOGIN_ENABLED=true`, **desativado por padrão**.
-Só habilite após o provisionamento seguro do primeiro administrador e
-testes de autenticação em staging. Enquanto isso, login retorna 503.
+Só habilite após a ativação, por convite, do primeiro administrador
+e testes de autenticação em staging. Enquanto isso, login retorna 503.
+O CLI de bootstrap **não aceita senha inicial** e não deve ser executado
+antes da tela HTTPS de ativação e do e-mail estarem operacionais:
+`docs/LOCAL_ADMIN_BOOTSTRAP_02E8B.md`.
 Google OAuth, convites e recuperação de senha nos endpoints antigos
 continuam indisponíveis até sua migração; uploads ainda usam o adapter
 Supabase e retornam 503 sem credenciais. Não liberar usuários reais.

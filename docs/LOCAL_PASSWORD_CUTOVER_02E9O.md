@@ -38,11 +38,12 @@ automaticamente no Render.**
    Manter `SWIMFLOW_LOCAL_PASSWORD_LOGIN_ENABLED=false` ou variável ausente.
 3. Conferir `GET /health` e `GET /health/ready` em HTTP 200 e
    `POST /api/auth/login` em HTTP 503 (gate desabilitado).
-4. **Em etapa separada**, revisar e executar o CLI de primeiro administrador
-   `scripts/bootstrap-first-admin.cjs` (ou workflow GitHub manual
-   opcional PR #43, após revisão e merge). O staging Neon já contém as duas
-   migrações, mas ainda não havia admin criado na auditoria anterior.
-   Não executar seed padrão ou cadastro público.
+4. **Depois de concluir a tela de ativação e a entrega de e-mail**, executar
+   o fluxo protegido por convite descrito em
+   `docs/LOCAL_ADMIN_BOOTSTRAP_02E8B.md`. O CLI cria uma conta
+   admin **pendente**, sem senha, e envia um token de uso único; a senha
+   é escolhida na tela pelo próprio titular. A PR #43 com senha no
+   GitHub Actions foi fechada sem merge e não integra este fluxo.
 5. Verificar privadamente a existência e a consistência do admin;
    configurar segredos exclusivos de produção/staging e revisar
    `JWT_ACCESS_SECRET`, que deve ser renovado se já foi exposto.
@@ -70,7 +71,7 @@ automaticamente no Render.**
 
 ## Próximas PRs
 
-1. Provisionamento do primeiro admin via fluxo auditado/manual.
+1. Provisionamento do primeiro admin pendente e ativação por convite auditado.
 2. Migração de convites, recuperação e diretório administrativo para
    os serviços locais já preparados.
 3. Login Google sem Supabase, com validação server-side.

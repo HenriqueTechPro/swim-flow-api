@@ -38,7 +38,8 @@
     "neon:local-auth:staging:test": "node --test scripts/neon-local-auth-staging.test.cjs",
     "render:blueprint:test": "node --test scripts/render-blueprint.test.cjs",
     "prisma:migrate:status": "prisma migrate status --schema prisma/schema.prisma",
-    "bootstrap:first-admin": "node scripts/bootstrap-first-admin.cjs",
+    "bootstrap:first-admin:invite": "node scripts/bootstrap-first-admin.cjs --apply",
+    "bootstrap:first-admin:resend": "node scripts/bootstrap-first-admin.cjs --resend",
     "bootstrap:first-admin:test": "node --test scripts/bootstrap-first-admin.test.cjs scripts/bootstrap-disposable-guard.test.cjs"
   },
   "dependencies": {
