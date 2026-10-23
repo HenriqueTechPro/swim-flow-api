@@ -106,6 +106,13 @@ Em bancos Neon **novos e vazios**, migrações futuras seguem
 No staging já inicializado, **não reaplique a baseline**; antes de conectar
 Render, valide o histórico com `prisma migrate status` usando Prisma 6.
 
+Se a conexão local ao Neon falhar com `P1001` por uma rota IPv6 indisponível,
+use `npm run prisma:migrate:status:ipv4` para consultar o histórico por IPv4.
+Esse comando exige uma `DIRECT_URL` Neon direta com `sslmode=require`, resolve
+o endereço a cada execução e identifica o endpoint pela opção de conexão do
+Neon. Ele executa somente `migrate status`, sem aplicar migrações, alterar o
+`.env` ou modificar a configuração de rede do sistema.
+
 A API possui dois endpoints de diagnóstico:
 
 - `GET /health`: processo HTTP respondendo (não consulta o banco);

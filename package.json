@@ -38,6 +38,7 @@
     "neon:local-auth:staging:test": "node --test scripts/neon-local-auth-staging.test.cjs",
     "render:blueprint:test": "node --test scripts/render-blueprint.test.cjs",
     "prisma:migrate:status": "prisma migrate status --schema prisma/schema.prisma",
+    "prisma:migrate:status:ipv4": "node scripts/prisma-migrate-status-ipv4.cjs",
     "bootstrap:first-admin": "node scripts/bootstrap-first-admin.cjs",
     "bootstrap:first-admin:test": "node --test scripts/bootstrap-first-admin.test.cjs scripts/bootstrap-disposable-guard.test.cjs"
   },

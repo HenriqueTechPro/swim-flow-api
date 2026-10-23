@@ -30,7 +30,10 @@ jobs:
       - run: npm ci
       - run: npm run prisma:validate
       - run: npm run prisma:generate
-      - run: npm run build
+      - name: Verify consecutive builds regenerate production artifacts
+        run: |
+          npm run build
+          npm run build
       - name: Verify Render production entrypoint and immutable Prisma SQL bytes
         run: node --test scripts/render-entrypoint.test.cjs
       # Existing Prettier-only debt is tracked separately, to avoid mixing
