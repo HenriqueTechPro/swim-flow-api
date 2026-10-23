@@ -42,9 +42,7 @@ describe('Render and Neon environment parsing', () => {
   });
 
   it('rejects invalid legacy Supabase URLs when explicitly configured', () => {
-    expect(() =>
-      loadEnv({ VITE_SUPABASE_URL: 'not-a-valid-url' }),
-    ).toThrow();
+    expect(() => loadEnv({ VITE_SUPABASE_URL: 'not-a-valid-url' })).toThrow();
   });
 
   it('reads explicit false booleans correctly', () => {
