@@ -22,9 +22,30 @@ describe('Render and Neon environment parsing', () => {
         port: number;
         authSecureCookies: boolean;
         swaggerEnabled: boolean;
+        supabaseUrl: string | undefined;
+        supabasePublishableKey: string | undefined;
       };
     }>('./env').env;
   }
+
+  it('allows Neon-only staging with no Supabase credentials', () => {
+    const env = loadEnv({
+      NODE_ENV: 'production',
+      VITE_SUPABASE_URL: undefined,
+      VITE_SUPABASE_PUBLISHABLE_KEY: undefined,
+      SUPABASE_SECRET_KEY: undefined,
+      SUPABASE_SERVICE_ROLE_KEY: undefined,
+    });
+
+    expect(env.supabaseUrl).toBeUndefined();
+    expect(env.supabasePublishableKey).toBeUndefined();
+  });
+
+  it('rejects invalid legacy Supabase URLs when explicitly configured', () => {
+    expect(() =>
+      loadEnv({ VITE_SUPABASE_URL: 'not-a-valid-url' }),
+    ).toThrow();
+  });
 
   it('reads explicit false booleans correctly', () => {
     const env = loadEnv({
