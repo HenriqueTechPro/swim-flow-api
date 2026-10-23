@@ -29,7 +29,10 @@ test('Blueprint targets the existing staging API and never provisions a second P
 });
 
 test('Render only runs NestJS build/start, not a database mutation or seed', () => {
-  assert.match(blueprint, /^    buildCommand: npm ci && npm run prisma:generate && npm run build$/m);
+  // NODE_ENV=production causes plain `npm ci` to omit @nestjs/cli.
+  assert.match(blueprint, /^    buildCommand: npm ci --include=dev && npm run prisma:generate && npm run build$/m);
+  const pkg = JSON.parse(readFileSync(resolve(__dirname, '..', 'package.json'), 'utf8'));
+  assert.ok(pkg.devDependencies['@nestjs/cli'], 'NestJS CLI must be a declared build dependency');
   assert.match(blueprint, /^    startCommand: npm run start:prod$/m);
   assert.match(blueprint, /^    autoDeployTrigger: off$/m);
   assert.match(blueprint, /^    healthCheckPath: \/health$/m);

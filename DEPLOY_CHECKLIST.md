@@ -53,7 +53,7 @@ preencher secrets via interface protegida. O Render ainda não foi publicado.
 
 
 - [ ] Conectar repositório `HenriqueTechPro/swim-flow-api`.
-- [ ] Node 22, build `npm ci && npm run prisma:generate && npm run build`.
+- [ ] Node 22, build `npm ci --include=dev && npm run prisma:generate && npm run build`.
 - [ ] Start `npm run start:prod`; Render fornece `PORT`, API escuta `0.0.0.0`.
 - [ ] `NODE_ENV=production`.
 - [ ] Configurar `DATABASE_URL` e `DIRECT_URL` como segredos, **somente no backend**.

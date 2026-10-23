@@ -97,8 +97,13 @@ o procedimento atualizado de deploy.
 Na API Render, execute o build com:
 
 ```bash
-npm ci && npm run prisma:generate && npm run build
+npm ci --include=dev && npm run prisma:generate && npm run build
 ```
+
+A opção `--include=dev` deve permanecer no build do Render mesmo com
+`NODE_ENV=production`: o comando `nest build` depende de `@nestjs/cli`,
+instalado como dependência de desenvolvimento. A execução continua via
+`npm run start:prod`.
 
 Start: `npm run start:prod` com `NODE_ENV=production` e as variáveis
 `DATABASE_URL` (pooled), `DIRECT_URL` (direct), `JWT_ACCESS_SECRET` e

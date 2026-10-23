@@ -10,7 +10,7 @@ services:
     branch: main
     autoDeployTrigger: off
     healthCheckPath: /health
-    buildCommand: npm ci && npm run prisma:generate && npm run build
+    buildCommand: npm ci --include=dev && npm run prisma:generate && npm run build
     startCommand: npm run start:prod
     envVars:
       - key: NODE_VERSION
