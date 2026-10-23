@@ -17,16 +17,7 @@ export class SupabaseAuthService extends AuthDirectoryRepository {
   }
 
   async signInWithPassword(email: string, password: string) {
-    const supabase = createClient(
-      this.envService.supabaseUrl,
-      this.envService.supabasePublishableKey,
-      {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-        },
-      },
-    );
+    const supabase = this.createPublicClient();
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -48,16 +39,7 @@ export class SupabaseAuthService extends AuthDirectoryRepository {
   }
 
   async getIdentityFromAccessToken(accessToken: string) {
-    const supabase = createClient(
-      this.envService.supabaseUrl,
-      this.envService.supabasePublishableKey,
-      {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-        },
-      },
-    );
+    const supabase = this.createPublicClient();
 
     const { data, error } = await supabase.auth.getUser(accessToken);
 
@@ -78,16 +60,7 @@ export class SupabaseAuthService extends AuthDirectoryRepository {
   async sendPasswordResetEmail(email: string, redirectTo: string) {
     this.assertAllowedRedirectTo(redirectTo);
 
-    const supabase = createClient(
-      this.envService.supabaseUrl,
-      this.envService.supabasePublishableKey,
-      {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-        },
-      },
-    );
+    const supabase = this.createPublicClient();
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,
@@ -105,16 +78,7 @@ export class SupabaseAuthService extends AuthDirectoryRepository {
     refreshToken: string;
     password: string;
   }) {
-    const supabase = createClient(
-      this.envService.supabaseUrl,
-      this.envService.supabasePublishableKey,
-      {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-        },
-      },
-    );
+    const supabase = this.createPublicClient();
 
     const { error: sessionError } = await supabase.auth.setSession({
       access_token: input.accessToken,
@@ -152,19 +116,7 @@ export class SupabaseAuthService extends AuthDirectoryRepository {
   }): Promise<AuthIdentity> {
     this.assertAllowedRedirectTo(input.redirectTo);
 
-    const serviceRoleKey = this.envService.supabaseServiceRoleKey;
-    if (!serviceRoleKey) {
-      throw new ServiceUnavailableException(
-        'Supabase service role key is not configured',
-      );
-    }
-
-    const supabase = createClient(this.envService.supabaseUrl, serviceRoleKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-    });
+    const supabase = this.createAdminClient();
 
     const { data, error } = await supabase.auth.admin.inviteUserByEmail(input.email, {
       redirectTo: input.redirectTo,
@@ -186,19 +138,7 @@ export class SupabaseAuthService extends AuthDirectoryRepository {
   }
 
   async listUsers() {
-    const serviceRoleKey = this.envService.supabaseServiceRoleKey;
-    if (!serviceRoleKey) {
-      throw new ServiceUnavailableException(
-        'Supabase service role key is not configured',
-      );
-    }
-
-    const supabase = createClient(this.envService.supabaseUrl, serviceRoleKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-    });
+    const supabase = this.createAdminClient();
 
     const users: Array<{
       id: string;
@@ -254,25 +194,49 @@ export class SupabaseAuthService extends AuthDirectoryRepository {
   }
 
   async deleteUser(userId: string): Promise<void> {
-    const serviceRoleKey = this.envService.supabaseServiceRoleKey;
-    if (!serviceRoleKey) {
-      throw new ServiceUnavailableException(
-        'Supabase admin key is not configured',
-      );
-    }
-
-    const supabase = createClient(this.envService.supabaseUrl, serviceRoleKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-    });
+    const supabase = this.createAdminClient();
 
     const { error } = await supabase.auth.admin.deleteUser(userId, false);
 
     if (error) {
       throw new InternalServerErrorException('Unable to delete access user');
     }
+  }
+
+  private createPublicClient() {
+    const url = this.envService.supabaseUrl;
+    const key = this.envService.supabasePublishableKey;
+
+    if (!url || !key) {
+      throw new ServiceUnavailableException(
+        'Legacy authentication is not configured',
+      );
+    }
+
+    return createClient(url, key, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    });
+  }
+
+  private createAdminClient() {
+    const url = this.envService.supabaseUrl;
+    const key = this.envService.supabaseServiceRoleKey;
+
+    if (!url || !key) {
+      throw new ServiceUnavailableException(
+        'Legacy user management is not configured',
+      );
+    }
+
+    return createClient(url, key, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    });
   }
 
   private assertAllowedRedirectTo(redirectTo: string) {
