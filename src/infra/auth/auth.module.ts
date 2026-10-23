@@ -24,7 +24,7 @@ import {
   LocalInvitationMailSender,
   ResendInvitationMailSender,
 } from './local-invitation-mail-sender';
-import { SupabaseAuthService } from './supabase-auth.service';
+import { LocalAuthDirectoryService } from './local-auth-directory.service';
 import { TrustedOriginGuard } from './trusted-origin.guard';
 import { TeacherAttendanceScopeGuard } from './teacher-attendance-scope.guard';
 
@@ -38,7 +38,7 @@ import { TeacherAttendanceScopeGuard } from './teacher-attendance-scope.guard';
     },
     {
       provide: AuthDirectoryRepository,
-      useExisting: SupabaseAuthService,
+      useExisting: LocalAuthDirectoryService,
     },
     JwtAuthGuard,
     RolesGuard,
@@ -46,7 +46,7 @@ import { TeacherAttendanceScopeGuard } from './teacher-attendance-scope.guard';
     TeacherAttendanceScopeGuard,
     PublicAuthRateLimitGuard,
     TrustedOriginGuard,
-    SupabaseAuthService,
+    LocalAuthDirectoryService,
     LocalPasswordIdentityService,
     LocalAuthActionTokensService,
     LocalAdminInvitationsService,
@@ -73,7 +73,7 @@ import { TeacherAttendanceScopeGuard } from './teacher-attendance-scope.guard';
     TeacherAttendanceScopeGuard,
     PublicAuthRateLimitGuard,
     TrustedOriginGuard,
-    SupabaseAuthService,
+    LocalAuthDirectoryService,
     LocalPasswordIdentityService,
     LocalAuthActionTokensService,
     LocalAdminInvitationsService,
