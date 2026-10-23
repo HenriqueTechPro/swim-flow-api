@@ -1,7 +1,4 @@
-import {
-  ForbiddenException,
-  type ExecutionContext,
-} from '@nestjs/common';
+import { ForbiddenException, type ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthProfilesRepository } from '@/domain/auth/application/repositories/auth-profiles-repository';
 import { RolesGuard } from './roles.guard';
@@ -25,10 +22,9 @@ describe('RolesGuard + PermissionsGuard fail-closed authorization', () => {
   const getAllAndOverride = jest.fn();
   const findByUserId = jest.fn();
   const reflector = { getAllAndOverride } as unknown as Reflector;
-  const roles = new RolesGuard(
-    reflector,
-    { findByUserId } as unknown as AuthProfilesRepository,
-  );
+  const roles = new RolesGuard(reflector, {
+    findByUserId,
+  } as unknown as AuthProfilesRepository);
   const permissions = new PermissionsGuard(reflector);
 
   beforeEach(() => {
