@@ -48,8 +48,9 @@
    `healthCheckPath: /health`.
    **Não cria banco Render** nem roda migrações automaticamente.
 4. Preencha os secrets solicitados na tela inicial do Blueprint
-   (variáveis `sync: false`). Copie-os diretamente dos painéis
-   protegidos dos provedores: não envie valores privados pelo chat.
+   (variáveis `sync: false`): URL pooled, URL direct e origem CORS.
+   O JWT é gerado pelo Blueprint. Nenhuma credencial Supabase é exigida
+   para o staging Neon-only. Não envie segredos privados pelo chat.
 5. Confira os valores e inicie a sincronização inicial.
    A criação inicial pode iniciar o **primeiro build/deploy** mesmo
    com `autoDeployTrigger: off`. A opção `off` bloqueia futuros
@@ -64,8 +65,10 @@
 8. Configure o Vite frontend na Vercel com `VITE_API_URL` apontando
    para a URL HTTPS real da API; redeploy da Vercel quando
    estiver preparado para testar integração.
-9. Teste em Chromium/Android PWA login, refresh, logout, cookies
-   httpOnly, CORS e permissões com **dados fictícios**.
+9. **Não** habilite o login ou uploads do dashboard para usuários reais
+   neste estágio: endpoints do Supabase legados responderão HTTP 503.
+   Somente após os adaptadores Auth/Storage substitutos serem testados,
+   valide login, refresh, logout, CORS, cookies e permissões com dados fictícios.
 
 ## Segredos e configurações
 
@@ -75,9 +78,7 @@
 | `DIRECT_URL` | Neon → Connect → **direct URL**, mesmo banco/role, SSL |
 | `API_CORS_ORIGIN` | `https://swim-flow-dash.vercel.app` (origem exata, sem barra final) |
 | `JWT_ACCESS_SECRET` | Gerado automaticamente pelo Render Blueprint, guardar privado |
-| `VITE_SUPABASE_URL` | Supabase URL atual usada pela autenticação de transição |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Chave publicável atual do Supabase |
-| `SUPABASE_SECRET_KEY` | Chave **secreta do servidor** usada nos fluxos legados Auth/Storage |
+| Supabase (legado) | **Não configurar no staging Neon-only**. Auth/Storage legados ficam indisponíveis (HTTP 503). |
 | `NODE_VERSION` | `22` |
 | `NODE_ENV` | `production` |
 | `SWAGGER_ENABLED` | `false` |
@@ -89,7 +90,7 @@
 chaves administrativas** se `SUPABASE_SECRET_KEY` funcionar no projeto.
 
 **Não** colocar `DATABASE_URL`, `DIRECT_URL`,
-`SUPABASE_SECRET_KEY`, `JWT_ACCESS_SECRET`, cookies privados ou
+`JWT_ACCESS_SECRET`, chaves privadas, cookies privados ou
 outras credenciais em `VITE_*`, em `.env` versionado, nas opções
 públicas da Vercel ou no repositório.
 
@@ -123,8 +124,9 @@ Não confundir `/health` (processo) com `/health/ready`
   tráfego; a retomada no primeiro acesso pode ser lenta.
 - O Neon tem sua própria política de compute ocioso.
 - Não use serviço free como ambiente de produção com dados reais.
-- A API ainda tem adaptação Supabase Auth/Storage **ativa**;
-  a migração de banco não removeu esses provedores.
+- Adaptadores Supabase Auth/Storage ainda existem, porém são **opcionais
+  na inicialização** e, sem configuração, suas operações retornam HTTP 503.
+  A migração de banco não substituiu completamente essas funcionalidades.
 - Não executar `prisma migrate deploy`, `prisma db push` ou seeds
   automaticamente no build/start do Render.
 - A verificação Prisma CLI no staging **já foi concluída** (22/10/2026).
