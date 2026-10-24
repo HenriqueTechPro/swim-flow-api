@@ -105,7 +105,8 @@ describe('Render and Neon environment parsing', () => {
   });
 
   const validR2 = {
-    S3_ENDPOINT: 'https://0123456789abcdef0123456789abcdef.r2.cloudflarestorage.com',
+    S3_ENDPOINT:
+      'https://0123456789abcdef0123456789abcdef.r2.cloudflarestorage.com',
     S3_REGION: 'auto',
     S3_BUCKET: 'swim-flow-private-media',
     S3_ACCESS_KEY_ID: 'fake-access-key',
