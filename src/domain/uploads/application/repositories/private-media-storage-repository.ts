@@ -31,10 +31,7 @@ export abstract class PrivateMediaStorageRepository {
   ): Promise<PrivateMediaObjectInfo | null>;
 
   /** Read only the prefix needed to validate a file signature. */
-  abstract readPrefix(
-    objectKey: string,
-    maxBytes: number,
-  ): Promise<Uint8Array>;
+  abstract readPrefix(objectKey: string, maxBytes: number): Promise<Uint8Array>;
 
   /** Never call before revalidating the requesting actor's access. */
   abstract signDownload(objectKey: string): Promise<PrivateMediaReadTicket>;
