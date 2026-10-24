@@ -30,9 +30,10 @@ function startsWith(bytes: Uint8Array, signature: number[]) {
 function hasImageSignature(mime: string, bytes: Uint8Array) {
   switch (mime) {
     case 'image/png':
-      return startsWith(bytes, [
-        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
-      ]);
+      return startsWith(
+        bytes,
+        [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
+      );
     case 'image/jpeg':
       return startsWith(bytes, [0xff, 0xd8, 0xff]);
     case 'image/gif':
