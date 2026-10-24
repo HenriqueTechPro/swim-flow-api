@@ -165,9 +165,7 @@ export class S3PrivateMediaStorageRepository extends PrivateMediaStorageReposito
     const chunks: Buffer[] = [];
     let received = 0;
     for await (const chunk of stream) {
-      const bytes = Buffer.isBuffer(chunk)
-        ? chunk
-        : Buffer.from(chunk);
+      const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
       received += bytes.byteLength;
       // Never buffer an entire unbounded object if a provider ignores Range.
       if (received > maxBytes) {
