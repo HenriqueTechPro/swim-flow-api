@@ -32,12 +32,18 @@ export function loadPrivateR2Config(
 
   // Do not interpolate the secret or input values into the exception.
   if (
-    !accountId || !accountIdPattern.test(accountId) ||
-    !bucket || !bucketPattern.test(bucket) ||
-    !accessKeyId || accessKeyId.length < 8 ||
-    !secretAccessKey || secretAccessKey.length < 16
+    !accountId ||
+    !accountIdPattern.test(accountId) ||
+    !bucket ||
+    !bucketPattern.test(bucket) ||
+    !accessKeyId ||
+    accessKeyId.length < 8 ||
+    !secretAccessKey ||
+    secretAccessKey.length < 16
   ) {
-    throw new Error('Private object storage configuration is missing or invalid');
+    throw new Error(
+      'Private object storage configuration is missing or invalid',
+    );
   }
 
   return {
