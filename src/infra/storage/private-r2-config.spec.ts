@@ -11,23 +11,28 @@ const good = {
 describe('Private R2 staged configuration — no connections or secrets', () => {
   it('defaults to disabled without requiring any R2 credentials', () => {
     expect(loadPrivateR2Config({})).toBeNull();
-    expect(loadPrivateR2Config({
-      SWIMFLOW_R2_STORAGE_ENABLED: 'false',
-    })).toBeNull();
+    expect(
+      loadPrivateR2Config({
+        SWIMFLOW_R2_STORAGE_ENABLED: 'false',
+      }),
+    ).toBeNull();
   });
 
   it('rejects flag typos instead of silently enabling public storage', () => {
     for (const value of ['TRUE', '1', 'yes', '', 'enabled']) {
-      expect(() => loadPrivateR2Config({
-        SWIMFLOW_R2_STORAGE_ENABLED: value,
-      })).toThrow('Invalid private object storage feature flag');
+      expect(() =>
+        loadPrivateR2Config({
+          SWIMFLOW_R2_STORAGE_ENABLED: value,
+        }),
+      ).toThrow('Invalid private object storage feature flag');
     }
   });
 
   it('requires explicitly scoped private R2 settings when enabled', () => {
     const config = loadPrivateR2Config(good);
     expect(config).toEqual({
-      endpoint: 'https://0123456789abcdef0123456789abcdef.r2.cloudflarestorage.com',
+      endpoint:
+        'https://0123456789abcdef0123456789abcdef.r2.cloudflarestorage.com',
       region: 'auto',
       bucket: 'swim-flow-private-images',
       credentials: {
@@ -39,9 +44,15 @@ describe('Private R2 staged configuration — no connections or secrets', () => 
   });
 
   it('rejects missing values, invalid account hostnames and unsafe bucket paths', () => {
-    for (const key of ['R2_ACCOUNT_ID', 'R2_PRIVATE_BUCKET', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY']) {
-      expect(() => loadPrivateR2Config({ ...good, [key]: undefined }))
-        .toThrow('Private object storage configuration is missing or invalid');
+    for (const key of [
+      'R2_ACCOUNT_ID',
+      'R2_PRIVATE_BUCKET',
+      'R2_ACCESS_KEY_ID',
+      'R2_SECRET_ACCESS_KEY',
+    ]) {
+      expect(() => loadPrivateR2Config({ ...good, [key]: undefined })).toThrow(
+        'Private object storage configuration is missing or invalid',
+      );
     }
     for (const value of [
       'another.example.invalid',
@@ -49,16 +60,27 @@ describe('Private R2 staged configuration — no connections or secrets', () => 
       '../../etc/passwd',
       '01234567.r2.cloudflarestorage.com',
     ]) {
-      expect(() => loadPrivateR2Config({
-        ...good, R2_ACCOUNT_ID: value,
-      })).toThrow();
+      expect(() =>
+        loadPrivateR2Config({
+          ...good,
+          R2_ACCOUNT_ID: value,
+        }),
+      ).toThrow();
     }
     for (const value of [
-      'bucket/another', 'UPPERCASE', 'b', '-bucket', 'bucket-', 'under_score',
+      'bucket/another',
+      'UPPERCASE',
+      'b',
+      '-bucket',
+      'bucket-',
+      'under_score',
     ]) {
-      expect(() => loadPrivateR2Config({
-        ...good, R2_PRIVATE_BUCKET: value,
-      })).toThrow();
+      expect(() =>
+        loadPrivateR2Config({
+          ...good,
+          R2_PRIVATE_BUCKET: value,
+        }),
+      ).toThrow();
     }
   });
 
