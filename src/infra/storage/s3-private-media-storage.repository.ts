@@ -50,7 +50,10 @@ function requireSignedContentType(key: string, type: string): string {
   const normalized = type.trim().toLowerCase();
   const canonical = normalized === 'image/jpg' ? 'image/jpeg' : normalized;
   const expectedExtension = ALLOWED_TYPES[canonical];
-  if (!expectedExtension || !key.toLowerCase().endsWith(`.${expectedExtension}`)) {
+  if (
+    !expectedExtension ||
+    !key.toLowerCase().endsWith(`.${expectedExtension}`)
+  ) {
     throw new Error('invalid-private-media-content-type');
   }
   return canonical;

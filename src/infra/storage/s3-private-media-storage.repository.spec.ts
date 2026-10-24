@@ -50,7 +50,10 @@ function testRepository(
     region: 'auto',
     endpoint: ENDPOINT,
     forcePathStyle: true,
-    credentials: { accessKeyId: 'fake-test-key', secretAccessKey: 'fake-secret' },
+    credentials: {
+      accessKeyId: 'fake-test-key',
+      secretAccessKey: 'fake-secret',
+    },
     requestHandler: { handle },
     maxAttempts: 1,
   });
@@ -92,10 +95,14 @@ describe('S3/R2 private media adapter (offline)', () => {
     expect(ticket.headers).toEqual({ 'Content-Type': 'image/png' });
     expect(url.protocol).toBe('https:');
     expect(url.hostname).toBe(new URL(ENDPOINT).hostname);
-    expect(url.pathname).toContain('/swim-flow-private-media/private/students/');
+    expect(url.pathname).toContain(
+      '/swim-flow-private-media/private/students/',
+    );
     expect(url.searchParams.get('X-Amz-Expires')).toBe('90');
     expect(url.searchParams.get('X-Amz-Algorithm')).toBe('AWS4-HMAC-SHA256');
-    expect(url.searchParams.get('X-Amz-SignedHeaders')).toContain('content-type');
+    expect(url.searchParams.get('X-Amz-SignedHeaders')).toContain(
+      'content-type',
+    );
     expect(ticket.url).not.toContain(CONFIG.secretAccessKey);
     expect(handle).not.toHaveBeenCalled();
   });
@@ -113,11 +120,14 @@ describe('S3/R2 private media adapter (offline)', () => {
     await expect(repository.signDownload('../other-user.png')).rejects.toThrow(
       'invalid-private-media-object-key',
     );
-    await expect(repository.headObject('private/students/any.png')).rejects.toThrow(
-      'invalid-private-media-object-key',
-    );
     await expect(
-      repository.signUpload({ objectKey: OBJECT_KEY, contentType: 'image/gif' }),
+      repository.headObject('private/students/any.png'),
+    ).rejects.toThrow('invalid-private-media-object-key');
+    await expect(
+      repository.signUpload({
+        objectKey: OBJECT_KEY,
+        contentType: 'image/gif',
+      }),
     ).rejects.toThrow('invalid-private-media-content-type');
     expect(handle).not.toHaveBeenCalled();
   });
