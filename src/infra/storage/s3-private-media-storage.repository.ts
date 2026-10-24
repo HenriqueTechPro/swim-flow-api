@@ -98,7 +98,10 @@ export class S3PrivateMediaStorageRepository extends PrivateMediaStorageReposito
         Key: input.objectKey,
         ContentType: contentType,
       }),
-      { expiresIn: PRIVATE_PUT_URL_TTL_SECONDS },
+      {
+        expiresIn: PRIVATE_PUT_URL_TTL_SECONDS,
+        signableHeaders: new Set(['content-type']),
+      },
     );
     return {
       method: 'PUT',
@@ -147,12 +150,18 @@ export class S3PrivateMediaStorageRepository extends PrivateMediaStorageReposito
         Range: `bytes=0-${maxBytes - 1}`,
       }),
     );
-    if (!response.Body) {
+    if (
+      !response.Body ||
+      typeof (response.Body as { [Symbol.asyncIterator]?: unknown })[
+        Symbol.asyncIterator
+      ] !== 'function'
+    ) {
       throw new Error('missing-private-media-object-body');
     }
+    const stream = response.Body as AsyncIterable<Uint8Array>;
     const chunks: Buffer[] = [];
     let received = 0;
-    for await (const chunk of response.Body) {
+    for await (const chunk of stream) {
       const bytes = Buffer.isBuffer(chunk)
         ? chunk
         : Buffer.from(chunk as Uint8Array);
