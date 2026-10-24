@@ -42,93 +42,96 @@ const booleanFromEnv = z
   .enum(['true', 'false'])
   .transform((value) => value === 'true');
 
-const envSchema = z.object({
-  DATABASE_URL: z.string().min(1),
-  // Legacy adapters are optional during the Neon/Render staging rollout.
-  // Missing credentials disable legacy auth/storage operations (HTTP 503).
-  VITE_SUPABASE_URL: optionalNonEmptyString.pipe(z.string().url().optional()),
-  VITE_SUPABASE_PUBLISHABLE_KEY: optionalNonEmptyString,
-  SUPABASE_SECRET_KEY: optionalNonEmptyString,
-  SUPABASE_SERVICE_ROLE_KEY: optionalNonEmptyString,
-  JWT_ACCESS_SECRET: z
-    .string()
-    .min(32)
-    .default(defaultDevelopmentJwtAccessSecret),
-  JWT_ACCESS_TTL_SECONDS: z.coerce.number().int().positive().default(900),
-  SWIMFLOW_LOCAL_PASSWORD_LOGIN_ENABLED: booleanFromEnv.default('false'),
-  // Not wired to any HTTP endpoint until authorization and persistence are ready.
-  SWIMFLOW_PRIVATE_MEDIA_S3_ENABLED: booleanFromEnv.default('false'),
-  S3_ENDPOINT: optionalNonEmptyString.pipe(z.string().url().optional()),
-  S3_REGION: optionalNonEmptyString,
-  S3_BUCKET: optionalNonEmptyString,
-  S3_ACCESS_KEY_ID: optionalNonEmptyString,
-  S3_SECRET_ACCESS_KEY: optionalNonEmptyString,
-  REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(7),
-  AUTH_REFRESH_COOKIE_NAME: z
-    .string()
-    .min(1)
-    .default('swim_flow_refresh_token'),
-  AUTH_COOKIE_SAME_SITE: z.enum(['lax', 'strict', 'none']).default('lax'),
-  AUTH_COOKIE_DOMAIN: z
-    .string()
-    .trim()
-    .optional()
-    .transform((value) => (value && value.length > 0 ? value : undefined)),
-  AUTH_COOKIE_PATH: z.string().trim().min(1).default('/api/auth'),
-  AUTH_SECURE_COOKIES: booleanFromEnv.default('false'),
-  API_CORS_ORIGIN: z
-    .string()
-    .default('http://localhost:8080')
-    .transform(parseCorsOrigins)
-    .refine((origins) => origins.length > 0, {
-      message: 'API_CORS_ORIGIN must include at least one origin',
-    }),
-  CACHE_TTL_SECONDS: z.coerce.number().default(30),
-  NEST_API_PORT: z.coerce.number().int().min(1).max(65535).default(3334),
-  PORT: z.coerce.number().int().min(1).max(65535).optional(),
-  SWAGGER_ENABLED: booleanFromEnv.default(
-    process.env.NODE_ENV !== 'production' ? 'true' : 'false',
-  ),
-  SWAGGER_PATH: z.string().default('docs'),
-}).superRefine((values, ctx) => {
-  // Partial settings are safe while disabled, but enabling is all-or-nothing.
-  if (!values.SWIMFLOW_PRIVATE_MEDIA_S3_ENABLED) return;
+const envSchema = z
+  .object({
+    DATABASE_URL: z.string().min(1),
+    // Legacy adapters are optional during the Neon/Render staging rollout.
+    // Missing credentials disable legacy auth/storage operations (HTTP 503).
+    VITE_SUPABASE_URL: optionalNonEmptyString.pipe(z.string().url().optional()),
+    VITE_SUPABASE_PUBLISHABLE_KEY: optionalNonEmptyString,
+    SUPABASE_SECRET_KEY: optionalNonEmptyString,
+    SUPABASE_SERVICE_ROLE_KEY: optionalNonEmptyString,
+    JWT_ACCESS_SECRET: z
+      .string()
+      .min(32)
+      .default(defaultDevelopmentJwtAccessSecret),
+    JWT_ACCESS_TTL_SECONDS: z.coerce.number().int().positive().default(900),
+    SWIMFLOW_LOCAL_PASSWORD_LOGIN_ENABLED: booleanFromEnv.default('false'),
+    // Not wired to any HTTP endpoint until authorization and persistence are ready.
+    SWIMFLOW_PRIVATE_MEDIA_S3_ENABLED: booleanFromEnv.default('false'),
+    S3_ENDPOINT: optionalNonEmptyString.pipe(z.string().url().optional()),
+    S3_REGION: optionalNonEmptyString,
+    S3_BUCKET: optionalNonEmptyString,
+    S3_ACCESS_KEY_ID: optionalNonEmptyString,
+    S3_SECRET_ACCESS_KEY: optionalNonEmptyString,
+    REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(7),
+    AUTH_REFRESH_COOKIE_NAME: z
+      .string()
+      .min(1)
+      .default('swim_flow_refresh_token'),
+    AUTH_COOKIE_SAME_SITE: z.enum(['lax', 'strict', 'none']).default('lax'),
+    AUTH_COOKIE_DOMAIN: z
+      .string()
+      .trim()
+      .optional()
+      .transform((value) => (value && value.length > 0 ? value : undefined)),
+    AUTH_COOKIE_PATH: z.string().trim().min(1).default('/api/auth'),
+    AUTH_SECURE_COOKIES: booleanFromEnv.default('false'),
+    API_CORS_ORIGIN: z
+      .string()
+      .default('http://localhost:8080')
+      .transform(parseCorsOrigins)
+      .refine((origins) => origins.length > 0, {
+        message: 'API_CORS_ORIGIN must include at least one origin',
+      }),
+    CACHE_TTL_SECONDS: z.coerce.number().default(30),
+    NEST_API_PORT: z.coerce.number().int().min(1).max(65535).default(3334),
+    PORT: z.coerce.number().int().min(1).max(65535).optional(),
+    SWAGGER_ENABLED: booleanFromEnv.default(
+      process.env.NODE_ENV !== 'production' ? 'true' : 'false',
+    ),
+    SWAGGER_PATH: z.string().default('docs'),
+  })
+  .superRefine((values, ctx) => {
+    // Partial settings are safe while disabled, but enabling is all-or-nothing.
+    if (!values.SWIMFLOW_PRIVATE_MEDIA_S3_ENABLED) return;
 
-  const required = [
-    'S3_ENDPOINT',
-    'S3_REGION',
-    'S3_BUCKET',
-    'S3_ACCESS_KEY_ID',
-    'S3_SECRET_ACCESS_KEY',
-  ] as const;
-  for (const key of required) {
-    if (!values[key]) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: [key],
-        message: `${key} is required when private S3 media is enabled`,
-      });
+    const required = [
+      'S3_ENDPOINT',
+      'S3_REGION',
+      'S3_BUCKET',
+      'S3_ACCESS_KEY_ID',
+      'S3_SECRET_ACCESS_KEY',
+    ] as const;
+    for (const key of required) {
+      if (!values[key]) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [key],
+          message: `${key} is required when private S3 media is enabled`,
+        });
+      }
     }
-  }
 
-  if (values.S3_ENDPOINT) {
-    const endpoint = new URL(values.S3_ENDPOINT);
-    if (
-      endpoint.protocol !== 'https:' ||
-      endpoint.username ||
-      endpoint.password ||
-      endpoint.pathname !== '/' ||
-      endpoint.search ||
-      endpoint.hash
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['S3_ENDPOINT'],
-        message: 'S3_ENDPOINT must be a bare HTTPS origin without credentials',
-      });
+    if (values.S3_ENDPOINT) {
+      const endpoint = new URL(values.S3_ENDPOINT);
+      if (
+        endpoint.protocol !== 'https:' ||
+        endpoint.username ||
+        endpoint.password ||
+        endpoint.pathname !== '/' ||
+        endpoint.search ||
+        endpoint.hash
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['S3_ENDPOINT'],
+          message:
+            'S3_ENDPOINT must be a bare HTTPS origin without credentials',
+        });
+      }
     }
-  }
-});
+  });
 
 const parsedEnv = envSchema.parse(process.env);
 
