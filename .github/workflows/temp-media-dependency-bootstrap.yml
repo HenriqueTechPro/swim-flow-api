@@ -28,7 +28,7 @@ jobs:
           ./node_modules/.bin/prettier --write
           src/infra/storage/s3-private-media-storage.repository.ts
           src/infra/storage/s3-private-media-storage.repository.spec.ts
-      - name: Validate TypeScript build
+      - name: Validate TypeScript build (stream guard and content-type signing)
         run: npm run build
       - name: Run new offline S3/R2 tests
         run: ./node_modules/.bin/jest src/infra/storage/s3-private-media-storage.repository.spec.ts --runInBand
