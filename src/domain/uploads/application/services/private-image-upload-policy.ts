@@ -51,9 +51,11 @@ export function planPrivateImageUpload(
   if (!uuidSchema.safeParse(actorUserId).success) {
     throw new AppError(401, 'Invalid upload identity');
   }
-  if (typeof input.fileName !== 'string' ||
-      input.fileName.trim().length === 0 ||
-      input.fileName.length > 255) {
+  if (
+    typeof input.fileName !== 'string' ||
+    input.fileName.trim().length === 0 ||
+    input.fileName.length > 255
+  ) {
     throw new AppError(400, 'Invalid image filename');
   }
   if (!Number.isSafeInteger(input.fileSizeBytes) || input.fileSizeBytes <= 0) {
@@ -77,7 +79,10 @@ export function planPrivateImageUpload(
     throw new AppError(400, 'Profile avatar cannot target another resource');
   }
   if (!isAvatar && !uuidSchema.safeParse(input.resourceId).success) {
-    throw new AppError(400, 'Image target requires a valid resource identifier');
+    throw new AppError(
+      400,
+      'Image target requires a valid resource identifier',
+    );
   }
 
   const objectId = generateId();
