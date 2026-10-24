@@ -31,6 +31,11 @@ export class EnvService {
     return env.localPasswordLoginEnabled;
   }
 
+  // Server-side only. Never serialize this configuration in API responses.
+  get privateMediaS3() {
+    return env.privateMediaS3;
+  }
+
   get refreshTokenTtlDays() {
     return env.refreshTokenTtlDays;
   }

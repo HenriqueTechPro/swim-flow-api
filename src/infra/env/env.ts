@@ -56,6 +56,13 @@ const envSchema = z.object({
     .default(defaultDevelopmentJwtAccessSecret),
   JWT_ACCESS_TTL_SECONDS: z.coerce.number().int().positive().default(900),
   SWIMFLOW_LOCAL_PASSWORD_LOGIN_ENABLED: booleanFromEnv.default('false'),
+  // Not wired to any HTTP endpoint until authorization and persistence are ready.
+  SWIMFLOW_PRIVATE_MEDIA_S3_ENABLED: booleanFromEnv.default('false'),
+  S3_ENDPOINT: optionalNonEmptyString.pipe(z.string().url().optional()),
+  S3_REGION: optionalNonEmptyString,
+  S3_BUCKET: optionalNonEmptyString,
+  S3_ACCESS_KEY_ID: optionalNonEmptyString,
+  S3_SECRET_ACCESS_KEY: optionalNonEmptyString,
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(7),
   AUTH_REFRESH_COOKIE_NAME: z
     .string()
@@ -83,6 +90,44 @@ const envSchema = z.object({
     process.env.NODE_ENV !== 'production' ? 'true' : 'false',
   ),
   SWAGGER_PATH: z.string().default('docs'),
+}).superRefine((values, ctx) => {
+  // Partial settings are safe while disabled, but enabling is all-or-nothing.
+  if (!values.SWIMFLOW_PRIVATE_MEDIA_S3_ENABLED) return;
+
+  const required = [
+    'S3_ENDPOINT',
+    'S3_REGION',
+    'S3_BUCKET',
+    'S3_ACCESS_KEY_ID',
+    'S3_SECRET_ACCESS_KEY',
+  ] as const;
+  for (const key of required) {
+    if (!values[key]) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [key],
+        message: `${key} is required when private S3 media is enabled`,
+      });
+    }
+  }
+
+  if (values.S3_ENDPOINT) {
+    const endpoint = new URL(values.S3_ENDPOINT);
+    if (
+      endpoint.protocol !== 'https:' ||
+      endpoint.username ||
+      endpoint.password ||
+      endpoint.pathname !== '/' ||
+      endpoint.search ||
+      endpoint.hash
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['S3_ENDPOINT'],
+        message: 'S3_ENDPOINT must be a bare HTTPS origin without credentials',
+      });
+    }
+  }
 });
 
 const parsedEnv = envSchema.parse(process.env);
@@ -114,6 +159,14 @@ export const env = {
   jwtAccessSecret: parsedEnv.JWT_ACCESS_SECRET,
   jwtAccessTtlSeconds: parsedEnv.JWT_ACCESS_TTL_SECONDS,
   localPasswordLoginEnabled: parsedEnv.SWIMFLOW_LOCAL_PASSWORD_LOGIN_ENABLED,
+  privateMediaS3: {
+    enabled: parsedEnv.SWIMFLOW_PRIVATE_MEDIA_S3_ENABLED,
+    endpoint: parsedEnv.S3_ENDPOINT,
+    region: parsedEnv.S3_REGION,
+    bucket: parsedEnv.S3_BUCKET,
+    accessKeyId: parsedEnv.S3_ACCESS_KEY_ID,
+    secretAccessKey: parsedEnv.S3_SECRET_ACCESS_KEY,
+  },
   refreshTokenTtlDays: parsedEnv.REFRESH_TOKEN_TTL_DAYS,
   authRefreshCookieName: parsedEnv.AUTH_REFRESH_COOKIE_NAME,
   authCookieSameSite: parsedEnv.AUTH_COOKIE_SAME_SITE,
