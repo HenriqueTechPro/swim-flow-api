@@ -1,0 +1,39 @@
+name: Temporary media Prettier preview
+on:
+  push:
+    branches:
+      - feat/private-media-r2-preflight-02e16b1-20261024
+permissions:
+  contents: read
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Format staged TS files without changing remote branch
+        run: >
+          ./node_modules/.bin/prettier --write
+          src/domain/uploads/application/repositories/private-media-storage-repository.ts
+          src/domain/uploads/application/services/verify-private-media-upload.spec.ts
+          src/domain/uploads/application/services/verify-private-media-upload.ts
+          src/infra/env/env.spec.ts
+          src/infra/env/env.ts
+      - name: Read-only formatted preview in base64
+        shell: bash
+        run: |
+          for file in \
+            src/domain/uploads/application/repositories/private-media-storage-repository.ts \
+            src/domain/uploads/application/services/verify-private-media-upload.spec.ts \
+            src/domain/uploads/application/services/verify-private-media-upload.ts \
+            src/infra/env/env.spec.ts \
+            src/infra/env/env.ts; do
+            echo "FORMAT_START:$file"
+            base64 -w0 "$file"
+            echo
+            echo "FORMAT_END:$file"
+          done
