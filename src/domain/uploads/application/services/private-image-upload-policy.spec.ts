@@ -34,10 +34,12 @@ describe('Private image upload policy (R2 staging, no network)', () => {
   });
 
   it('uses actor identity for avatars, not a supplied resource', () => {
-    expect(plan({ target: 'profile-avatar', resourceId: undefined }).key)
-      .toBe(`profiles/${actorId}/${objectId}.png`);
-    expect(() => plan({ target: 'profile-avatar', resourceId: studentId }))
-      .toThrow(AppError);
+    expect(plan({ target: 'profile-avatar', resourceId: undefined }).key).toBe(
+      `profiles/${actorId}/${objectId}.png`,
+    );
+    expect(() =>
+      plan({ target: 'profile-avatar', resourceId: studentId }),
+    ).toThrow(AppError);
   });
 
   it('supports exactly the existing image MIME types', () => {
@@ -64,30 +66,37 @@ describe('Private image upload policy (R2 staging, no network)', () => {
     for (const bad of [-1, 0, NaN, Infinity, 2.5, 2 ** 55]) {
       expect(() => plan({ fileSizeBytes: bad })).toThrow(AppError);
     }
-    expect(() => plan({ fileSizeBytes: MAX_PRIVATE_IMAGE_BYTES + 1 }))
-      .toThrow(expect.objectContaining({ statusCode: 413 }));
-    expect(plan({ fileSizeBytes: MAX_PRIVATE_IMAGE_BYTES }).contentLength)
-      .toBe(MAX_PRIVATE_IMAGE_BYTES);
+    expect(() => plan({ fileSizeBytes: MAX_PRIVATE_IMAGE_BYTES + 1 })).toThrow(
+      expect.objectContaining({ statusCode: 413 }),
+    );
+    expect(plan({ fileSizeBytes: MAX_PRIVATE_IMAGE_BYTES }).contentLength).toBe(
+      MAX_PRIVATE_IMAGE_BYTES,
+    );
   });
 
   it('rejects invalid actor/resource identifiers and arbitrary object keys', () => {
     expect(() => plan({ resourceId: '../path-traversal' })).toThrow(AppError);
     expect(() => plan({ resourceId: '' })).toThrow(AppError);
-    expect(() => planPrivateImageUpload(
-      '../../user',
-      {
-        target: 'profile-avatar', fileName: 'x.png',
-        contentType: 'image/png', fileSizeBytes: 1,
-      },
-    )).toThrow(AppError);
-    expect(() => planPrivateImageUpload(
-      actorId,
-      {
-        target: 'profile-avatar', fileName: 'x.png',
-        contentType: 'image/png', fileSizeBytes: 1,
-      },
-      () => '../bad-key',
-    )).toThrow(AppError);
+    expect(() =>
+      planPrivateImageUpload('../../user', {
+        target: 'profile-avatar',
+        fileName: 'x.png',
+        contentType: 'image/png',
+        fileSizeBytes: 1,
+      }),
+    ).toThrow(AppError);
+    expect(() =>
+      planPrivateImageUpload(
+        actorId,
+        {
+          target: 'profile-avatar',
+          fileName: 'x.png',
+          contentType: 'image/png',
+          fileSizeBytes: 1,
+        },
+        () => '../bad-key',
+      ),
+    ).toThrow(AppError);
   });
 
   it('never includes a public object URL in its contract', () => {
