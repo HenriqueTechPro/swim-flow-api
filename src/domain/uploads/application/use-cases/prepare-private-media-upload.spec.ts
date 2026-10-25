@@ -18,19 +18,17 @@ const photo = {
 };
 
 function setup(role: 'admin' | 'teacher' | 'user' | null = 'admin') {
-  const findByUserId = jest
-    .fn()
-    .mockResolvedValue(
-      role
-        ? {
-            id: ADMIN,
-            role,
-            permissions: [],
-            fullName: 'Test',
-            avatarUrl: null,
-          }
-        : null,
-    );
+  const findByUserId = jest.fn().mockResolvedValue(
+    role
+      ? {
+          id: ADMIN,
+          role,
+          permissions: [],
+          fullName: 'Test',
+          avatarUrl: null,
+        }
+      : null,
+  );
   const existsForTarget = jest.fn().mockResolvedValue(true);
   const signUpload = jest.fn().mockResolvedValue({
     method: 'PUT',
@@ -96,6 +94,12 @@ describe('Private S3 media permission and pending object registration', () => {
 
   it('allows every authenticated profile to change only its own avatar', async () => {
     const api = setup('user');
+    api.signUpload.mockResolvedValueOnce({
+      method: 'PUT',
+      url: 'https://storage.example.invalid/signed-put?test-only',
+      headers: { 'Content-Type': 'image/jpeg' },
+      expiresInSeconds: 90,
+    });
     const result = await api.useCase.execute(ADMIN, {
       target: 'profile-avatar',
       fileName: 'avatar.jpg',
