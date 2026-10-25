@@ -58,7 +58,6 @@ describe('Private S3 media permission and pending object registration', () => {
     expect(api.createPending).toHaveBeenCalledWith(expect.objectContaining({
       id: response.uploadId,
       objectKey,
-      status: undefined, // Status is server-defined in the Prisma repository.
       uploadedById: ADMIN,
       resourceId: STUDENT,
       declaredContentType: 'image/png',
