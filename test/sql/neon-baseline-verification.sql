@@ -3,8 +3,8 @@
 DO $$
 DECLARE
   -- Initial schema has 31 domain tables; the append-only native Auth
-  -- migration adds two, while _prisma_migrations remains excluded.
-  expected_tables integer := 33;
+  -- migration adds two and private media adds one; _prisma_migrations excluded.
+  expected_tables integer := 34;
   found_tables integer;
   missing_indexes text;
   missing_checks text;
