@@ -55,11 +55,6 @@ jobs:
         run: node --test scripts/neon-local-auth-dispatch.test.cjs
       - name: Test incremental formatting file selection
         run: npm run format:changed:test
-      # TEMPORARY preview for author-only formatting review; remove before merge.
-      - name: Preview exact media Prettier changes
-        run: |
-          ./node_modules/.bin/prettier --write src/domain/uploads/application/use-cases/prepare-private-media-upload.spec.ts src/domain/uploads/application/use-cases/prepare-private-media-upload.ts
-          git --no-pager diff -- src/domain/uploads/application/use-cases/prepare-private-media-upload.spec.ts src/domain/uploads/application/use-cases/prepare-private-media-upload.ts
       - name: Enforce Prettier only on TypeScript changed by this PR
         if: github.event_name == 'pull_request'
         env:
