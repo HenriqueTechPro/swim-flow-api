@@ -56,7 +56,8 @@ describe('Private image confirmation (offline, no HTTP)', () => {
   it('validates HEAD bytes and signature before an atomic PENDING -> VERIFIED', async () => {
     const api = setup();
     expect(await api.useCase.execute(ACTOR, UPLOAD, NOW)).toEqual({
-      uploadId: UPLOAD, status: 'VERIFIED',
+      uploadId: UPLOAD,
+      status: 'VERIFIED',
     });
     expect(api.storage.headObject).toHaveBeenCalledWith(KEY);
     expect(api.storage.readPrefix).toHaveBeenCalledWith(KEY, 64);
@@ -70,22 +71,29 @@ describe('Private image confirmation (offline, no HTTP)', () => {
 
   it('refuses confirmation until expiry plus settlement grace', async () => {
     const api = setup();
-    api.objects.findById.mockResolvedValue({ ...pending,
+    api.objects.findById.mockResolvedValue({
+      ...pending,
       ticketExpiresAt: new Date('2026-10-25T16:59:00.000Z'),
     });
-    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toMatchObject({
-      statusCode: 409,
-    });
+    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toMatchObject(
+      {
+        statusCode: 409,
+      },
+    );
     expect(api.storage.headObject).not.toHaveBeenCalled();
     expect(api.objects.markVerifiedIfPending).not.toHaveBeenCalled();
   });
 
   it('rejects mismatched bytes and never marks invalid data VERIFIED', async () => {
     const api = setup();
-    api.storage.readPrefix.mockResolvedValue(Uint8Array.from([0x3c, 0x73, 0x76, 0x67]));
-    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toMatchObject({
-      statusCode: 422,
-    });
+    api.storage.readPrefix.mockResolvedValue(
+      Uint8Array.from([0x3c, 0x73, 0x76, 0x67]),
+    );
+    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toMatchObject(
+      {
+        statusCode: 422,
+      },
+    );
     expect(api.objects.rejectIfPending).toHaveBeenCalledWith(
       UPLOAD,
       new Date('2026-10-25T16:58:00.000Z'),
@@ -96,21 +104,30 @@ describe('Private image confirmation (offline, no HTTP)', () => {
   it('rejects observed MIME/length mismatch, not just magic bytes', async () => {
     const api = setup();
     api.storage.headObject.mockResolvedValue({
-      contentType: 'image/jpeg', sizeBytes: 1000,
+      contentType: 'image/jpeg',
+      sizeBytes: 1000,
     });
-    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toBeInstanceOf(AppError);
+    await expect(
+      api.useCase.execute(ACTOR, UPLOAD, NOW),
+    ).rejects.toBeInstanceOf(AppError);
     expect(api.objects.rejectIfPending).toHaveBeenCalledTimes(1);
     expect(api.objects.markVerifiedIfPending).not.toHaveBeenCalled();
   });
 
   it('preserves PENDING after S3 outage or absent object for retry/cleanup', async () => {
     const api = setup();
-    api.storage.headObject.mockRejectedValueOnce(new Error('temporarily offline'));
-    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toThrow('temporarily offline');
+    api.storage.headObject.mockRejectedValueOnce(
+      new Error('temporarily offline'),
+    );
+    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toThrow(
+      'temporarily offline',
+    );
     api.storage.headObject.mockResolvedValueOnce(null);
-    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toMatchObject({
-      statusCode: 409,
-    });
+    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toMatchObject(
+      {
+        statusCode: 409,
+      },
+    );
     expect(api.objects.rejectIfPending).not.toHaveBeenCalled();
     expect(api.objects.markVerifiedIfPending).not.toHaveBeenCalled();
   });
@@ -118,38 +135,53 @@ describe('Private image confirmation (offline, no HTTP)', () => {
   it('revokes authorization if admin loses role, resource disappears or actor differs', async () => {
     const api = setup();
     api.profiles.findByUserId.mockResolvedValue({ id: ACTOR, role: 'teacher' });
-    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toMatchObject({
-      statusCode: 404,
-    });
+    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toMatchObject(
+      {
+        statusCode: 404,
+      },
+    );
     api.profiles.findByUserId.mockResolvedValue({ id: ACTOR, role: 'admin' });
     api.resources.existsForTarget.mockResolvedValue(false);
-    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toMatchObject({
-      statusCode: 404,
-    });
+    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toMatchObject(
+      {
+        statusCode: 404,
+      },
+    );
     const other = '44444444-4444-4444-8444-444444444444';
-    await expect(api.useCase.execute(other, UPLOAD, NOW)).rejects.toMatchObject({
-      statusCode: 404,
-    });
+    await expect(api.useCase.execute(other, UPLOAD, NOW)).rejects.toMatchObject(
+      {
+        statusCode: 404,
+      },
+    );
     expect(api.storage.headObject).not.toHaveBeenCalled();
   });
 
   it('does not sign anything or verify malformed IDs and non-pending media', async () => {
     const api = setup();
-    await expect(api.useCase.execute(ACTOR, '../bad', NOW)).rejects.toMatchObject({
+    await expect(
+      api.useCase.execute(ACTOR, '../bad', NOW),
+    ).rejects.toMatchObject({
       statusCode: 404,
     });
     api.objects.findById.mockResolvedValue({ ...pending, status: 'DELETED' });
-    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toMatchObject({
-      statusCode: 409,
-    });
+    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toMatchObject(
+      {
+        statusCode: 409,
+      },
+    );
     expect(api.storage.headObject).not.toHaveBeenCalled();
   });
 
   it('provides idempotent re-confirmation after checking CURRENT permission', async () => {
     const api = setup();
-    api.objects.findById.mockResolvedValue({ ...pending, status: 'VERIFIED', verifiedAt: NOW });
+    api.objects.findById.mockResolvedValue({
+      ...pending,
+      status: 'VERIFIED',
+      verifiedAt: NOW,
+    });
     expect(await api.useCase.execute(ACTOR, UPLOAD, NOW)).toEqual({
-      uploadId: UPLOAD, status: 'VERIFIED',
+      uploadId: UPLOAD,
+      status: 'VERIFIED',
     });
     expect(api.storage.headObject).not.toHaveBeenCalled();
   });
@@ -160,9 +192,11 @@ describe('Private image confirmation (offline, no HTTP)', () => {
     api.objects.findById
       .mockResolvedValueOnce({ ...pending })
       .mockResolvedValueOnce({ ...pending, status: 'REJECTED' });
-    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toMatchObject({
-      statusCode: 409,
-    });
+    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toMatchObject(
+      {
+        statusCode: 409,
+      },
+    );
   });
 
   it('treats a concurrent verification as idempotent after rechecking ACL', async () => {
@@ -170,9 +204,14 @@ describe('Private image confirmation (offline, no HTTP)', () => {
     api.objects.markVerifiedIfPending.mockResolvedValue(false);
     api.objects.findById
       .mockResolvedValueOnce({ ...pending })
-      .mockResolvedValueOnce({ ...pending, status: 'VERIFIED', verifiedAt: NOW });
+      .mockResolvedValueOnce({
+        ...pending,
+        status: 'VERIFIED',
+        verifiedAt: NOW,
+      });
     expect(await api.useCase.execute(ACTOR, UPLOAD, NOW)).toEqual({
-      uploadId: UPLOAD, status: 'VERIFIED',
+      uploadId: UPLOAD,
+      status: 'VERIFIED',
     });
     expect(api.profiles.findByUserId).toHaveBeenCalledTimes(2);
   });
@@ -180,17 +219,23 @@ describe('Private image confirmation (offline, no HTTP)', () => {
   it('confirms self-avatar for authenticated user, not a foreign profile', async () => {
     const api = setup();
     api.profiles.findByUserId.mockResolvedValue({ id: ACTOR, role: 'user' });
-    api.objects.findById.mockResolvedValue({ ...pending,
-      target: 'profile-avatar', resourceId: ACTOR,
+    api.objects.findById.mockResolvedValue({
+      ...pending,
+      target: 'profile-avatar',
+      resourceId: ACTOR,
     });
     expect(await api.useCase.execute(ACTOR, UPLOAD, NOW)).toMatchObject({
       status: 'VERIFIED',
     });
-    api.objects.findById.mockResolvedValue({ ...pending,
-      target: 'profile-avatar', resourceId: STUDENT,
+    api.objects.findById.mockResolvedValue({
+      ...pending,
+      target: 'profile-avatar',
+      resourceId: STUDENT,
     });
-    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toMatchObject({
-      statusCode: 404,
-    });
+    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toMatchObject(
+      {
+        statusCode: 404,
+      },
+    );
   });
 });
