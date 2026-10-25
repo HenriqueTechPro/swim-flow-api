@@ -66,7 +66,8 @@ export class PreparePrivateMediaUploadUseCase {
       ticket.expiresInSeconds <= 0 ||
       ticket.expiresInSeconds > 90 ||
       !ticket.url.startsWith('https://') ||
-      ticket.headers['Content-Type'] !== contentType
+      ticket.headers['Content-Type'] !== contentType ||
+      ticket.headers['If-None-Match'] !== '*'
     ) {
       throw new Error('Invalid private upload ticket returned by storage');
     }

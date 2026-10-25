@@ -11,6 +11,7 @@ const UPLOAD = '33333333-3333-4333-8333-333333333333';
 const NOW = new Date('2026-10-25T17:00:00.000Z');
 const EXPIRY = new Date('2026-10-25T16:57:00.000Z');
 const KEY = 'private/students/' + STUDENT + '/' + UPLOAD + '.png';
+const ETAG = '"d41d8cd98f00b204e9800998ecf8427e"';
 const PNG = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
 const pending = {
@@ -24,6 +25,7 @@ const pending = {
   ticketExpiresAt: EXPIRY,
   status: 'PENDING' as const,
   verifiedAt: null,
+  verifiedEtag: null,
 };
 
 function setup() {
@@ -40,6 +42,7 @@ function setup() {
     headObject: jest.fn().mockResolvedValue({
       contentType: 'image/png',
       sizeBytes: 1000,
+      etag: ETAG,
     }),
     readPrefix: jest.fn().mockResolvedValue(PNG),
   };
@@ -60,11 +63,13 @@ describe('Private image confirmation (offline, no HTTP)', () => {
       status: 'VERIFIED',
     });
     expect(api.storage.headObject).toHaveBeenCalledWith(KEY);
-    expect(api.storage.readPrefix).toHaveBeenCalledWith(KEY, 64);
+    expect(api.storage.readPrefix).toHaveBeenCalledWith(KEY, 64, ETAG);
+    expect(api.storage.headObject).toHaveBeenCalledTimes(2);
     expect(api.objects.markVerifiedIfPending).toHaveBeenCalledWith(
       UPLOAD,
       new Date('2026-10-25T16:58:00.000Z'),
       NOW,
+      ETAG,
     );
     expect(api.objects.rejectIfPending).not.toHaveBeenCalled();
   });
@@ -106,6 +111,7 @@ describe('Private image confirmation (offline, no HTTP)', () => {
     api.storage.headObject.mockResolvedValue({
       contentType: 'image/jpeg',
       sizeBytes: 1000,
+      etag: ETAG,
     });
     await expect(
       api.useCase.execute(ACTOR, UPLOAD, NOW),
@@ -130,6 +136,46 @@ describe('Private image confirmation (offline, no HTTP)', () => {
     );
     expect(api.objects.rejectIfPending).not.toHaveBeenCalled();
     expect(api.objects.markVerifiedIfPending).not.toHaveBeenCalled();
+  });
+
+  it('does not confirm if HEAD lacks a strong ETag', async () => {
+    const api = setup();
+    api.storage.headObject.mockResolvedValue({
+      contentType: 'image/png',
+      sizeBytes: 1000,
+      etag: undefined,
+    });
+    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toMatchObject(
+      {
+        statusCode: 409,
+      },
+    );
+    expect(api.storage.readPrefix).not.toHaveBeenCalled();
+    expect(api.objects.markVerifiedIfPending).not.toHaveBeenCalled();
+    expect(api.objects.rejectIfPending).not.toHaveBeenCalled();
+  });
+
+  it('does not verify if ETag changes between HEAD and conditional Range', async () => {
+    const api = setup();
+    api.storage.headObject
+      .mockResolvedValueOnce({
+        contentType: 'image/png',
+        sizeBytes: 1000,
+        etag: ETAG,
+      })
+      .mockResolvedValueOnce({
+        contentType: 'image/png',
+        sizeBytes: 1000,
+        etag: '"aabbccddeeff00112233445566778899"',
+      });
+    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toMatchObject(
+      {
+        statusCode: 409,
+      },
+    );
+    expect(api.storage.readPrefix).toHaveBeenCalledWith(KEY, 64, ETAG);
+    expect(api.objects.markVerifiedIfPending).not.toHaveBeenCalled();
+    expect(api.objects.rejectIfPending).not.toHaveBeenCalled();
   });
 
   it('revokes authorization if admin loses role, resource disappears or actor differs', async () => {
@@ -178,6 +224,7 @@ describe('Private image confirmation (offline, no HTTP)', () => {
       ...pending,
       status: 'VERIFIED',
       verifiedAt: NOW,
+      verifiedEtag: ETAG,
     });
     expect(await api.useCase.execute(ACTOR, UPLOAD, NOW)).toEqual({
       uploadId: UPLOAD,
@@ -208,6 +255,7 @@ describe('Private image confirmation (offline, no HTTP)', () => {
         ...pending,
         status: 'VERIFIED',
         verifiedAt: NOW,
+        verifiedEtag: ETAG,
       });
     expect(await api.useCase.execute(ACTOR, UPLOAD, NOW)).toEqual({
       uploadId: UPLOAD,

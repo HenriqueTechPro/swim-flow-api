@@ -33,7 +33,7 @@ function setup(role: 'admin' | 'teacher' | 'user' | null = 'admin') {
   const signUpload = jest.fn().mockResolvedValue({
     method: 'PUT',
     url: 'https://storage.example.invalid/signed-put?test-only',
-    headers: { 'Content-Type': 'image/png' },
+    headers: { 'Content-Type': 'image/png', 'If-None-Match': '*' },
     expiresInSeconds: 90,
   });
   const createPending = jest.fn().mockResolvedValue(undefined);
@@ -54,7 +54,7 @@ describe('Private S3 media permission and pending object registration', () => {
       uploadId: expect.any(String),
       method: 'PUT',
       uploadUrl: 'https://storage.example.invalid/signed-put?test-only',
-      headers: { 'Content-Type': 'image/png' },
+      headers: { 'Content-Type': 'image/png', 'If-None-Match': '*' },
       expiresInSeconds: 90,
     });
     expect(api.existsForTarget).toHaveBeenCalledWith('student-photo', STUDENT);
@@ -97,7 +97,7 @@ describe('Private S3 media permission and pending object registration', () => {
     api.signUpload.mockResolvedValueOnce({
       method: 'PUT',
       url: 'https://storage.example.invalid/signed-put?test-only',
-      headers: { 'Content-Type': 'image/jpeg' },
+      headers: { 'Content-Type': 'image/jpeg', 'If-None-Match': '*' },
       expiresInSeconds: 90,
     });
     const result = await api.useCase.execute(ADMIN, {

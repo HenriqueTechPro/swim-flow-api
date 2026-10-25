@@ -4,6 +4,7 @@ import { PrismaPrivateMediaObjectsRepository } from './prisma-private-media-obje
 const UUID = '33333333-3333-4333-8333-333333333333';
 const EXPIRY = new Date('2026-10-25T16:57:00.000Z');
 const CUTOFF = new Date('2026-10-25T16:58:00.000Z');
+const ETAG = '"d41d8cd98f00b204e9800998ecf8427e"';
 const VERIFIED_AT = new Date('2026-10-25T17:00:00.000Z');
 
 const row = {
@@ -17,6 +18,7 @@ const row = {
   declaredSizeBytes: 100,
   ticketExpiresAt: EXPIRY,
   verifiedAt: null,
+  verifiedEtag: null,
   status: 'PENDING',
 };
 
@@ -53,11 +55,11 @@ describe('Prisma private media compare-and-swap transitions', () => {
   it('atomically verifies only PENDING whose PUT grace is over', async () => {
     prisma.privateMediaObject.updateMany.mockResolvedValue({ count: 1 });
     expect(
-      await repository.markVerifiedIfPending(UUID, CUTOFF, VERIFIED_AT),
+      await repository.markVerifiedIfPending(UUID, CUTOFF, VERIFIED_AT, ETAG),
     ).toBe(true);
     expect(prisma.privateMediaObject.updateMany).toHaveBeenCalledWith({
       where: { id: UUID, status: 'PENDING', ticketExpiresAt: { lte: CUTOFF } },
-      data: { status: 'VERIFIED', verifiedAt: VERIFIED_AT },
+      data: { status: 'VERIFIED', verifiedAt: VERIFIED_AT, verifiedEtag: ETAG },
     });
   });
 

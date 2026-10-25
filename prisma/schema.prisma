@@ -910,6 +910,7 @@ model PrivateMediaObject {
   status String @default("PENDING") @db.VarChar(16)
   ticketExpiresAt DateTime @map("ticket_expires_at") @db.Timestamptz(6)
   verifiedAt DateTime? @map("verified_at") @db.Timestamptz(6)
+  verifiedEtag String? @map("verified_etag") @db.VarChar(128)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 

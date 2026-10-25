@@ -21,6 +21,7 @@ const EXPECTED = Object.freeze({
 // first-local-auth bootstrap runner remains retired for all apply operations.
 const ADDITIONAL_MIGRATION_BLOBS = Object.freeze({
   '20261025000000_private_media_object_metadata': '18443faa28d55ee13eec99bc3bda472e6e5822d8',
+  '20261025010000_private_media_verified_etag': '90514b5e7b7fc9f76eee8f747012d8eed02ba8ab',
 });
 const HISTORICAL_MIGRATIONS = Object.keys(EXPECTED).length;
 const APPROVED_MIGRATIONS = HISTORICAL_MIGRATIONS +
