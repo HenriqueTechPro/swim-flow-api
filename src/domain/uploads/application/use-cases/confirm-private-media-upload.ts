@@ -1,9 +1,7 @@
 import { AppError } from '@/shared/errors/app-error';
 import { AuthProfilesRepository } from '@/domain/auth/application/repositories/auth-profiles-repository';
 import { ManagedUploadResourcesRepository } from '../repositories/managed-upload-resources-repository';
-import {
-  PrivateMediaObjectsRepository,
-} from '../repositories/private-media-objects-repository';
+import { PrivateMediaObjectsRepository } from '../repositories/private-media-objects-repository';
 import { PrivateMediaStorageRepository } from '../repositories/private-media-storage-repository';
 import {
   verifyPrivateImageObject,
@@ -40,7 +38,12 @@ export class ConfirmPrivateMediaUploadUseCase {
     if (
       !record ||
       record.uploadedById !== actorId ||
-      !(await canAccessPrivateMediaRecord(actorId, record, this.profiles, this.resources))
+      !(await canAccessPrivateMediaRecord(
+        actorId,
+        record,
+        this.profiles,
+        this.resources,
+      ))
     ) {
       throw new AppError(404, 'Private media unavailable');
     }
@@ -81,12 +84,13 @@ export class ConfirmPrivateMediaUploadUseCase {
       // Conditional reject prevents a concurrent cleanup or successful
       // verifier from being overwritten by a second request.
       await this.objects.rejectIfPending(uploadId, cutoff);
-      throw new AppError(422, 'Private image content does not match declaration');
+      throw new AppError(
+        422,
+        'Private image content does not match declaration',
+      );
     }
 
-    if (
-      await this.objects.markVerifiedIfPending(uploadId, cutoff, now)
-    ) {
+    if (await this.objects.markVerifiedIfPending(uploadId, cutoff, now)) {
       return { uploadId, status: 'VERIFIED' as const };
     }
 
@@ -96,11 +100,15 @@ export class ConfirmPrivateMediaUploadUseCase {
     if (
       current?.status === 'VERIFIED' &&
       current.uploadedById === actorId &&
-      await canAccessPrivateMediaRecord(actorId, current, this.profiles, this.resources)
+      (await canAccessPrivateMediaRecord(
+        actorId,
+        current,
+        this.profiles,
+        this.resources,
+      ))
     ) {
       return { uploadId, status: 'VERIFIED' as const };
     }
     throw new AppError(409, 'Private media state changed during verification');
   }
-
 }
