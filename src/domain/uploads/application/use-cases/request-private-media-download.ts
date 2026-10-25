@@ -4,6 +4,7 @@ import { ManagedUploadResourcesRepository } from '../repositories/managed-upload
 import { PrivateMediaObjectsRepository } from '../repositories/private-media-objects-repository';
 import { PrivateMediaStorageRepository } from '../repositories/private-media-storage-repository';
 import { canAccessPrivateMediaRecord } from '../services/private-media-record-access';
+import { isStrongPrivateMediaEtag } from '../services/private-media-etag-policy';
 
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -29,6 +30,7 @@ export class RequestPrivateMediaDownloadUseCase {
     if (
       !record ||
       record.status !== 'VERIFIED' ||
+      !isStrongPrivateMediaEtag(record.verifiedEtag) ||
       !(await canAccessPrivateMediaRecord(
         actorId,
         record,
@@ -39,12 +41,16 @@ export class RequestPrivateMediaDownloadUseCase {
       throw new AppError(404, 'Private media unavailable');
     }
 
-    const ticket = await this.storage.signDownload(record.objectKey);
+    const ticket = await this.storage.signDownload(
+      record.objectKey,
+      record.verifiedEtag,
+    );
     if (
       !ticket.url.startsWith('https://') ||
       !Number.isSafeInteger(ticket.expiresInSeconds) ||
       ticket.expiresInSeconds <= 0 ||
-      ticket.expiresInSeconds > 60
+      ticket.expiresInSeconds > 60 ||
+      ticket.headers['If-Match'] !== record.verifiedEtag
     ) {
       throw new Error('Invalid private download ticket');
     }
