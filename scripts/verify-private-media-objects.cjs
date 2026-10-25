@@ -73,6 +73,24 @@ async function run() {
       },
     }));
 
+    // VERIFIED must have an immutable, strong quoted ETag from HEAD;
+    // an arbitrary/missing ETag must not satisfy the DB invariant.
+    await assert.rejects(prisma.privateMediaObject.update({
+      where: { id: objectId },
+      data: { status: 'VERIFIED', verifiedAt: new Date() },
+    }));
+    await assert.rejects(prisma.privateMediaObject.update({
+      where: { id: objectId },
+      data: {
+        status: 'VERIFIED',
+        verifiedAt: new Date(),
+        verifiedEtag: '"bad\\r\\nheader"',
+      },
+    }));
+    assert.equal((await prisma.privateMediaObject.findUniqueOrThrow({
+      where: { id: objectId },
+    })).status, 'PENDING');
+
     // Preserve the audit actor ID even if their profile is deleted.
     await prisma.profile.delete({ where: { id: actorId } });
     const retained = await prisma.privateMediaObject.findUniqueOrThrow({
