@@ -65,6 +65,15 @@ describe('Verified private image read tickets', () => {
     },
   );
 
+  it('refuses verified media without an immutable recorded ETag', async () => {
+    const api = setup();
+    api.objects.findById.mockResolvedValue({ ...verified, verifiedEtag: null });
+    await expect(api.useCase.execute(ACTOR, UPLOAD)).rejects.toMatchObject({
+      statusCode: 404,
+    });
+    expect(api.storage.signDownload).not.toHaveBeenCalled();
+  });
+
   it('denies teacher even when they know a verified child image UUID', async () => {
     const api = setup();
     api.profiles.findByUserId.mockResolvedValue({ id: ACTOR, role: 'teacher' });
