@@ -52,7 +52,9 @@ describe('Prisma private media compare-and-swap transitions', () => {
 
   it('atomically verifies only PENDING whose PUT grace is over', async () => {
     prisma.privateMediaObject.updateMany.mockResolvedValue({ count: 1 });
-    expect(await repository.markVerifiedIfPending(UUID, CUTOFF, VERIFIED_AT)).toBe(true);
+    expect(
+      await repository.markVerifiedIfPending(UUID, CUTOFF, VERIFIED_AT),
+    ).toBe(true);
     expect(prisma.privateMediaObject.updateMany).toHaveBeenCalledWith({
       where: { id: UUID, status: 'PENDING', ticketExpiresAt: { lte: CUTOFF } },
       data: { status: 'VERIFIED', verifiedAt: VERIFIED_AT },
@@ -69,7 +71,9 @@ describe('Prisma private media compare-and-swap transitions', () => {
   });
 
   it('only queries expired pending or rejected for bounded orphan cleanup', async () => {
-    prisma.privateMediaObject.findMany.mockResolvedValue([{ ...row, status: 'REJECTED' }]);
+    prisma.privateMediaObject.findMany.mockResolvedValue([
+      { ...row, status: 'REJECTED' },
+    ]);
     const results = await repository.listCleanupCandidates(CUTOFF, 25);
     expect(results[0].status).toBe('REJECTED');
     expect(prisma.privateMediaObject.findMany).toHaveBeenCalledWith({
@@ -80,9 +84,9 @@ describe('Prisma private media compare-and-swap transitions', () => {
       take: 25,
       orderBy: [{ ticketExpiresAt: 'asc' }, { id: 'asc' }],
     });
-    await expect(repository.listCleanupCandidates(CUTOFF, 1000)).rejects.toThrow(
-      'invalid-private-media-cleanup-limit',
-    );
+    await expect(
+      repository.listCleanupCandidates(CUTOFF, 1000),
+    ).rejects.toThrow('invalid-private-media-cleanup-limit');
   });
 
   it('marks DELETED only if previous status is REJECTED', async () => {
