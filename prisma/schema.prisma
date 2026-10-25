@@ -183,6 +183,24 @@ enum ExStudentExitReason {
   @@map("ex_student_exit_reason")
 }
 
+enum PrivateMediaTarget {
+  PROFILE_AVATAR @map("profile-avatar")
+  STUDENT_PHOTO @map("student-photo")
+  TEACHER_PHOTO @map("teacher-photo")
+  PARENT_PHOTO @map("parent-photo")
+
+  @@map("private_media_target")
+}
+
+enum PrivateMediaStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+  DELETED
+
+  @@map("private_media_status")
+}
+
 enum AttendanceStatus {
   present
   absent
@@ -248,10 +266,34 @@ model Profile {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
   authSessions AuthSession[]
+  privateMediaUploads PrivateMediaObject[] @relation("PrivateMediaRequestedBy")
   localAuthIdentity LocalAuthIdentity?
   teacher      Teacher? @relation("TeacherAccount")
 
   @@map("profiles")
+}
+
+// Private media references never contain a public URL or a signed URL.
+// ResourceId is polymorphic; every access MUST check the live target and ACL.
+model PrivateMediaObject {
+  id              String             @id @db.Uuid
+  requestedById   String             @map("requested_by_id") @db.Uuid
+  target          PrivateMediaTarget
+  resourceId      String             @map("resource_id") @db.Uuid
+  objectKey       String             @unique @map("object_key") @db.VarChar(255)
+  status          PrivateMediaStatus @default(PENDING)
+  declaredContentType String         @map("declared_content_type") @db.VarChar(32)
+  declaredSizeBytes Int              @map("declared_size_bytes")
+  uploadExpiresAt DateTime           @map("upload_expires_at") @db.Timestamptz(6)
+  confirmedAt     DateTime?          @map("confirmed_at") @db.Timestamptz(6)
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  requestedBy     Profile            @relation("PrivateMediaRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict)
+
+  @@index([target, resourceId, status])
+  @@index([requestedById, createdAt])
+  @@index([status, createdAt])
+  @@map("media_objects")
 }
 
 model AuthSession {
