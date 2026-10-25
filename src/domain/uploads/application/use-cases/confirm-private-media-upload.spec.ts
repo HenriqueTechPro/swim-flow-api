@@ -145,9 +145,11 @@ describe('Private image confirmation (offline, no HTTP)', () => {
       sizeBytes: 1000,
       etag: undefined,
     });
-    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toMatchObject({
-      statusCode: 409,
-    });
+    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toMatchObject(
+      {
+        statusCode: 409,
+      },
+    );
     expect(api.storage.readPrefix).not.toHaveBeenCalled();
     expect(api.objects.markVerifiedIfPending).not.toHaveBeenCalled();
     expect(api.objects.rejectIfPending).not.toHaveBeenCalled();
@@ -166,9 +168,11 @@ describe('Private image confirmation (offline, no HTTP)', () => {
         sizeBytes: 1000,
         etag: '"aabbccddeeff00112233445566778899"',
       });
-    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toMatchObject({
-      statusCode: 409,
-    });
+    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toMatchObject(
+      {
+        statusCode: 409,
+      },
+    );
     expect(api.storage.readPrefix).toHaveBeenCalledWith(KEY, 64, ETAG);
     expect(api.objects.markVerifiedIfPending).not.toHaveBeenCalled();
     expect(api.objects.rejectIfPending).not.toHaveBeenCalled();
@@ -251,7 +255,7 @@ describe('Private image confirmation (offline, no HTTP)', () => {
         ...pending,
         status: 'VERIFIED',
         verifiedAt: NOW,
-      verifiedEtag: ETAG,
+        verifiedEtag: ETAG,
       });
     expect(await api.useCase.execute(ACTOR, UPLOAD, NOW)).toEqual({
       uploadId: UPLOAD,
