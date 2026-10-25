@@ -14,7 +14,7 @@ describe('Strong S3/R2 private object ETag policy', () => {
     'W/"weak"',
     '"has space"',
     '"header\r\ninjection"',
-    '"quote\"inside"',
+    '"quote"inside"',
     '"' + 'a'.repeat(129) + '"',
   ])('rejects an unsafe or weak validator: %s', (etag) => {
     expect(isStrongPrivateMediaEtag(etag)).toBe(false);
