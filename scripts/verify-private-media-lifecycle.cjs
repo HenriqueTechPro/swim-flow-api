@@ -44,6 +44,8 @@ async function run() {
     uploadedByProfileId: actor,
     declaredContentType: 'image/png',
     declaredSizeBytes: 1024,
+    // An expired ticket must still be later than the original row creation.
+    createdAt: new Date(expired.getTime() - 60_000),
     ticketExpiresAt: expired,
   });
 
