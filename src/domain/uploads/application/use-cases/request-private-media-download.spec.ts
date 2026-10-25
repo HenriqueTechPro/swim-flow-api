@@ -6,11 +6,13 @@ import { RequestPrivateMediaDownloadUseCase } from './request-private-media-down
 
 const ACTOR = '11111111-1111-4111-8111-111111111111';
 const RESOURCE = '22222222-2222-4222-8222-222222222222';
+const ETAG = '"d41d8cd98f00b204e9800998ecf8427e"';
 const UPLOAD = '33333333-3333-4333-8333-333333333333';
 
 const verified = {
   id: UPLOAD,
   status: 'VERIFIED',
+  verifiedEtag: ETAG,
   uploadedById: ACTOR,
   target: 'student-photo',
   resourceId: RESOURCE,
@@ -27,6 +29,7 @@ function setup() {
     signDownload: jest.fn().mockResolvedValue({
       url: 'https://storage.invalid/short-lived-private-ticket',
       expiresInSeconds: 60,
+      headers: { 'If-Match': ETAG },
     }),
   };
   const useCase = new RequestPrivateMediaDownloadUseCase(
@@ -43,7 +46,7 @@ describe('Verified private image read tickets', () => {
     const api = setup();
     const result = await api.useCase.execute(ACTOR, UPLOAD);
     expect(result.expiresInSeconds).toBe(60);
-    expect(api.storage.signDownload).toHaveBeenCalledWith(verified.objectKey);
+    expect(api.storage.signDownload).toHaveBeenCalledWith(verified.objectKey, ETAG);
     expect(api.resources.existsForTarget).toHaveBeenCalledWith(
       'student-photo',
       RESOURCE,
