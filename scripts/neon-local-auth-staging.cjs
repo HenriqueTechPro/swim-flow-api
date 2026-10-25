@@ -56,7 +56,7 @@ function verifyVersionedMigrations(root = ROOT) {
   for (const [name, expectedBlob] of Object.entries(ADDITIONAL_MIGRATION_BLOBS)) {
     const data = readFileSync(resolve(dir, name, 'migration.sql'));
     const blob = createHash('sha1')
-      .update(Buffer.from('blob ' + data.length + '\\0'))
+      .update(Buffer.from('blob ' + data.length + '\0'))
       .update(data)
       .digest('hex');
     if (blob !== expectedBlob) {
