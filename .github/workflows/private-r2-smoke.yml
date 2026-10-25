@@ -1,0 +1,47 @@
+name: Private R2 disposable smoke — MANUAL ONLY
+
+# No push, PR, schedule, workflow_call or deployment trigger.
+on:
+  workflow_dispatch:
+    inputs:
+      approval:
+        description: 'Type I_APPROVE_DISPOSABLE_R2_SMOKE_ONLY (test bucket ONLY)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: swimflow-disposable-r2-smoke
+  cancel-in-progress: false
+
+jobs:
+  private-r2-smoke:
+    if: github.ref == 'refs/heads/main' && inputs.approval == 'I_APPROVE_DISPOSABLE_R2_SMOKE_ONLY'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    environment: r2-smoke
+    env:
+      NODE_ENV: test
+      SWIMFLOW_PRIVATE_MEDIA_S3_ENABLED: 'false'
+      SWIMFLOW_R2_SMOKE_APPROVAL: ${{ inputs.approval }}
+      R2_SMOKE_ENDPOINT: ${{ secrets.R2_SMOKE_ENDPOINT }}
+      R2_SMOKE_BUCKET: ${{ secrets.R2_SMOKE_BUCKET }}
+      R2_SMOKE_ACCESS_KEY_ID: ${{ secrets.R2_SMOKE_ACCESS_KEY_ID }}
+      R2_SMOKE_SECRET_ACCESS_KEY: ${{ secrets.R2_SMOKE_SECRET_ACCESS_KEY }}
+      R2_SMOKE_ORIGIN: ${{ vars.R2_SMOKE_ORIGIN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Check offline safety guards before touching R2
+        run: npm run r2:smoke:guard:test
+      - name: Explicit disposable R2 smoke (never real swimmers' photos)
+        run: npm run r2:smoke:live
