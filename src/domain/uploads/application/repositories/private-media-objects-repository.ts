@@ -15,7 +15,11 @@ export interface PendingPrivateMediaObject {
   ticketExpiresAt: Date;
 }
 
-export type PrivateMediaStatus = 'PENDING' | 'VERIFIED' | 'REJECTED' | 'DELETED';
+export type PrivateMediaStatus =
+  | 'PENDING'
+  | 'VERIFIED'
+  | 'REJECTED'
+  | 'DELETED';
 
 export interface PrivateMediaObjectRecord extends PendingPrivateMediaObject {
   status: PrivateMediaStatus;
