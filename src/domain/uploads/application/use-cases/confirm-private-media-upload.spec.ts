@@ -138,6 +138,42 @@ describe('Private image confirmation (offline, no HTTP)', () => {
     expect(api.objects.markVerifiedIfPending).not.toHaveBeenCalled();
   });
 
+  it('does not confirm if HEAD lacks a strong ETag', async () => {
+    const api = setup();
+    api.storage.headObject.mockResolvedValue({
+      contentType: 'image/png',
+      sizeBytes: 1000,
+      etag: undefined,
+    });
+    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toMatchObject({
+      statusCode: 409,
+    });
+    expect(api.storage.readPrefix).not.toHaveBeenCalled();
+    expect(api.objects.markVerifiedIfPending).not.toHaveBeenCalled();
+    expect(api.objects.rejectIfPending).not.toHaveBeenCalled();
+  });
+
+  it('does not verify if ETag changes between HEAD and conditional Range', async () => {
+    const api = setup();
+    api.storage.headObject
+      .mockResolvedValueOnce({
+        contentType: 'image/png',
+        sizeBytes: 1000,
+        etag: ETAG,
+      })
+      .mockResolvedValueOnce({
+        contentType: 'image/png',
+        sizeBytes: 1000,
+        etag: '"aabbccddeeff00112233445566778899"',
+      });
+    await expect(api.useCase.execute(ACTOR, UPLOAD, NOW)).rejects.toMatchObject({
+      statusCode: 409,
+    });
+    expect(api.storage.readPrefix).toHaveBeenCalledWith(KEY, 64, ETAG);
+    expect(api.objects.markVerifiedIfPending).not.toHaveBeenCalled();
+    expect(api.objects.rejectIfPending).not.toHaveBeenCalled();
+  });
+
   it('revokes authorization if admin loses role, resource disappears or actor differs', async () => {
     const api = setup();
     api.profiles.findByUserId.mockResolvedValue({ id: ACTOR, role: 'teacher' });
