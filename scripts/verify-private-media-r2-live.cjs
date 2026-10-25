@@ -195,6 +195,7 @@ async function execute(config) {
     // no deletion by prefix and no access to production media.
     for (const key of keys) {
       try { await storage.deleteObject(key); } catch {
+        cleanupFailed = true;
         process.stderr.write('SMOKE_CLEANUP_FAILED: inspect the disposable bucket privately.\n');
       }
     }
