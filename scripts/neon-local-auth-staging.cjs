@@ -26,12 +26,17 @@ const STAGING = Object.freeze({
   approval: 'APPLY_SWIM_FLOW_LOCAL_AUTH_STAGING',
 });
 
-function verifyVersionedMigrations(root = ROOT) {
+function verifyVersionedMigrations(root = ROOT, exactInventory = false) {
   const dir = resolve(root, 'prisma', 'migrations');
   const names = readdirSync(dir, { withFileTypes: true })
     .filter((file) => file.isDirectory() && /^\d{14}_/.test(file.name))
     .map((file) => file.name).sort();
-  if (JSON.stringify(names) !== JSON.stringify(Object.keys(EXPECTED).sort())) {
+  // Always check the historical hashes, even after newer migrations exist.
+  // The deprecated one-time APPLY path, however, must never deploy a newer
+  // migration before its own two-migration postcondition can validate it.
+  const historical = Object.keys(EXPECTED).sort();
+  if (historical.some((name) => !names.includes(name)) ||
+      (exactInventory && JSON.stringify(names) !== JSON.stringify(historical))) {
     throw new Error('Unexpected migration inventory');
   }
   for (const [name, checksum] of Object.entries(EXPECTED)) {
@@ -139,7 +144,7 @@ function runPrisma(args) {
 }
 
 async function execute(env, args, deps) {
-  verifyVersionedMigrations(deps.root || ROOT);
+  verifyVersionedMigrations(deps.root || ROOT, !(args.length === 1 && args[0] === '--check'));
   if (args.length === 1 && args[0] === '--check') {
     // Offline-only check; safe in CI without secrets.
     return { verifiedFiles: 2, wroteDatabase: false };
@@ -164,6 +169,9 @@ async function main() {
     }
     // Do not instantiate Prisma until all flag and destination checks succeed.
     validateApplyTarget(process.env, args);
+    // Do not even instantiate a DB client if newer migrations make this
+    // historical one-time runner unsafe. Use a reviewed modern deploy plan.
+    verifyVersionedMigrations(ROOT, true);
     const { PrismaClient } = require('@prisma/client');
     const prisma = new PrismaClient({ datasources: { db: { url: process.env.DIRECT_URL } }, log: [] });
     try {
