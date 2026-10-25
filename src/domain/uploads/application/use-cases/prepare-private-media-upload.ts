@@ -12,12 +12,20 @@ import {
   type PrivateMediaUploadInput,
 } from '../services/private-media-upload-policy';
 
-type MediaScope = { actorId: string; target: ManagedUploadTarget; resourceId: string };
+type MediaScope = {
+  actorId: string;
+  target: ManagedUploadTarget;
+  resourceId: string;
+};
 
 function canonicalContentType(value: string) {
   return value.toLowerCase() === 'image/jpg'
-    ? 'image/jpeg' as const
-    : value.toLowerCase() as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
+    ? ('image/jpeg' as const)
+    : (value.toLowerCase() as
+        | 'image/jpeg'
+        | 'image/png'
+        | 'image/webp'
+        | 'image/gif');
 }
 
 /**
