@@ -58,6 +58,10 @@ jobs:
         env:
           SWIMFLOW_DISPOSABLE_DB: 'yes'
         run: node scripts/verify-private-media-objects.cjs
+      - name: Private media lifecycle race and cleanup transitions (disposable PostgreSQL)
+        env:
+          SWIMFLOW_DISPOSABLE_DB: 'yes'
+        run: node scripts/verify-private-media-lifecycle.cjs
       - name: Admin bootstrap concurrency on disposable PostgreSQL
         env:
           SWIMFLOW_DISPOSABLE_DB: 'yes'
