@@ -29,7 +29,12 @@ export class RequestPrivateMediaDownloadUseCase {
     if (
       !record ||
       record.status !== 'VERIFIED' ||
-      !(await canAccessPrivateMediaRecord(actorId, record, this.profiles, this.resources))
+      !(await canAccessPrivateMediaRecord(
+        actorId,
+        record,
+        this.profiles,
+        this.resources,
+      ))
     ) {
       throw new AppError(404, 'Private media unavailable');
     }
