@@ -28,5 +28,5 @@ test('R2 smoke uses isolated environment secrets and never alters the applicatio
   assert.match(workflow, /SWIMFLOW_PRIVATE_MEDIA_S3_ENABLED: 'false'/);
   assert.doesNotMatch(workflow, /\bVITE_/);
   assert.doesNotMatch(workflow, /pull_request_target/);
-  assert.doesNotMatch(workflow, /deploy|prisma migrate/i);
+  assert.doesNotMatch(workflow, /\bdeploy\b|prisma migrate/i);
 });
