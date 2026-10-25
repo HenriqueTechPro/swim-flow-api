@@ -33,6 +33,7 @@ async function run() {
   const expired = new Date(Date.now() - 5 * 60_000);
   const cutoff = new Date(Date.now() - 2 * 60_000);
   const now = new Date();
+  const etag = '"d41d8cd98f00b204e9800998ecf8427e"';
   const ids = [verifiedId, raceId];
 
   const toInput = (id) => ({
@@ -69,9 +70,10 @@ async function run() {
 
     const good = await prisma.privateMediaObject.updateMany({
       where: { id: verifiedId, status: 'PENDING', ticketExpiresAt: { lte: cutoff } },
-      data: { status: 'VERIFIED', verifiedAt: now },
+      data: { status: 'VERIFIED', verifiedAt: now, verifiedEtag: etag },
     });
     assert.equal(good.count, 1);
+    assert.equal((await prisma.privateMediaObject.findUniqueOrThrow({ where: { id: verifiedId } })).verifiedEtag, etag);
     assert.equal((await prisma.privateMediaObject.updateMany({
       where: { id: verifiedId, status: 'PENDING', ticketExpiresAt: { lte: cutoff } },
       data: { status: 'REJECTED' },
@@ -87,7 +89,7 @@ async function run() {
     const [confirm, reject] = await Promise.all([
       prisma.privateMediaObject.updateMany({
         where: { id: raceId, status: 'PENDING', ticketExpiresAt: { lte: cutoff } },
-        data: { status: 'VERIFIED', verifiedAt: now },
+        data: { status: 'VERIFIED', verifiedAt: now, verifiedEtag: etag },
       }),
       prisma.privateMediaObject.updateMany({
         where: { id: raceId, status: 'PENDING', ticketExpiresAt: { lte: cutoff } },
