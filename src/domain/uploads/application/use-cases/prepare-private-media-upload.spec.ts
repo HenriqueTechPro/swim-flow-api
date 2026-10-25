@@ -18,9 +18,19 @@ const photo = {
 };
 
 function setup(role: 'admin' | 'teacher' | 'user' | null = 'admin') {
-  const findByUserId = jest.fn().mockResolvedValue(
-    role ? { id: ADMIN, role, permissions: [], fullName: 'Test', avatarUrl: null } : null,
-  );
+  const findByUserId = jest
+    .fn()
+    .mockResolvedValue(
+      role
+        ? {
+            id: ADMIN,
+            role,
+            permissions: [],
+            fullName: 'Test',
+            avatarUrl: null,
+          }
+        : null,
+    );
   const existsForTarget = jest.fn().mockResolvedValue(true);
   const signUpload = jest.fn().mockResolvedValue({
     method: 'PUT',
@@ -55,16 +65,20 @@ describe('Private S3 media permission and pending object registration', () => {
       /^private\/students\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.png$/,
     );
     expect(objectKey).not.toContain(photo.fileName);
-    expect(api.createPending).toHaveBeenCalledWith(expect.objectContaining({
-      id: response.uploadId,
-      objectKey,
-      uploadedById: ADMIN,
-      resourceId: STUDENT,
-      declaredContentType: 'image/png',
-      declaredSizeBytes: 128,
-      ticketExpiresAt: expect.any(Date),
-    }));
-    expect(JSON.stringify(api.createPending.mock.calls)).not.toContain('signed-put');
+    expect(api.createPending).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: response.uploadId,
+        objectKey,
+        uploadedById: ADMIN,
+        resourceId: STUDENT,
+        declaredContentType: 'image/png',
+        declaredSizeBytes: 128,
+        ticketExpiresAt: expect.any(Date),
+      }),
+    );
+    expect(JSON.stringify(api.createPending.mock.calls)).not.toContain(
+      'signed-put',
+    );
   });
 
   it.each(['teacher', 'user'] as const)(
@@ -95,20 +109,30 @@ describe('Private S3 media permission and pending object registration', () => {
       contentType: 'image/jpeg',
     });
     expect(api.createPending).toHaveBeenCalledWith(
-      expect.objectContaining({ resourceId: ADMIN, declaredContentType: 'image/jpeg' }),
+      expect.objectContaining({
+        resourceId: ADMIN,
+        declaredContentType: 'image/jpeg',
+      }),
     );
   });
 
   it('rejects cross-profile avatar IDs and oversized or malicious file types', async () => {
     const api = setup('admin');
     for (const invalid of [
-      { target: 'profile-avatar' as const, resourceId: TEACHER,
-        fileName: 'foo.jpg', contentType: 'image/jpeg', fileSizeBytes: 10 },
+      {
+        target: 'profile-avatar' as const,
+        resourceId: TEACHER,
+        fileName: 'foo.jpg',
+        contentType: 'image/jpeg',
+        fileSizeBytes: 10,
+      },
       { ...photo, fileSizeBytes: 5 * 1024 * 1024 + 1 },
       { ...photo, fileSizeBytes: 0 },
       { ...photo, contentType: 'image/svg+xml' },
     ]) {
-      await expect(api.useCase.execute(ADMIN, invalid)).rejects.toBeInstanceOf(AppError);
+      await expect(api.useCase.execute(ADMIN, invalid)).rejects.toBeInstanceOf(
+        AppError,
+      );
     }
     expect(api.signUpload).not.toHaveBeenCalled();
     expect(api.createPending).not.toHaveBeenCalled();
@@ -116,12 +140,16 @@ describe('Private S3 media permission and pending object registration', () => {
 
   it('requires a current profile and an existing referenced resource', async () => {
     const absent = setup(null);
-    await expect(absent.useCase.execute(ADMIN, photo)).rejects.toBeInstanceOf(AppError);
+    await expect(absent.useCase.execute(ADMIN, photo)).rejects.toBeInstanceOf(
+      AppError,
+    );
     expect(absent.signUpload).not.toHaveBeenCalled();
 
     const missing = setup();
     missing.existsForTarget.mockResolvedValue(false);
-    await expect(missing.useCase.execute(ADMIN, photo)).rejects.toBeInstanceOf(AppError);
+    await expect(missing.useCase.execute(ADMIN, photo)).rejects.toBeInstanceOf(
+      AppError,
+    );
     expect(missing.signUpload).not.toHaveBeenCalled();
     expect(missing.createPending).not.toHaveBeenCalled();
   });
@@ -129,14 +157,18 @@ describe('Private S3 media permission and pending object registration', () => {
   it('never returns an unsigned ticket or persists metadata after S3 signing fails', async () => {
     const api = setup();
     api.signUpload.mockRejectedValueOnce(new Error('storage offline'));
-    await expect(api.useCase.execute(ADMIN, photo)).rejects.toThrow('storage offline');
+    await expect(api.useCase.execute(ADMIN, photo)).rejects.toThrow(
+      'storage offline',
+    );
     expect(api.createPending).not.toHaveBeenCalled();
   });
 
   it('never returns a signed URL if writing the pending record fails', async () => {
     const api = setup();
     api.createPending.mockRejectedValueOnce(new Error('database offline'));
-    await expect(api.useCase.execute(ADMIN, photo)).rejects.toThrow('database offline');
+    await expect(api.useCase.execute(ADMIN, photo)).rejects.toThrow(
+      'database offline',
+    );
   });
 
   it('refuses an excessive TTL or unexpected signed header from the adapter', async () => {
