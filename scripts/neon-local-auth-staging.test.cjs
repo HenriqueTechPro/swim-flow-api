@@ -26,7 +26,7 @@ function after() {
     local_migration_ok: 1, identity_rows: 0, token_rows: 0, local_constraints: 9 };
 }
 
-test('checks the two immutable migrations offline', () => {
+test('checks two frozen migrations and one additive media migration offline', () => {
   assert.equal(verifyVersionedMigrations(), true);
 });
 
@@ -67,26 +67,21 @@ test('check mode does not call any database action', async () => {
     inspectAfter: unexpected,
     status: unexpected,
   });
-  assert.deepEqual(result, { verifiedFiles: 2, wroteDatabase: false });
+  assert.deepEqual(result, { verifiedFiles: 3, wroteDatabase: false });
 });
 
-test('apply mode enforces order, verifies everything and blocks writes when preflight fails', async () => {
-  const calls = [];
-  const mock = {
-    inspectBefore: async () => { calls.push('before'); return before(); },
-    migrate: () => { calls.push('deploy'); },
-    inspectAfter: async () => { calls.push('after'); return after(); },
-    status: () => { calls.push('status'); },
+test('retired one-time local-auth runner refuses applying new media migrations', async () => {
+  const unexpected = () => {
+    throw new Error('Must never access or modify the live staging database');
   };
-  const result = await execute(env, ['--apply'], mock);
-  assert.deepEqual(calls, ['before', 'deploy', 'after', 'status']);
-  assert.equal(result.migrationCount, 2);
-  calls.length = 0;
   await assert.rejects(
     () => execute(env, ['--apply'], {
-      ...mock, inspectBefore: async () => { calls.push('before'); return { ...before(), profiles: 1 }; },
+      inspectBefore: unexpected,
+      migrate: unexpected,
+      inspectAfter: unexpected,
+      status: unexpected,
     }),
-    /approved empty staging baseline/,
+    /runner is retired/,
   );
-  assert.deepEqual(calls, ['before']);
 });
+
