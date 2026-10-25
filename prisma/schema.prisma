@@ -249,6 +249,7 @@ model Profile {
   updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
   authSessions AuthSession[]
   localAuthIdentity LocalAuthIdentity?
+  privateMediaUploads PrivateMediaObject[] @relation("PrivateMediaUploader")
   teacher      Teacher? @relation("TeacherAccount")
 
   @@map("profiles")
@@ -891,4 +892,29 @@ model OpenWaterResult {
   @@index([studentId, distanceMeters, bodyType])
   @@index([eventId, status])
   @@index([seasonId, heldOn])
+}
+
+// Private image object metadata only. The S3 bucket remains private; neither
+// a public URL nor a presigned credential is persisted here.
+// An uploader snapshot survives account deletion; the optional FK is cleared.
+model PrivateMediaObject {
+  id String @id @default(uuid()) @db.Uuid
+  objectKey String @unique @map("object_key") @db.VarChar(255)
+  target String @db.VarChar(32)
+  resourceId String @map("resource_id") @db.Uuid
+  uploadedById String @map("uploaded_by_id") @db.Uuid
+  uploadedByProfileId String? @map("uploaded_by_profile_id") @db.Uuid
+  uploader Profile? @relation("PrivateMediaUploader", fields: [uploadedByProfileId], references: [id], onDelete: SetNull)
+  declaredContentType String @map("declared_content_type") @db.VarChar(32)
+  declaredSizeBytes Int @map("declared_size_bytes")
+  status String @default("PENDING") @db.VarChar(16)
+  ticketExpiresAt DateTime @map("ticket_expires_at") @db.Timestamptz(6)
+  verifiedAt DateTime? @map("verified_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([target, resourceId, status])
+  @@index([uploadedById, status])
+  @@index([status, ticketExpiresAt])
+  @@map("private_media_objects")
 }

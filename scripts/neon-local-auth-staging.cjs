@@ -17,6 +17,15 @@ const EXPECTED = Object.freeze({
   '20261020000000_init_neon': 'e98a2c3c9940e55344fc39c7a551979c7b2b20362783e2ddf44ab01b40fc3e80',
   '20261021000000_local_auth_identity_foundation': '7a010c592b4c30b6d2e8a609ccd593c8bea262e98371fa2e99d3211a26f046a5',
 });
+// New migrations must be reviewed and pinned individually. The former
+// first-local-auth bootstrap runner remains retired for all apply operations.
+const ADDITIONAL_MIGRATION_BLOBS = Object.freeze({
+  '20261025000000_private_media_object_metadata': '18443faa28d55ee13eec99bc3bda472e6e5822d8',
+});
+const HISTORICAL_MIGRATIONS = Object.keys(EXPECTED).length;
+const APPROVED_MIGRATIONS = HISTORICAL_MIGRATIONS +
+  Object.keys(ADDITIONAL_MIGRATION_BLOBS).length;
+
 const STAGING = Object.freeze({
   projectId: 'raspy-breeze-33258358',
   branchId: 'br-gentle-wildflower-b7qrnd74',
@@ -31,13 +40,27 @@ function verifyVersionedMigrations(root = ROOT) {
   const names = readdirSync(dir, { withFileTypes: true })
     .filter((file) => file.isDirectory() && /^\d{14}_/.test(file.name))
     .map((file) => file.name).sort();
-  if (JSON.stringify(names) !== JSON.stringify(Object.keys(EXPECTED).sort())) {
+  if (JSON.stringify(names) !== JSON.stringify([
+    ...Object.keys(EXPECTED), ...Object.keys(ADDITIONAL_MIGRATION_BLOBS),
+  ].sort())) {
     throw new Error('Unexpected migration inventory');
   }
   for (const [name, checksum] of Object.entries(EXPECTED)) {
     const data = readFileSync(resolve(dir, name, 'migration.sql'));
     if (createHash('sha256').update(data).digest('hex') !== checksum) {
       throw new Error('Versioned migration checksum mismatch');
+    }
+  }
+  // Git blob SHA-1 pins the exact bytes of the new, reviewed migration.
+  // Historical migrations remain pinned by their existing SHA-256 digests.
+  for (const [name, expectedBlob] of Object.entries(ADDITIONAL_MIGRATION_BLOBS)) {
+    const data = readFileSync(resolve(dir, name, 'migration.sql'));
+    const blob = createHash('sha1')
+      .update(Buffer.from('blob ' + data.length + '\0'))
+      .update(data)
+      .digest('hex');
+    if (blob !== expectedBlob) {
+      throw new Error('Additional migration checksum mismatch');
     }
   }
   return true;
@@ -142,7 +165,13 @@ async function execute(env, args, deps) {
   verifyVersionedMigrations(deps.root || ROOT);
   if (args.length === 1 && args[0] === '--check') {
     // Offline-only check; safe in CI without secrets.
-    return { verifiedFiles: 2, wroteDatabase: false };
+    return { verifiedFiles: APPROVED_MIGRATIONS, wroteDatabase: false };
+  }
+  // This script was a ONE-TIME local-identity migration for an EMPTY Neon
+  // staging database. It must never silently deploy new private-media
+  // migrations or write over the now-live administrator's data.
+  if (APPROVED_MIGRATIONS > HISTORICAL_MIGRATIONS) {
+    throw new Error('One-time local-auth migration runner is retired');
   }
   validateApplyTarget(env, args);
   const before = await deps.inspectBefore();
@@ -159,7 +188,7 @@ async function main() {
     const args = process.argv.slice(2);
     if (args.length === 1 && args[0] === '--check') {
       await execute(process.env, args, { root: ROOT });
-      process.stdout.write('Incremental staging migration files verified; no database connection.\n');
+      process.stdout.write('Versioned historical and new migration files verified offline; no database connection.\n');
       return;
     }
     // Do not instantiate Prisma until all flag and destination checks succeed.
