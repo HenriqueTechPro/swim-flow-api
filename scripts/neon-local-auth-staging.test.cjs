@@ -26,7 +26,7 @@ function after() {
     local_migration_ok: 1, identity_rows: 0, token_rows: 0, local_constraints: 9 };
 }
 
-test('checks the two immutable migrations offline', () => {
+test('checks the two historical immutable migrations offline', () => {
   assert.equal(verifyVersionedMigrations(), true);
 });
 
@@ -70,23 +70,17 @@ test('check mode does not call any database action', async () => {
   assert.deepEqual(result, { verifiedFiles: 2, wroteDatabase: false });
 });
 
-test('apply mode enforces order, verifies everything and blocks writes when preflight fails', async () => {
+test('legacy apply refuses future migrations BEFORE querying or writing to staging', async () => {
   const calls = [];
-  const mock = {
-    inspectBefore: async () => { calls.push('before'); return before(); },
-    migrate: () => { calls.push('deploy'); },
-    inspectAfter: async () => { calls.push('after'); return after(); },
-    status: () => { calls.push('status'); },
-  };
-  const result = await execute(env, ['--apply'], mock);
-  assert.deepEqual(calls, ['before', 'deploy', 'after', 'status']);
-  assert.equal(result.migrationCount, 2);
-  calls.length = 0;
+  const unexpected = () => { calls.push('database'); throw new Error('must not run'); };
   await assert.rejects(
     () => execute(env, ['--apply'], {
-      ...mock, inspectBefore: async () => { calls.push('before'); return { ...before(), profiles: 1 }; },
+      inspectBefore: unexpected,
+      migrate: unexpected,
+      inspectAfter: unexpected,
+      status: unexpected,
     }),
-    /approved empty staging baseline/,
+    /Unexpected migration inventory/,
   );
-  assert.deepEqual(calls, ['before']);
+  assert.deepEqual(calls, []);
 });
