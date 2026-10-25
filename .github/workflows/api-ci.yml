@@ -28,11 +28,6 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - name: Temporary PR59 Prettier snapshots (remove before merge)
-        if: github.event_name == 'pull_request' && github.event.pull_request.number == 59
-        run: |
-          node node_modules/prettier/bin/prettier.cjs --write -- src/domain/uploads/application/repositories/private-media-objects-repository.ts src/domain/uploads/application/use-cases/cleanup-private-media-uploads.spec.ts src/domain/uploads/application/use-cases/cleanup-private-media-uploads.ts src/domain/uploads/application/use-cases/confirm-private-media-upload.spec.ts src/domain/uploads/application/use-cases/confirm-private-media-upload.ts src/domain/uploads/application/use-cases/request-private-media-download.spec.ts src/domain/uploads/application/use-cases/request-private-media-download.ts src/infra/database/prisma/repositories/prisma-private-media-objects-repository.spec.ts
-          node -e 'const fs = require("node:fs"); for (const f of ["src/domain/uploads/application/repositories/private-media-objects-repository.ts","src/domain/uploads/application/use-cases/cleanup-private-media-uploads.spec.ts","src/domain/uploads/application/use-cases/cleanup-private-media-uploads.ts","src/domain/uploads/application/use-cases/confirm-private-media-upload.spec.ts","src/domain/uploads/application/use-cases/confirm-private-media-upload.ts","src/domain/uploads/application/use-cases/request-private-media-download.spec.ts","src/domain/uploads/application/use-cases/request-private-media-download.ts","src/infra/database/prisma/repositories/prisma-private-media-objects-repository.spec.ts"]) console.log("FMT_SNAPSHOT:" + f + ":" + JSON.stringify(fs.readFileSync(f, "utf8")))'
       - run: npm run prisma:validate
       - run: npm run prisma:generate
       - name: Verify consecutive builds regenerate production artifacts
