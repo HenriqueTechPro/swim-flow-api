@@ -24,6 +24,7 @@ export type PrivateMediaStatus =
 export interface PrivateMediaObjectRecord extends PendingPrivateMediaObject {
   status: PrivateMediaStatus;
   verifiedAt: Date | null;
+  verifiedEtag: string | null;
 }
 
 /**
@@ -41,6 +42,7 @@ export abstract class PrivateMediaObjectsRepository {
     id: string,
     cutoff: Date,
     verifiedAt: Date,
+    verifiedEtag: string,
   ): Promise<boolean>;
 
   /** PENDING -> REJECTED, never change VERIFIED or DELETED records. */
