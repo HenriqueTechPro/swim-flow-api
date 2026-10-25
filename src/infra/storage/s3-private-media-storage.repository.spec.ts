@@ -29,7 +29,11 @@ function testRepository(
     if (method === 'HEAD') {
       return {
         statusCode: 200,
-        headers: { 'content-type': 'image/png', 'content-length': '8', etag: ETAG },
+        headers: {
+          'content-type': 'image/png',
+          'content-length': '8',
+          etag: ETAG,
+        },
       };
     }
     return {
@@ -93,7 +97,10 @@ describe('S3/R2 private media adapter (offline)', () => {
     const url = new URL(ticket.url);
     expect(ticket.method).toBe('PUT');
     expect(ticket.expiresInSeconds).toBe(90);
-    expect(ticket.headers).toEqual({ 'Content-Type': 'image/png', 'If-None-Match': '*' });
+    expect(ticket.headers).toEqual({
+      'Content-Type': 'image/png',
+      'If-None-Match': '*',
+    });
     expect(url.protocol).toBe('https:');
     expect(url.hostname).toBe(new URL(ENDPOINT).hostname);
     expect(url.pathname).toContain(
@@ -104,7 +111,9 @@ describe('S3/R2 private media adapter (offline)', () => {
     expect(url.searchParams.get('X-Amz-SignedHeaders')).toContain(
       'content-type',
     );
-    expect(url.searchParams.get('X-Amz-SignedHeaders')).toContain('if-none-match');
+    expect(url.searchParams.get('X-Amz-SignedHeaders')).toContain(
+      'if-none-match',
+    );
     expect(ticket.url).not.toContain(CONFIG.secretAccessKey);
     expect(handle).not.toHaveBeenCalled();
   });
@@ -114,16 +123,18 @@ describe('S3/R2 private media adapter (offline)', () => {
     const ticket = await repository.signDownload(OBJECT_KEY, ETAG);
     expect(ticket.expiresInSeconds).toBe(60);
     expect(ticket.headers).toEqual({ 'If-Match': ETAG });
-    expect(new URL(ticket.url).searchParams.get('X-Amz-SignedHeaders')).toContain('if-match');
+    expect(
+      new URL(ticket.url).searchParams.get('X-Amz-SignedHeaders'),
+    ).toContain('if-match');
     expect(new URL(ticket.url).searchParams.get('X-Amz-Expires')).toBe('60');
     expect(handle).not.toHaveBeenCalled();
   });
 
   it('denies arbitrary keys and mismatched MIME types', async () => {
     const { repository, handle } = testRepository();
-    await expect(repository.signDownload('../other-user.png', ETAG)).rejects.toThrow(
-      'invalid-private-media-object-key',
-    );
+    await expect(
+      repository.signDownload('../other-user.png', ETAG),
+    ).rejects.toThrow('invalid-private-media-object-key');
     await expect(
       repository.headObject('private/students/any.png'),
     ).rejects.toThrow('invalid-private-media-object-key');
