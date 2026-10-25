@@ -46,7 +46,10 @@ describe('Verified private image read tickets', () => {
     const api = setup();
     const result = await api.useCase.execute(ACTOR, UPLOAD);
     expect(result.expiresInSeconds).toBe(60);
-    expect(api.storage.signDownload).toHaveBeenCalledWith(verified.objectKey, ETAG);
+    expect(api.storage.signDownload).toHaveBeenCalledWith(
+      verified.objectKey,
+      ETAG,
+    );
     expect(api.resources.existsForTarget).toHaveBeenCalledWith(
       'student-photo',
       RESOURCE,
