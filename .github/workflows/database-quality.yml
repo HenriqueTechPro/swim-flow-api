@@ -54,6 +54,8 @@ jobs:
         run: node node_modules/prisma/build/index.js db execute --file test/sql/neon-baseline-verification.sql --schema prisma/schema.prisma
       - name: Verify staged local identity schema and security constraints
         run: node node_modules/prisma/build/index.js db execute --file test/sql/local-auth-foundation-verification.sql --schema prisma/schema.prisma
+      - name: Verify private media constraints on disposable PostgreSQL
+        run: node node_modules/prisma/build/index.js db execute --file test/sql/private-media-schema-verification.sql --schema prisma/schema.prisma
       - name: Admin bootstrap concurrency on disposable PostgreSQL
         env:
           SWIMFLOW_DISPOSABLE_DB: 'yes'
