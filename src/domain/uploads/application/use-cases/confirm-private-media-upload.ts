@@ -12,6 +12,7 @@ import {
   settledBefore,
 } from '../services/private-media-settlement-policy';
 import { canAccessPrivateMediaRecord } from '../services/private-media-record-access';
+import { isStrongPrivateMediaEtag } from '../services/private-media-etag-policy';
 
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -66,9 +67,15 @@ export class ConfirmPrivateMediaUploadUseCase {
     if (!observed) {
       throw new AppError(409, 'Private upload object not found');
     }
+    if (!isStrongPrivateMediaEtag(observed.etag)) {
+      throw new AppError(409, 'Private upload has no stable object validator');
+    }
+    // The conditional Range read must not succeed if the object changes
+    // between HEAD and GET; an ETag is an opaque version validator, not MD5.
     const firstBytes = await this.storage.readPrefix(
       record.objectKey,
       PRIVATE_MEDIA_SIGNATURE_READ_BYTES,
+      observed.etag,
     );
 
     try {
@@ -90,7 +97,27 @@ export class ConfirmPrivateMediaUploadUseCase {
       );
     }
 
-    if (await this.objects.markVerifiedIfPending(uploadId, cutoff, now)) {
+    // Verify that the object observed during Range is still the same one.
+    // Privileged direct bucket writes remain out of scope; the future live
+    // test must confirm conditional PUT and GET behavior on the real provider.
+    const afterRead = await this.storage.headObject(record.objectKey);
+    if (
+      !afterRead ||
+      afterRead.etag !== observed.etag ||
+      afterRead.sizeBytes !== observed.sizeBytes ||
+      afterRead.contentType !== observed.contentType
+    ) {
+      throw new AppError(409, 'Private image changed during verification');
+    }
+
+    if (
+      await this.objects.markVerifiedIfPending(
+        uploadId,
+        cutoff,
+        now,
+        observed.etag,
+      )
+    ) {
       return { uploadId, status: 'VERIFIED' as const };
     }
 
