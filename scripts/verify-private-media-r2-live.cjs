@@ -190,6 +190,7 @@ async function execute(config) {
         : 'NOTE: replay after DELETE did not succeed in this run; in-flight PUT risk remains unresolved.\n',
     );
   } finally {
+    let cleanupFailed = false;
     // Cleanup only keys created by this run. No ListObjects, no bucket delete,
     // no deletion by prefix and no access to production media.
     for (const key of keys) {
@@ -198,6 +199,7 @@ async function execute(config) {
       }
     }
     client.destroy();
+    if (cleanupFailed) throw new Error('r2-smoke-cleanup-failed');
   }
 }
 
