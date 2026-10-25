@@ -3,7 +3,6 @@ import { AuthProfilesRepository } from '@/domain/auth/application/repositories/a
 import { ManagedUploadResourcesRepository } from '../repositories/managed-upload-resources-repository';
 import {
   PrivateMediaObjectsRepository,
-  type PrivateMediaObjectRecord,
 } from '../repositories/private-media-objects-repository';
 import { PrivateMediaStorageRepository } from '../repositories/private-media-storage-repository';
 import {
@@ -14,6 +13,7 @@ import {
   PRIVATE_MEDIA_SIGNATURE_READ_BYTES,
   settledBefore,
 } from '../services/private-media-settlement-policy';
+import { canAccessPrivateMediaRecord } from '../services/private-media-record-access';
 
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -37,7 +37,11 @@ export class ConfirmPrivateMediaUploadUseCase {
     }
 
     const record = await this.objects.findById(uploadId);
-    if (!record || !(await this.mayConfirm(actorId, record))) {
+    if (
+      !record ||
+      record.uploadedById !== actorId ||
+      !(await canAccessPrivateMediaRecord(actorId, record, this.profiles, this.resources))
+    ) {
       throw new AppError(404, 'Private media unavailable');
     }
 
@@ -89,28 +93,14 @@ export class ConfirmPrivateMediaUploadUseCase {
     // A concurrent request may already have verified it. Do not misreport
     // success for objects claimed by garbage collection.
     const current = await this.objects.findById(uploadId);
-    if (current?.status === 'VERIFIED' && await this.mayConfirm(actorId, current)) {
+    if (
+      current?.status === 'VERIFIED' &&
+      current.uploadedById === actorId &&
+      await canAccessPrivateMediaRecord(actorId, current, this.profiles, this.resources)
+    ) {
       return { uploadId, status: 'VERIFIED' as const };
     }
     throw new AppError(409, 'Private media state changed during verification');
   }
 
-  private async mayConfirm(
-    actorId: string,
-    record: PrivateMediaObjectRecord,
-  ): Promise<boolean> {
-    if (actorId !== record.uploadedById) return false;
-
-    const profile = await this.profiles.findByUserId(actorId);
-    if (!profile) return false;
-
-    if (record.target === 'profile-avatar') {
-      return record.resourceId === actorId;
-    }
-
-    // This is deliberately stricter than student read scope. No teacher
-    // may confirm a student's photo until record-level write ACL exists.
-    if (profile.role !== 'admin') return false;
-    return this.resources.existsForTarget(record.target, record.resourceId);
-  }
 }
