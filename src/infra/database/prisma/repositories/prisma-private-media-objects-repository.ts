@@ -22,6 +22,7 @@ function toRecord(record: PrivateMediaObject): PrivateMediaObjectRecord {
     ticketExpiresAt: record.ticketExpiresAt,
     status: record.status as PrivateMediaStatus,
     verifiedAt: record.verifiedAt,
+    verifiedEtag: record.verifiedEtag,
   };
 }
 
@@ -64,10 +65,11 @@ export class PrismaPrivateMediaObjectsRepository extends PrivateMediaObjectsRepo
     id: string,
     cutoff: Date,
     verifiedAt: Date,
+    verifiedEtag: string,
   ): Promise<boolean> {
     const updated = await this.prisma.privateMediaObject.updateMany({
       where: { id, status: 'PENDING', ticketExpiresAt: { lte: cutoff } },
-      data: { status: 'VERIFIED', verifiedAt },
+      data: { status: 'VERIFIED', verifiedAt, verifiedEtag },
     });
     return updated.count === 1;
   }
