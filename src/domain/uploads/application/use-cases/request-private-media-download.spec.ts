@@ -18,7 +18,9 @@ const verified = {
 };
 
 function setup() {
-  const profiles = { findByUserId: jest.fn().mockResolvedValue({ id: ACTOR, role: 'admin' }) };
+  const profiles = {
+    findByUserId: jest.fn().mockResolvedValue({ id: ACTOR, role: 'admin' }),
+  };
   const resources = { existsForTarget: jest.fn().mockResolvedValue(true) };
   const objects = { findById: jest.fn().mockResolvedValue(verified) };
   const storage = {
@@ -43,7 +45,8 @@ describe('Verified private image read tickets', () => {
     expect(result.expiresInSeconds).toBe(60);
     expect(api.storage.signDownload).toHaveBeenCalledWith(verified.objectKey);
     expect(api.resources.existsForTarget).toHaveBeenCalledWith(
-      'student-photo', RESOURCE,
+      'student-photo',
+      RESOURCE,
     );
   });
 
@@ -86,14 +89,18 @@ describe('Verified private image read tickets', () => {
   it('allows self-avatar but not another profile avatar', async () => {
     const api = setup();
     api.profiles.findByUserId.mockResolvedValue({ id: ACTOR, role: 'user' });
-    api.objects.findById.mockResolvedValue({ ...verified,
-      target: 'profile-avatar', resourceId: ACTOR,
+    api.objects.findById.mockResolvedValue({
+      ...verified,
+      target: 'profile-avatar',
+      resourceId: ACTOR,
     });
     await expect(api.useCase.execute(ACTOR, UPLOAD)).resolves.toMatchObject({
       expiresInSeconds: 60,
     });
-    api.objects.findById.mockResolvedValue({ ...verified,
-      target: 'profile-avatar', resourceId: RESOURCE,
+    api.objects.findById.mockResolvedValue({
+      ...verified,
+      target: 'profile-avatar',
+      resourceId: RESOURCE,
     });
     await expect(api.useCase.execute(ACTOR, UPLOAD)).rejects.toMatchObject({
       statusCode: 404,
@@ -103,7 +110,8 @@ describe('Verified private image read tickets', () => {
   it('rejects unexpectedly long or insecure signed GET', async () => {
     const api = setup();
     api.storage.signDownload.mockResolvedValue({
-      url: 'http://public.invalid/object', expiresInSeconds: 600,
+      url: 'http://public.invalid/object',
+      expiresInSeconds: 600,
     });
     await expect(api.useCase.execute(ACTOR, UPLOAD)).rejects.toThrow(
       'Invalid private download ticket',
