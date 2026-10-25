@@ -6,6 +6,7 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { isStrongPrivateMediaEtag } from '@/domain/uploads/application/services/private-media-etag-policy';
 import {
   PRIVATE_GET_URL_TTL_SECONDS,
   PRIVATE_PUT_URL_TTL_SECONDS,
@@ -100,16 +101,17 @@ export class S3PrivateMediaStorageRepository extends PrivateMediaStorageReposito
         Bucket: this.bucket,
         Key: input.objectKey,
         ContentType: contentType,
+        IfNoneMatch: '*',
       }),
       {
         expiresIn: PRIVATE_PUT_URL_TTL_SECONDS,
-        signableHeaders: new Set(['content-type']),
+        signableHeaders: new Set(['content-type', 'if-none-match']),
       },
     );
     return {
       method: 'PUT',
       url,
-      headers: { 'Content-Type': contentType },
+      headers: { 'Content-Type': contentType, 'If-None-Match': '*' },
       expiresInSeconds: PRIVATE_PUT_URL_TTL_SECONDS,
     };
   }
@@ -130,6 +132,7 @@ export class S3PrivateMediaStorageRepository extends PrivateMediaStorageReposito
       return {
         contentType: response.ContentType,
         sizeBytes: response.ContentLength,
+        etag: response.ETag,
       };
     } catch (error: unknown) {
       if (isMissingObject(error)) return null;
@@ -137,8 +140,15 @@ export class S3PrivateMediaStorageRepository extends PrivateMediaStorageReposito
     }
   }
 
-  async readPrefix(objectKey: string, maxBytes: number): Promise<Uint8Array> {
+  async readPrefix(
+    objectKey: string,
+    maxBytes: number,
+    etag: string,
+  ): Promise<Uint8Array> {
     requirePrivateObjectKey(objectKey);
+    if (!isStrongPrivateMediaEtag(etag)) {
+      throw new Error('invalid-private-media-etag');
+    }
     if (
       !Number.isSafeInteger(maxBytes) ||
       maxBytes <= 0 ||
@@ -151,6 +161,7 @@ export class S3PrivateMediaStorageRepository extends PrivateMediaStorageReposito
         Bucket: this.bucket,
         Key: objectKey,
         Range: `bytes=0-${maxBytes - 1}`,
+        IfMatch: etag,
       }),
     );
     if (
@@ -176,14 +187,28 @@ export class S3PrivateMediaStorageRepository extends PrivateMediaStorageReposito
     return new Uint8Array(Buffer.concat(chunks, received));
   }
 
-  async signDownload(objectKey: string): Promise<PrivateMediaReadTicket> {
+  async signDownload(
+    objectKey: string,
+    etag: string,
+  ): Promise<PrivateMediaReadTicket> {
     requirePrivateObjectKey(objectKey);
+    if (!isStrongPrivateMediaEtag(etag)) {
+      throw new Error('invalid-private-media-etag');
+    }
     return {
       url: await getSignedUrl(
         this.client,
-        new GetObjectCommand({ Bucket: this.bucket, Key: objectKey }),
-        { expiresIn: PRIVATE_GET_URL_TTL_SECONDS },
+        new GetObjectCommand({
+          Bucket: this.bucket,
+          Key: objectKey,
+          IfMatch: etag,
+        }),
+        {
+          expiresIn: PRIVATE_GET_URL_TTL_SECONDS,
+          signableHeaders: new Set(['if-match']),
+        },
       ),
+      headers: { 'If-Match': etag },
       expiresInSeconds: PRIVATE_GET_URL_TTL_SECONDS,
     };
   }
