@@ -19,7 +19,10 @@ export class CleanupPrivateMediaUploadsUseCase {
     private readonly storage: PrivateMediaStorageRepository,
   ) {}
 
-  async execute(now = new Date(), limit = 25): Promise<PrivateMediaCleanupSummary> {
+  async execute(
+    now = new Date(),
+    limit = 25,
+  ): Promise<PrivateMediaCleanupSummary> {
     const cutoff = settledBefore(now);
     const candidates = await this.objects.listCleanupCandidates(cutoff, limit);
     let deleted = 0;
@@ -27,7 +30,10 @@ export class CleanupPrivateMediaUploadsUseCase {
 
     for (const candidate of candidates) {
       if (candidate.status === 'PENDING') {
-        const claimed = await this.objects.rejectIfPending(candidate.id, cutoff);
+        const claimed = await this.objects.rejectIfPending(
+          candidate.id,
+          cutoff,
+        );
         // If confirmation won first, do not delete its now-VERIFIED bytes.
         if (!claimed) continue;
       } else if (candidate.status !== 'REJECTED') {
