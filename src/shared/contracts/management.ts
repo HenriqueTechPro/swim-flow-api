@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { isValidDurationString } from '@/shared/utils/duration';
 import { normalizeWeekday, weekdayValues } from './weekdays';
+import { isValidCpf } from '@/shared/utils/cpf';
 
 export const studentGenderValues = ["Masculino", "Feminino"] as const;
 export const resultStyleValues = ["Livre", "Costas", "Peito", "Borboleta", "Medley"] as const;
@@ -165,7 +166,11 @@ export const updateStudentSchema = createStudentSchema.partial().extend({
 
 export const createTeacherSchema = z.object({
   name: z.string().min(3),
-  cpf: z.string().optional().nullable(),
+  cpf: z
+    .string()
+    .optional()
+    .nullable()
+    .refine((value) => !value || isValidCpf(value), 'Invalid CPF'),
   birthDate: z.string().optional().nullable(),
   email: z.string().email(),
   phone: z.string().min(1),
@@ -190,7 +195,11 @@ export const updateTeacherSchema = createTeacherSchema.partial().extend({
 
 export const createParentSchema = z.object({
   name: z.string().min(3),
-  cpf: z.string().optional().nullable(),
+  cpf: z
+    .string()
+    .optional()
+    .nullable()
+    .refine((value) => !value || isValidCpf(value), 'Invalid CPF'),
   birthDate: z.string().optional().nullable(),
   photo: z.string().optional().nullable(),
   childrenIds: z.array(z.string().uuid()).default([]),
