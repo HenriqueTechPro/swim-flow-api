@@ -171,6 +171,55 @@ describe('Prisma private media compare-and-swap transitions', () => {
     expect(await repository.assignActiveVerifiedBlob(input)).toBe(false);
   });
 
+  it('scans only aged, unbound VERIFIED Blob metadata with a bounded query', async () => {
+    const resultRow = {
+      id: UUID,
+      target: 'student-photo',
+      declaredSizeBytes: 200,
+      verifiedAt: VERIFIED_AT,
+    };
+    prisma.privateMediaObject.findMany.mockResolvedValue([resultRow]);
+    expect(
+      await repository.listUnboundVerifiedBlobCandidates(CUTOFF, 26),
+    ).toEqual([resultRow]);
+    expect(prisma.privateMediaObject.findMany).toHaveBeenCalledWith({
+      where: {
+        storageProvider: 'BLOB',
+        status: 'VERIFIED',
+        ticketExpiresAt: null,
+        verifiedAt: { lte: CUTOFF },
+        createdAt: { lte: CUTOFF },
+        activeBindings: { none: {} },
+      },
+      orderBy: [{ verifiedAt: 'asc' }, { id: 'asc' }],
+      take: 26,
+      select: {
+        id: true,
+        target: true,
+        declaredSizeBytes: true,
+        verifiedAt: true,
+      },
+    });
+    for (const limit of [-1, 0, 52, 1.5]) {
+      await expect(
+        repository.listUnboundVerifiedBlobCandidates(CUTOFF, limit),
+      ).rejects.toThrow('invalid-private-blob-audit-query');
+    }
+    expect(prisma.privateMediaObject.findMany).toHaveBeenCalledTimes(1);
+  });
+
+  it('refuses to classify unverified metadata as a cleanup candidate', async () => {
+    prisma.privateMediaObject.findMany.mockResolvedValueOnce([{
+      id: UUID,
+      target: 'student-photo',
+      declaredSizeBytes: 100,
+      verifiedAt: null,
+    }]);
+    await expect(
+      repository.listUnboundVerifiedBlobCandidates(CUTOFF, 25),
+    ).rejects.toThrow('invalid-private-blob-audit-metadata');
+  });
+
   it('atomically verifies only PENDING whose PUT grace is over', async () => {
     prisma.privateMediaObject.updateMany.mockResolvedValue({ count: 1 });
     expect(
