@@ -25,6 +25,7 @@ const row = {
 
 describe('Prisma private media compare-and-swap transitions', () => {
   const prisma = {
+    privateMediaActiveBinding: { create: jest.fn(), updateMany: jest.fn() },
     privateMediaObject: {
       create: jest.fn(),
       findUnique: jest.fn(),
@@ -86,13 +87,61 @@ describe('Prisma private media compare-and-swap transitions', () => {
     });
   });
 
+  it('assigns first Blob image only if there is no current binding', async () => {
+    prisma.privateMediaActiveBinding.create.mockResolvedValue({ mediaId: UUID });
+    const input = {
+      target: 'student-photo' as const,
+      resourceId: row.resourceId,
+      mediaId: UUID,
+      expectedMediaId: null,
+    };
+    expect(await repository.assignActiveVerifiedBlob(input)).toBe(true);
+    expect(prisma.privateMediaActiveBinding.create).toHaveBeenCalledWith({
+      data: {
+        target: 'student-photo',
+        resourceId: row.resourceId,
+        mediaId: UUID,
+        storageProvider: 'BLOB',
+        status: 'VERIFIED',
+      },
+      select: { mediaId: true },
+    });
+    prisma.privateMediaActiveBinding.create.mockRejectedValueOnce({ code: 'P2002' });
+    expect(await repository.assignActiveVerifiedBlob(input)).toBe(false);
+    prisma.privateMediaActiveBinding.create.mockRejectedValueOnce({ code: 'P2003' });
+    await expect(repository.assignActiveVerifiedBlob(input)).rejects.toMatchObject({
+      code: 'P2003',
+    });
+  });
+
+  it('conditionally replaces only the expected old photo', async () => {
+    prisma.privateMediaActiveBinding.updateMany.mockResolvedValue({ count: 1 });
+    const input = {
+      target: 'student-photo' as const,
+      resourceId: row.resourceId,
+      mediaId: UUID,
+      expectedMediaId: '44444444-4444-4444-8444-444444444444',
+    };
+    expect(await repository.assignActiveVerifiedBlob(input)).toBe(true);
+    expect(prisma.privateMediaActiveBinding.updateMany).toHaveBeenCalledWith({
+      where: {
+        target: input.target,
+        resourceId: input.resourceId,
+        mediaId: input.expectedMediaId,
+      },
+      data: { mediaId: input.mediaId },
+    });
+    prisma.privateMediaActiveBinding.updateMany.mockResolvedValueOnce({ count: 0 });
+    expect(await repository.assignActiveVerifiedBlob(input)).toBe(false);
+  });
+
   it('atomically verifies only PENDING whose PUT grace is over', async () => {
     prisma.privateMediaObject.updateMany.mockResolvedValue({ count: 1 });
     expect(
       await repository.markVerifiedIfPending(UUID, CUTOFF, VERIFIED_AT, ETAG),
     ).toBe(true);
     expect(prisma.privateMediaObject.updateMany).toHaveBeenCalledWith({
-      where: { id: UUID, status: 'PENDING', ticketExpiresAt: { lte: CUTOFF } },
+      where: { id: UUID, status: 'PENDING', storageProvider: 'R2', ticketExpiresAt: { lte: CUTOFF } },
       data: { status: 'VERIFIED', verifiedAt: VERIFIED_AT, verifiedEtag: ETAG },
     });
   });
@@ -115,6 +164,7 @@ describe('Prisma private media compare-and-swap transitions', () => {
     expect(prisma.privateMediaObject.findMany).toHaveBeenCalledWith({
       where: {
         status: { in: ['PENDING', 'REJECTED'] },
+        storageProvider: 'R2',
         ticketExpiresAt: { lte: CUTOFF },
       },
       take: 25,
@@ -129,7 +179,7 @@ describe('Prisma private media compare-and-swap transitions', () => {
     prisma.privateMediaObject.updateMany.mockResolvedValue({ count: 1 });
     expect(await repository.markDeletedIfRejected(UUID)).toBe(true);
     expect(prisma.privateMediaObject.updateMany).toHaveBeenCalledWith({
-      where: { id: UUID, status: 'REJECTED' },
+      where: { id: UUID, status: 'REJECTED', storageProvider: 'R2' },
       data: { status: 'DELETED' },
     });
   });
