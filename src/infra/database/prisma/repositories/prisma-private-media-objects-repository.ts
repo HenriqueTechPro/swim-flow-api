@@ -138,7 +138,7 @@ export class PrismaPrivateMediaObjectsRepository extends PrivateMediaObjectsRepo
     verifiedEtag: string,
   ): Promise<boolean> {
     const updated = await this.prisma.privateMediaObject.updateMany({
-      where: { id, status: 'PENDING', ticketExpiresAt: { lte: cutoff } },
+      where: { id, status: 'PENDING', storageProvider: 'R2', ticketExpiresAt: { lte: cutoff } },
       data: { status: 'VERIFIED', verifiedAt, verifiedEtag },
     });
     return updated.count === 1;
@@ -162,6 +162,7 @@ export class PrismaPrivateMediaObjectsRepository extends PrivateMediaObjectsRepo
     const records = await this.prisma.privateMediaObject.findMany({
       where: {
         status: { in: ['PENDING', 'REJECTED'] },
+        storageProvider: 'R2',
         ticketExpiresAt: { lte: cutoff },
       },
       take: limit,
@@ -172,7 +173,7 @@ export class PrismaPrivateMediaObjectsRepository extends PrivateMediaObjectsRepo
 
   async markDeletedIfRejected(id: string): Promise<boolean> {
     const updated = await this.prisma.privateMediaObject.updateMany({
-      where: { id, status: 'REJECTED' },
+      where: { id, status: 'REJECTED', storageProvider: 'R2' },
       data: { status: 'DELETED' },
     });
     return updated.count === 1;
