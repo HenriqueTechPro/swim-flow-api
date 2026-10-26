@@ -28,63 +28,32 @@ const parent = {
   status: 'Ativo',
 };
 
+const checkCpfAcrossRequests = (cpf?: string | null): boolean[] => [
+  createTeacherRequestSchema.safeParse({ ...teacher, cpf }).success,
+  updateTeacherRequestSchema.safeParse({ ...teacher, cpf }).success,
+  createParentRequestSchema.safeParse({ ...parent, cpf }).success,
+  updateParentRequestSchema.safeParse({ ...parent, cpf }).success,
+];
+
 describe('CPF validation on NestJS create and update DTOs', () => {
-  it('keeps CPF optional and accepts valid formatted or numeric forms', () => {
-    for (const cpf of [
-      undefined,
-      null,
-      '',
-      '52998224725',
-      '529.982.247-25',
-    ]) {
-      for (const schema of [
-        createTeacherRequestSchema,
-        updateTeacherRequestSchema,
-      ]) {
-        expect(schema.safeParse({ ...teacher, cpf }).success).toBe(true);
-      }
-      for (const schema of [
-        createParentRequestSchema,
-        updateParentRequestSchema,
-      ]) {
-        expect(schema.safeParse({ ...parent, cpf }).success).toBe(true);
-      }
-    }
+  it('accepts an omitted, empty or valid CPF', () => {
+    const valid = [true, true, true, true];
+
+    expect(checkCpfAcrossRequests(undefined)).toEqual(valid);
+    expect(checkCpfAcrossRequests(null)).toEqual(valid);
+    expect(checkCpfAcrossRequests('')).toEqual(valid);
+    expect(checkCpfAcrossRequests('52998224725')).toEqual(valid);
+    expect(checkCpfAcrossRequests('529.982.247-25')).toEqual(valid);
   });
 
   it('rejects invalid CPFs for create and update', () => {
-    for (const cpf of [
-      '529.982.247-26',
-      '52998224726',
-      '000.000.000-00',
-      '12345678901',
-      '52998224725x',
-      '529.982.247',
-    ]) {
-      for (const schema of [
-        createTeacherRequestSchema,
-        updateTeacherRequestSchema,
-      ]) {
-        const result = schema.safeParse({ ...teacher, cpf });
-        expect(result.success).toBe(false);
-        if (!result.success) {
-          expect(
-            result.error.issues.some((issue) => issue.path[0] === 'cpf'),
-          ).toBe(true);
-        }
-      }
-      for (const schema of [
-        createParentRequestSchema,
-        updateParentRequestSchema,
-      ]) {
-        const result = schema.safeParse({ ...parent, cpf });
-        expect(result.success).toBe(false);
-        if (!result.success) {
-          expect(
-            result.error.issues.some((issue) => issue.path[0] === 'cpf'),
-          ).toBe(true);
-        }
-      }
-    }
+    const invalid = [false, false, false, false];
+
+    expect(checkCpfAcrossRequests('529.982.247-26')).toEqual(invalid);
+    expect(checkCpfAcrossRequests('52998224726')).toEqual(invalid);
+    expect(checkCpfAcrossRequests('000.000.000-00')).toEqual(invalid);
+    expect(checkCpfAcrossRequests('12345678901')).toEqual(invalid);
+    expect(checkCpfAcrossRequests('52998224725x')).toEqual(invalid);
+    expect(checkCpfAcrossRequests('529.982.247')).toEqual(invalid);
   });
 });
