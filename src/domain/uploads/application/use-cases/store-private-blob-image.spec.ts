@@ -13,11 +13,15 @@ const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x01, 0x02, 0x03, 0x04]);
 
 function setup(role: 'admin' | 'teacher' | 'user' | null = 'admin') {
   const profiles = {
-    findByUserId: jest.fn().mockResolvedValue(role ? { id: ACTOR, role } : null),
+    findByUserId: jest
+      .fn()
+      .mockResolvedValue(role ? { id: ACTOR, role } : null),
   };
   const resources = { existsForTarget: jest.fn().mockResolvedValue(true) };
   const images = {
-    normalize: jest.fn().mockResolvedValue({ bytes: JPEG, contentType: 'image/jpeg' }),
+    normalize: jest
+      .fn()
+      .mockResolvedValue({ bytes: JPEG, contentType: 'image/jpeg' }),
   };
   const blobs = {
     put: jest.fn().mockImplementation(async (input: { pathname: string }) => ({
@@ -28,7 +32,9 @@ function setup(role: 'admin' | 'teacher' | 'user' | null = 'admin') {
     })),
     delete: jest.fn().mockResolvedValue(undefined),
   };
-  const records = { createVerifiedBlob: jest.fn().mockResolvedValue(undefined) };
+  const records = {
+    createVerifiedBlob: jest.fn().mockResolvedValue(undefined),
+  };
   const useCase = new StorePrivateBlobImageUseCase(
     profiles as unknown as AuthProfilesRepository,
     resources as unknown as ManagedUploadResourcesRepository,
@@ -50,7 +56,10 @@ describe('Blob private upload use case: conservative current ACL + clean bytes',
   it('uploads normalized JPEG with an opaque key and saves VERIFIED metadata only', async () => {
     const api = setup();
     const result = await api.useCase.execute(ACTOR, photo);
-    expect(result).toEqual({ uploadId: expect.any(String), status: 'VERIFIED' });
+    expect(result).toEqual({
+      uploadId: expect.any(String),
+      status: 'VERIFIED',
+    });
     expect(api.images.normalize).toHaveBeenCalledWith(RAW, 'image/png');
     const stored = api.blobs.put.mock.calls[0][0] as {
       pathname: string;
@@ -92,18 +101,22 @@ describe('Blob private upload use case: conservative current ACL + clean bytes',
 
   it('allows self-avatar for a non-admin but no foreign profile scope', async () => {
     const api = setup('user');
-    await expect(api.useCase.execute(ACTOR, {
-      target: 'profile-avatar',
-      contentType: 'image/png',
-      bytes: RAW,
-    })).resolves.toMatchObject({ status: 'VERIFIED' });
+    await expect(
+      api.useCase.execute(ACTOR, {
+        target: 'profile-avatar',
+        contentType: 'image/png',
+        bytes: RAW,
+      }),
+    ).resolves.toMatchObject({ status: 'VERIFIED' });
     expect(api.resources.existsForTarget).not.toHaveBeenCalled();
-    await expect(api.useCase.execute(ACTOR, {
-      target: 'profile-avatar',
-      resourceId: STUDENT,
-      contentType: 'image/png',
-      bytes: RAW,
-    })).rejects.toMatchObject({ statusCode: 400 });
+    await expect(
+      api.useCase.execute(ACTOR, {
+        target: 'profile-avatar',
+        resourceId: STUDENT,
+        contentType: 'image/png',
+        bytes: RAW,
+      }),
+    ).rejects.toMatchObject({ statusCode: 400 });
   });
 
   it('fails closed after role revocation during processing', async () => {
@@ -119,8 +132,12 @@ describe('Blob private upload use case: conservative current ACL + clean bytes',
 
   it('compensates exact generation after lost role or database failure', async () => {
     const db = setup();
-    db.records.createVerifiedBlob.mockRejectedValue(new Error('database offline'));
-    await expect(db.useCase.execute(ACTOR, photo)).rejects.toThrow('database offline');
+    db.records.createVerifiedBlob.mockRejectedValue(
+      new Error('database offline'),
+    );
+    await expect(db.useCase.execute(ACTOR, photo)).rejects.toThrow(
+      'database offline',
+    );
     expect(db.blobs.delete).toHaveBeenCalledWith(
       db.blobs.put.mock.results[0].value.then
         ? expect.stringMatching(/^private\/students\//)
@@ -142,7 +159,9 @@ describe('Blob private upload use case: conservative current ACL + clean bytes',
   it('reports fail-closed compensation failure without exposing image path', async () => {
     const api = setup();
     api.records.createVerifiedBlob.mockRejectedValue(new Error('db broken'));
-    api.blobs.delete.mockRejectedValue(new Error('remote unavailable with URL'));
+    api.blobs.delete.mockRejectedValue(
+      new Error('remote unavailable with URL'),
+    );
     await expect(api.useCase.execute(ACTOR, photo)).rejects.toThrow(
       'private-blob-compensation-failed',
     );
@@ -153,9 +172,12 @@ describe('Blob private upload use case: conservative current ACL + clean bytes',
     await expect(api.useCase.execute('invalid', photo)).rejects.toMatchObject({
       statusCode: 400,
     });
-    await expect(api.useCase.execute(ACTOR, {
-      ...photo, contentType: 'image/svg+xml',
-    })).rejects.toMatchObject({ statusCode: 400 });
+    await expect(
+      api.useCase.execute(ACTOR, {
+        ...photo,
+        contentType: 'image/svg+xml',
+      }),
+    ).rejects.toMatchObject({ statusCode: 400 });
     expect(api.images.normalize).not.toHaveBeenCalled();
     expect(api.blobs.put).not.toHaveBeenCalled();
   });
