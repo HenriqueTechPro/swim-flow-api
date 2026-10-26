@@ -1,10 +1,6 @@
 import { del, get, head, put } from '@vercel/blob';
-import {
-  MAX_PRIVATE_IMAGE_BYTES,
-} from '@/domain/uploads/application/services/private-media-upload-policy';
-import {
-  verifyPrivateImageObject,
-} from '@/domain/uploads/application/services/verify-private-media-upload';
+import { MAX_PRIVATE_IMAGE_BYTES } from '@/domain/uploads/application/services/private-media-upload-policy';
+import { verifyPrivateImageObject } from '@/domain/uploads/application/services/verify-private-media-upload';
 import { isStrongPrivateMediaEtag } from '@/domain/uploads/application/services/private-media-etag-policy';
 import {
   PrivateBlobStorageRepository,
@@ -45,7 +41,7 @@ function requirePrivateBlobUrl(value: string, pathname: string): void {
   }
   if (
     url.protocol !== 'https:' ||
-    !/^[a-z0-9-]+\\.private\\.blob\\.vercel-storage\\.com$/.test(
+    !/^[a-z0-9-]+\.private\.blob\.vercel-storage\.com$/.test(
       url.hostname,
     ) ||
     url.username ||
@@ -86,8 +82,8 @@ function requireBlobMetadata(
     typeof metadata.contentType !== 'string' ||
     !MIME_EXTENSION[metadata.contentType] ||
     !pathname.endsWith(MIME_EXTENSION[metadata.contentType]) ||
-    !Number.isSafeInteger(metadata.size) ||
     metadata.size === null ||
+    !Number.isSafeInteger(metadata.size) ||
     metadata.size <= 0 ||
     metadata.size > MAX_PRIVATE_IMAGE_BYTES
   ) {
