@@ -80,6 +80,17 @@ export class PrismaPrivateMediaObjectsRepository extends PrivateMediaObjectsRepo
     });
   }
 
+  async findActiveMediaId(
+    target: ManagedUploadTarget,
+    resourceId: string,
+  ): Promise<string | null> {
+    const binding = await this.prisma.privateMediaActiveBinding.findUnique({
+      where: { target_resourceId: { target, resourceId } },
+      select: { mediaId: true },
+    });
+    return binding?.mediaId ?? null;
+  }
+
   async assignActiveVerifiedBlob(input: {
     target: ManagedUploadTarget;
     resourceId: string;
