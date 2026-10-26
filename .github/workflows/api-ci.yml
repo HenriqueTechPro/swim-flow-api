@@ -27,6 +27,10 @@ jobs:
         with:
           node-version: '22'
           cache: npm
+      - name: Temporary SDK lockfile snapshot (remove before merge)
+        run: |
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          node -e 'const fs = require("node:fs"); console.log("LOCK_B64:" + fs.readFileSync("package-lock.json").toString("base64"))'
       - run: npm ci
       - name: Check private R2 smoke run is opt-in and never touches live buckets
         run: npm run r2:smoke:guard:test
