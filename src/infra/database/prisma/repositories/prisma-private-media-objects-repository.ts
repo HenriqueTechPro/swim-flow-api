@@ -55,11 +55,15 @@ export class PrismaPrivateMediaObjectsRepository extends PrivateMediaObjectsRepo
     });
   }
 
-  async createVerifiedBlob(input: VerifiedPrivateBlobMediaObject): Promise<void> {
+  async createVerifiedBlob(
+    input: VerifiedPrivateBlobMediaObject,
+  ): Promise<void> {
     // The legacy table requires ticket_expires_at even for server-mediated
     // uploads. This future timestamp satisfies that historical CHECK; it is
     // NOT a real client ticket, nor used by the VERIFIED cleanup query.
-    const legacyTicketExpiry = new Date(input.verifiedAt.getTime() + 86_400_000);
+    const legacyTicketExpiry = new Date(
+      input.verifiedAt.getTime() + 86_400_000,
+    );
     await this.prisma.privateMediaObject.create({
       data: {
         id: input.id,
