@@ -179,8 +179,7 @@ async function main() {
     await db.$disconnect();
   }
 }
-void main().catch((error) => {
-  process.stderr.write('TEMP_CI_CLAIM_DIAGNOSTIC:' + String(error?.name || 'Error') + ':' + String(error?.code || 'unknown') + ':' + String(error?.message || 'unknown').slice(0,900) + '\n');
+void main().catch(() => {
   process.stderr.write('Disposable Blob GC claim integrity test failed.\n');
   process.exitCode = 1;
 });
