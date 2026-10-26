@@ -5,6 +5,7 @@ import {
   type PendingPrivateMediaObject,
   type PrivateMediaObjectRecord,
   type PrivateMediaStatus,
+  type VerifiedPrivateBlobMediaObject,
 } from '@/domain/uploads/application/repositories/private-media-objects-repository';
 import type { ManagedUploadTarget } from '@/domain/uploads/application/dtos/managed-upload';
 import { PrismaService } from '../prisma.service';
@@ -49,6 +50,34 @@ export class PrismaPrivateMediaObjectsRepository extends PrivateMediaObjectsRepo
         declaredSizeBytes: input.declaredSizeBytes,
         status: 'PENDING',
         ticketExpiresAt: input.ticketExpiresAt,
+      },
+      select: { id: true },
+    });
+  }
+
+  async createVerifiedBlob(
+    input: VerifiedPrivateBlobMediaObject,
+  ): Promise<void> {
+    // The legacy table requires ticket_expires_at even for server-mediated
+    // uploads. This future timestamp satisfies that historical CHECK; it is
+    // NOT a real client ticket, nor used by the VERIFIED cleanup query.
+    const legacyTicketExpiry = new Date(
+      input.verifiedAt.getTime() + 86_400_000,
+    );
+    await this.prisma.privateMediaObject.create({
+      data: {
+        id: input.id,
+        objectKey: input.objectKey,
+        target: input.target,
+        resourceId: input.resourceId,
+        uploadedById: input.uploadedById,
+        uploadedByProfileId: input.uploadedById,
+        declaredContentType: input.declaredContentType,
+        declaredSizeBytes: input.declaredSizeBytes,
+        status: 'VERIFIED',
+        verifiedAt: input.verifiedAt,
+        verifiedEtag: input.verifiedEtag,
+        ticketExpiresAt: legacyTicketExpiry,
       },
       select: { id: true },
     });

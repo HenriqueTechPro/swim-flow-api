@@ -62,6 +62,10 @@ jobs:
         env:
           SWIMFLOW_DISPOSABLE_DB: 'yes'
         run: node scripts/verify-private-media-lifecycle.cjs
+      - name: Server-verified Vercel Blob records (disposable PostgreSQL only)
+        env:
+          SWIMFLOW_DISPOSABLE_DB: 'yes'
+        run: node scripts/verify-private-blob-verified.cjs
       - name: Admin bootstrap concurrency on disposable PostgreSQL
         env:
           SWIMFLOW_DISPOSABLE_DB: 'yes'
