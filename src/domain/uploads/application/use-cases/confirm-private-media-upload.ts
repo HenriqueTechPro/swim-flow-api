@@ -56,6 +56,9 @@ export class ConfirmPrivateMediaUploadUseCase {
       throw new AppError(409, 'Private media is no longer pending');
     }
 
+    if (!record.ticketExpiresAt) {
+      throw new AppError(409, 'Signed upload ticket is absent');
+    }
     const cutoff = settledBefore(now);
     if (record.ticketExpiresAt.getTime() > cutoff.getTime()) {
       throw new AppError(409, 'Signed upload may still be in progress');
