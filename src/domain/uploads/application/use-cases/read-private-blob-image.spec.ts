@@ -22,6 +22,7 @@ function setup() {
     target: 'student-photo',
     resourceId: STUDENT,
     status: 'VERIFIED',
+    storageProvider: 'BLOB',
     verifiedEtag: ETAG,
     declaredSizeBytes: 8,
     declaredContentType: 'image/jpeg',
