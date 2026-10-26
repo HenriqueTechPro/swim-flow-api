@@ -10,7 +10,10 @@ import {
 } from '@/domain/uploads/application/repositories/private-blob-storage-repository';
 import type { PrivateVercelBlobConfig } from './private-vercel-blob-config';
 
-type BlobSdk = Pick<typeof import('@vercel/blob'), 'put' | 'head' | 'get' | 'del'>;
+type BlobSdk = Pick<
+  typeof import('@vercel/blob'),
+  'put' | 'head' | 'get' | 'del'
+>;
 
 const SDK: BlobSdk = { put, head, get, del };
 const UUID_PART =
@@ -41,9 +44,7 @@ function requirePrivateBlobUrl(value: string, pathname: string): void {
   }
   if (
     url.protocol !== 'https:' ||
-    !/^[a-z0-9-]+\.private\.blob\.vercel-storage\.com$/.test(
-      url.hostname,
-    ) ||
+    !/^[a-z0-9-]+\.private\.blob\.vercel-storage\.com$/.test(url.hostname) ||
     url.username ||
     url.password ||
     url.search ||
@@ -133,14 +134,18 @@ export class VercelPrivateBlobStorageRepository extends PrivateBlobStorageReposi
       firstBytes: input.bytes.subarray(0, 64),
     });
 
-    const uploaded = await this.sdk.put(input.pathname, Buffer.from(input.bytes), {
-      access: 'private',
-      token: this.token,
-      allowOverwrite: false,
-      addRandomSuffix: false,
-      contentType: input.contentType,
-      cacheControlMaxAge: 60,
-    });
+    const uploaded = await this.sdk.put(
+      input.pathname,
+      Buffer.from(input.bytes),
+      {
+        access: 'private',
+        token: this.token,
+        allowOverwrite: false,
+        addRandomSuffix: false,
+        contentType: input.contentType,
+        cacheControlMaxAge: 60,
+      },
+    );
     if (
       uploaded.pathname !== input.pathname ||
       uploaded.contentType !== input.contentType
