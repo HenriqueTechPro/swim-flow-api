@@ -66,6 +66,10 @@ jobs:
         env:
           SWIMFLOW_DISPOSABLE_DB: 'yes'
         run: node scripts/verify-private-blob-verified.cjs
+      - name: Active Blob photo binding integrity and CAS (disposable PostgreSQL)
+        env:
+          SWIMFLOW_DISPOSABLE_DB: 'yes'
+        run: node scripts/verify-private-blob-binding.cjs
       - name: Admin bootstrap concurrency on disposable PostgreSQL
         env:
           SWIMFLOW_DISPOSABLE_DB: 'yes'
