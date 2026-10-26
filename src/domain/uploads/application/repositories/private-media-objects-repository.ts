@@ -45,6 +45,7 @@ export interface PrivateMediaObjectRecord extends Omit<
   verifiedAt: Date | null;
   verifiedEtag: string | null;
   cleanupClaimedAt: Date | null;
+  cleanupCompletedAt: Date | null;
 }
 
 /**
@@ -111,6 +112,17 @@ export abstract class PrivateMediaObjectsRepository {
     mediaId: string,
     cutoff: Date,
     claimedAt: Date,
+  ): Promise<boolean>;
+
+  /**
+   * CAS completion only after the caller has confirmed that the exact remote
+   * object is ABSENT. Cannot complete a live or unclaimed photo.
+   */
+  abstract completeClaimedBlobCleanup(
+    mediaId: string,
+    etag: string,
+    claimedAt: Date,
+    completedAt: Date,
   ): Promise<boolean>;
 
   /** PENDING -> VERIFIED only after byte/HEAD verification and expiry. */
