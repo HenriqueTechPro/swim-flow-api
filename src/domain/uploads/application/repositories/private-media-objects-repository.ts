@@ -57,6 +57,12 @@ export abstract class PrivateMediaObjectsRepository {
 
   abstract findById(id: string): Promise<PrivateMediaObjectRecord | null>;
 
+  /** Current binding only; never infer an active image from a UUID alone. */
+  abstract findActiveMediaId(
+    target: ManagedUploadTarget,
+    resourceId: string,
+  ): Promise<string | null>;
+
   /**
    * Optimistic reference swap. When expectedMediaId is null, attach only if no
    * current image exists; otherwise replace only that exact old media ID.
