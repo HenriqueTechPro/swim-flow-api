@@ -142,6 +142,55 @@ export class PrismaPrivateMediaObjectsRepository extends PrivateMediaObjectsRepo
     return object ? toRecord(object) : null;
   }
 
+  async listUnboundVerifiedBlobCandidates(
+    cutoff: Date,
+    limit: number,
+  ): Promise<ReadonlyArray<{
+    id: string;
+    target: ManagedUploadTarget;
+    declaredSizeBytes: number;
+    verifiedAt: Date;
+  }>> {
+    if (
+      !(cutoff instanceof Date) ||
+      !Number.isFinite(cutoff.getTime()) ||
+      !Number.isSafeInteger(limit) ||
+      limit < 1 ||
+      limit > 51
+    ) {
+      throw new Error('invalid-private-blob-audit-query');
+    }
+    const objects = await this.prisma.privateMediaObject.findMany({
+      where: {
+        storageProvider: 'BLOB',
+        status: 'VERIFIED',
+        ticketExpiresAt: null,
+        verifiedAt: { lte: cutoff },
+        createdAt: { lte: cutoff },
+        activeBindings: { none: {} },
+      },
+      orderBy: [{ verifiedAt: 'asc' }, { id: 'asc' }],
+      take: limit,
+      select: {
+        id: true,
+        target: true,
+        declaredSizeBytes: true,
+        verifiedAt: true,
+      },
+    });
+    return objects.map((item) => {
+      if (item.verifiedAt === null) {
+        throw new Error('invalid-private-blob-audit-metadata');
+      }
+      return {
+        id: item.id,
+        target: item.target as ManagedUploadTarget,
+        declaredSizeBytes: item.declaredSizeBytes,
+        verifiedAt: item.verifiedAt,
+      };
+    });
+  }
+
   async markVerifiedIfPending(
     id: string,
     cutoff: Date,
