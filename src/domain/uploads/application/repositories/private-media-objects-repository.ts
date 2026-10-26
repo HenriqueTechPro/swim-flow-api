@@ -78,6 +78,25 @@ export abstract class PrivateMediaObjectsRepository {
     expectedMediaId: string | null;
   }): Promise<boolean>;
 
+  /**
+   * Dry-run inventory ONLY: VERIFIED server Blob records old enough for
+   * retention review, with NO current active binding. A candidate is NOT
+   * a deletion permit: an image may become active after this query.
+   *
+   * Do not return object paths, credentials or signed/public URLs.
+   */
+  abstract listUnboundVerifiedBlobCandidates(
+    cutoff: Date,
+    limit: number,
+  ): Promise<
+    ReadonlyArray<{
+      id: string;
+      target: ManagedUploadTarget;
+      declaredSizeBytes: number;
+      verifiedAt: Date;
+    }>
+  >;
+
   /** PENDING -> VERIFIED only after byte/HEAD verification and expiry. */
   abstract markVerifiedIfPending(
     id: string,

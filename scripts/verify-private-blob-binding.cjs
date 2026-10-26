@@ -30,7 +30,9 @@ async function main() {
   const nextId = randomUUID();
   const losingId = randomUUID();
   const etag = '"aabbccddeeff00112233445566778899"';
-  const verifiedAt = new Date();
+  const verifiedAt = new Date(Date.now() - 35 * 86_400_000);
+  const createdAt = new Date(Date.now() - 40 * 86_400_000);
+  const retentionCutoff = new Date(Date.now() - 30 * 86_400_000);
   const refs = [oldId, nextId, losingId];
 
   const create = (id, resourceId, provider = 'BLOB') =>
@@ -47,6 +49,7 @@ async function main() {
         storageProvider: provider,
         status: 'VERIFIED',
         verifiedAt,
+        createdAt,
         verifiedEtag: etag,
         ticketExpiresAt: provider === 'BLOB'
           ? null : new Date(verifiedAt.getTime() + 86_400_000),
@@ -107,6 +110,43 @@ async function main() {
       where: { target_resourceId: { target: 'student-photo', resourceId: student } },
     });
     assert.equal(selected.mediaId, nextId);
+
+    // Actual PostgreSQL relation filter: ONLY old, unbound, server-verified
+    // blobs qualify as inventory candidates (not deletion permissions).
+    const inventory = async () => prisma.privateMediaObject.findMany({
+      where: {
+        storageProvider: 'BLOB',
+        status: 'VERIFIED',
+        ticketExpiresAt: null,
+        verifiedAt: { lte: retentionCutoff },
+        createdAt: { lte: retentionCutoff },
+        activeBindings: { none: {} },
+      },
+      select: { id: true },
+    });
+
+    const initial = (await inventory()).map((item) => item.id);
+    assert(initial.includes(oldId));
+    assert(initial.includes(losingId));
+    assert(!initial.includes(nextId)); // bound photo cannot be a candidate
+
+    // Even after selecting oldId, it may become active. Never infer a
+    // deletion permit from an earlier SELECT snapshot.
+    const switched = await prisma.privateMediaActiveBinding.updateMany({
+      where: { target: 'student-photo', resourceId: student, mediaId: nextId },
+      data: { mediaId: oldId },
+    });
+    assert.equal(switched.count, 1);
+    const after = (await inventory()).map((item) => item.id);
+    assert(!after.includes(oldId));
+    assert(after.includes(nextId));
+    assert(after.includes(losingId));
+
+    // Restore binding to nextId for the rest of this test.
+    assert.equal((await prisma.privateMediaActiveBinding.updateMany({
+      where: { target: 'student-photo', resourceId: student, mediaId: oldId },
+      data: { mediaId: nextId },
+    })).count, 1);
 
     // Nonexistent reference must fail closed rather than silently create.
     await assert.rejects(prisma.privateMediaActiveBinding.update({
