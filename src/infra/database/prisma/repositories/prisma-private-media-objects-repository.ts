@@ -149,7 +149,12 @@ export class PrismaPrivateMediaObjectsRepository extends PrivateMediaObjectsRepo
     verifiedEtag: string,
   ): Promise<boolean> {
     const updated = await this.prisma.privateMediaObject.updateMany({
-      where: { id, status: 'PENDING', storageProvider: 'R2', ticketExpiresAt: { lte: cutoff } },
+      where: {
+        id,
+        status: 'PENDING',
+        storageProvider: 'R2',
+        ticketExpiresAt: { lte: cutoff },
+      },
       data: { status: 'VERIFIED', verifiedAt, verifiedEtag },
     });
     return updated.count === 1;
