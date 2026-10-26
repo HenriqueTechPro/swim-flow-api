@@ -52,6 +52,38 @@ describe('Prisma private media compare-and-swap transitions', () => {
     });
   });
 
+  it('inserts server-processed Vercel Blob metadata as VERIFIED atomically', async () => {
+    prisma.privateMediaObject.create.mockResolvedValue({ id: UUID });
+    await repository.createVerifiedBlob({
+      id: UUID,
+      objectKey: row.objectKey.replace('.png', '.jpg'),
+      target: 'student-photo',
+      resourceId: row.resourceId,
+      uploadedById: row.uploadedById,
+      declaredContentType: 'image/jpeg',
+      declaredSizeBytes: 500,
+      verifiedAt: VERIFIED_AT,
+      verifiedEtag: ETAG,
+    });
+    expect(prisma.privateMediaObject.create).toHaveBeenCalledWith({
+      data: {
+        id: UUID,
+        objectKey: row.objectKey.replace('.png', '.jpg'),
+        target: 'student-photo',
+        resourceId: row.resourceId,
+        uploadedById: row.uploadedById,
+        uploadedByProfileId: row.uploadedById,
+        declaredContentType: 'image/jpeg',
+        declaredSizeBytes: 500,
+        status: 'VERIFIED',
+        verifiedAt: VERIFIED_AT,
+        verifiedEtag: ETAG,
+        ticketExpiresAt: new Date('2026-10-26T17:00:00.000Z'),
+      },
+      select: { id: true },
+    });
+  });
+
   it('atomically verifies only PENDING whose PUT grace is over', async () => {
     prisma.privateMediaObject.updateMany.mockResolvedValue({ count: 1 });
     expect(
