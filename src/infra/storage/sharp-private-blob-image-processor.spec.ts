@@ -42,8 +42,11 @@ describe('Safe private image normalization (real decoder, offline)', () => {
     const result = await processImage.normalize(source, 'image/png');
     const metadata = await sharp(Buffer.from(result.bytes)).metadata();
     expect(metadata.exif).toBeUndefined();
-    expect(Buffer.from(result.bytes).includes(Buffer.from('sensitive child photo metadata')))
-      .toBe(false);
+    expect(
+      Buffer.from(result.bytes).includes(
+        Buffer.from('sensitive child photo metadata'),
+      ),
+    ).toBe(false);
   });
 
   it('refuses unsupported formats, malformed data and forged MIME', async () => {
@@ -51,14 +54,18 @@ describe('Safe private image normalization (real decoder, offline)', () => {
     await expect(processImage.normalize(source, 'image/gif')).rejects.toThrow(
       'invalid-private-image-content',
     );
-    await expect(processImage.normalize(
-      Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"></svg>'),
-      'image/svg+xml',
-    )).rejects.toThrow('invalid-private-image-input-format');
-    await expect(processImage.normalize(
-      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0x00, 0x00, 0x00]),
-      'image/png',
-    )).rejects.toThrow('invalid-private-image-content');
+    await expect(
+      processImage.normalize(
+        Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"></svg>'),
+        'image/svg+xml',
+      ),
+    ).rejects.toThrow('invalid-private-image-input-format');
+    await expect(
+      processImage.normalize(
+        Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0x00, 0x00, 0x00]),
+        'image/png',
+      ),
+    ).rejects.toThrow('invalid-private-image-content');
   });
 
   it('refuses empty/oversized inputs before invoking image decode', async () => {
