@@ -3,6 +3,15 @@
 ALTER TABLE "private_media_objects"
   ADD COLUMN "cleanup_claimed_at" TIMESTAMPTZ(6);
 
+-- The original status whitelist predates GC_CLAIMED. Keep all historical
+-- states and admit the new claim state only where provider-aware CHECKs pass.
+ALTER TABLE "private_media_objects"
+  DROP CONSTRAINT "private_media_status_chk";
+
+ALTER TABLE "private_media_objects"
+  ADD CONSTRAINT "private_media_status_chk"
+  CHECK ("status" IN ('PENDING', 'VERIFIED', 'REJECTED', 'DELETED', 'GC_CLAIMED'));
+
 -- BLOB uploads are server-side, with no presigned ticket. Claimed media
 -- remains versioned, but MUST NOT be eligible for an active binding.
 -- R2 ticket and state semantics are unchanged.
