@@ -20,7 +20,10 @@ const record = {
   cleanupCompletedAt: null,
 };
 const remote = {
-  pathname: PATH, etag: ETAG, sizeBytes: 512, contentType: 'image/jpeg',
+  pathname: PATH,
+  etag: ETAG,
+  sizeBytes: 512,
+  contentType: 'image/jpeg',
 };
 function setup() {
   const records = {
@@ -32,7 +35,8 @@ function setup() {
     delete: jest.fn().mockResolvedValue(undefined),
   };
   return {
-    records, blobs,
+    records,
+    blobs,
     run: new ReconcileClaimedPrivateBlobImageUseCase(
       records as unknown as PrivateMediaObjectsRepository,
       blobs as unknown as PrivateBlobStorageRepository,
@@ -42,24 +46,32 @@ function setup() {
 describe('Internal-only Blob GC reconciliation — all remote operations mocked', () => {
   it('deletes exactly the claimed ETag and marks complete only after confirmed 404', async () => {
     const x = setup();
-    await expect(x.run.execute(ID, NOW)).resolves.toEqual({ status: 'COMPLETED' });
+    await expect(x.run.execute(ID, NOW)).resolves.toEqual({
+      status: 'COMPLETED',
+    });
     expect(x.blobs.delete).toHaveBeenCalledWith(PATH, ETAG);
     expect(x.blobs.stat).toHaveBeenCalledTimes(2);
     expect(x.records.completeClaimedBlobCleanup).toHaveBeenCalledWith(
-      ID, ETAG, CLAIMED, NOW,
+      ID,
+      ETAG,
+      CLAIMED,
+      NOW,
     );
   });
   it('recovers from completed remote deletion without replaying DELETE', async () => {
     const x = setup();
     x.blobs.stat.mockReset().mockResolvedValue(null);
-    await expect(x.run.execute(ID, NOW)).resolves.toEqual({ status: 'COMPLETED' });
+    await expect(x.run.execute(ID, NOW)).resolves.toEqual({
+      status: 'COMPLETED',
+    });
     expect(x.blobs.delete).not.toHaveBeenCalled();
     expect(x.blobs.stat).toHaveBeenCalledTimes(2);
   });
   it('never finalizes on changed ETag, pending deletion or network errors', async () => {
     const changed = setup();
     changed.blobs.stat.mockReset().mockResolvedValue({
-      ...remote, etag: '"different123"',
+      ...remote,
+      etag: '"different123"',
     });
     await expect(changed.run.execute(ID, NOW)).rejects.toThrow(
       'private-blob-cleanup-etag-conflict',
@@ -72,11 +84,17 @@ describe('Internal-only Blob GC reconciliation — all remote operations mocked'
     await expect(stillThere.run.execute(ID, NOW)).rejects.toThrow(
       'private-blob-cleanup-not-confirmed',
     );
-    expect(stillThere.records.completeClaimedBlobCleanup).not.toHaveBeenCalled();
+    expect(
+      stillThere.records.completeClaimedBlobCleanup,
+    ).not.toHaveBeenCalled();
 
     const offline = setup();
-    offline.blobs.delete.mockRejectedValueOnce(new Error('network unavailable'));
-    await expect(offline.run.execute(ID, NOW)).rejects.toThrow('network unavailable');
+    offline.blobs.delete.mockRejectedValueOnce(
+      new Error('network unavailable'),
+    );
+    await expect(offline.run.execute(ID, NOW)).rejects.toThrow(
+      'network unavailable',
+    );
     expect(offline.records.completeClaimedBlobCleanup).not.toHaveBeenCalled();
   });
   it('does not access Blob for R2, VERIFIED, absent or malformed claims', async () => {
@@ -103,7 +121,9 @@ describe('Internal-only Blob GC reconciliation — all remote operations mocked'
   it('is idempotent for completed claims and handles losing DB races', async () => {
     const completed = setup();
     completed.records.findById.mockResolvedValueOnce({
-      ...record, status: 'DELETED', cleanupCompletedAt: NOW,
+      ...record,
+      status: 'DELETED',
+      cleanupCompletedAt: NOW,
     });
     await expect(completed.run.execute(ID, NOW)).resolves.toEqual({
       status: 'ALREADY_COMPLETED',
@@ -113,7 +133,9 @@ describe('Internal-only Blob GC reconciliation — all remote operations mocked'
     const race = setup();
     race.records.completeClaimedBlobCleanup.mockResolvedValueOnce(false);
     race.records.findById.mockResolvedValueOnce(record).mockResolvedValueOnce({
-      ...record, status: 'DELETED', cleanupCompletedAt: NOW,
+      ...record,
+      status: 'DELETED',
+      cleanupCompletedAt: NOW,
     });
     await expect(race.run.execute(ID, NOW)).resolves.toEqual({
       status: 'ALREADY_COMPLETED',
