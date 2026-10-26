@@ -9,9 +9,7 @@ const PATHNAME = `private/students/${OWNER}/${OBJECT}.png`;
 const URL = `https://abcdefgh12345678.private.blob.vercel-storage.com/${PATHNAME}`;
 const TOKEN = 'vercel_blob_rw_offline_dummy_token_12345';
 const ETAG = '"d41d8cd98f00b204e9800998ecf8427e"';
-const PNG = Uint8Array.from([
-  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
-]);
+const PNG = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
 const metadata = {
   pathname: PATHNAME,
@@ -79,18 +77,14 @@ describe('Private Vercel Blob transport (SDK mocked, zero cloud calls)', () => {
       contentType: 'image/png',
       etag: ETAG,
     });
-    expect(sdk.put).toHaveBeenCalledWith(
-      PATHNAME,
-      Buffer.from(PNG),
-      {
-        access: 'private',
-        token: TOKEN,
-        allowOverwrite: false,
-        addRandomSuffix: false,
-        contentType: 'image/png',
-        cacheControlMaxAge: 60,
-      },
-    );
+    expect(sdk.put).toHaveBeenCalledWith(PATHNAME, Buffer.from(PNG), {
+      access: 'private',
+      token: TOKEN,
+      allowOverwrite: false,
+      addRandomSuffix: false,
+      contentType: 'image/png',
+      cacheControlMaxAge: 60,
+    });
     expect(sdk.head).toHaveBeenCalledWith(PATHNAME, { token: TOKEN });
     expect(JSON.stringify(sdk.put.mock.results)).not.toContain(TOKEN);
   });
