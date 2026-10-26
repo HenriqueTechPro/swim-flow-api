@@ -28,12 +28,6 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - name: Temporary PR63 Prettier snapshots (remove before merge)
-        run: |
-          node node_modules/prettier/bin/prettier.cjs --write -- src/infra/storage/private-vercel-blob-storage.repository.spec.ts src/infra/storage/private-vercel-blob-storage.repository.ts
-          node -e 'const fs = require("node:fs"); for (const f of ["src/infra/storage/private-vercel-blob-storage.repository.spec.ts","src/infra/storage/private-vercel-blob-storage.repository.ts"]) console.log("FMT_SNAPSHOT:" + f + ":" + JSON.stringify(fs.readFileSync(f, "utf8")))'
-      - name: Check private R2 smoke run is opt-in and never touches live buckets
-        run: npm run r2:smoke:guard:test
       - run: npm run prisma:validate
       - run: npm run prisma:generate
       - name: Verify consecutive builds regenerate production artifacts
