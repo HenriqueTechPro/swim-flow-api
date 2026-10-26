@@ -164,7 +164,10 @@ describe('Private Vercel Blob transport (SDK mocked, zero cloud calls)', () => {
       sizeBytes: PNG.byteLength,
     });
     expect(sdk.head).toHaveBeenCalledWith(PATHNAME, { token: TOKEN });
-    sdk.head.mockResolvedValueOnce({ ...metadata, url: URL.replace('.private.', '.public.') });
+    sdk.head.mockResolvedValueOnce({
+      ...metadata,
+      url: URL.replace('.private.', '.public.'),
+    });
     await expect(adapter.stat(PATHNAME)).rejects.toThrow(
       'invalid-private-blob-host',
     );
@@ -174,8 +177,12 @@ describe('Private Vercel Blob transport (SDK mocked, zero cloud calls)', () => {
   it('never interprets a network error as absence or completes a deletion', async () => {
     const { sdk, adapter } = setup();
     sdk.head.mockRejectedValueOnce(new Error('unexpected network failure'));
-    await expect(adapter.stat(PATHNAME)).rejects.toThrow('unexpected network failure');
-    await expect(adapter.stat('../fake')).rejects.toThrow('invalid-private-blob-pathname');
+    await expect(adapter.stat(PATHNAME)).rejects.toThrow(
+      'unexpected network failure',
+    );
+    await expect(adapter.stat('../fake')).rejects.toThrow(
+      'invalid-private-blob-pathname',
+    );
     expect(sdk.del).not.toHaveBeenCalled();
   });
 
