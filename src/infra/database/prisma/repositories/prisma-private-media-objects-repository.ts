@@ -211,7 +211,7 @@ export class PrismaPrivateMediaObjectsRepository extends PrivateMediaObjectsRepo
 
   async rejectIfPending(id: string, cutoff: Date): Promise<boolean> {
     const updated = await this.prisma.privateMediaObject.updateMany({
-      where: { id, status: 'PENDING', ticketExpiresAt: { lte: cutoff } },
+      where: { id, status: 'PENDING', storageProvider: 'R2', ticketExpiresAt: { lte: cutoff } },
       data: { status: 'REJECTED' },
     });
     return updated.count === 1;
