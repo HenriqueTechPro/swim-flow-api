@@ -44,7 +44,9 @@
     "resend:smoke": "node scripts/resend-delivery-smoke.cjs --send",
     "resend:smoke:test": "node --test scripts/resend-delivery-smoke.test.cjs",
     "r2:smoke:guard:test": "node --test scripts/private-r2-smoke-guard.test.cjs scripts/private-r2-smoke-http.test.cjs scripts/private-r2-smoke-workflow.test.cjs",
-    "r2:smoke:live": "node -r ts-node/register/transpile-only -r tsconfig-paths/register scripts/verify-private-media-r2-live.cjs --execute"
+    "r2:smoke:live": "node -r ts-node/register/transpile-only -r tsconfig-paths/register scripts/verify-private-media-r2-live.cjs --execute",
+    "blob:smoke:guard:test": "node --test scripts/private-blob-smoke-guard.test.cjs scripts/private-blob-smoke-live.test.cjs scripts/private-blob-smoke-workflow.test.cjs",
+    "blob:smoke:live": "node -r ts-node/register/transpile-only -r tsconfig-paths/register scripts/verify-private-blob-live.cjs --execute"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1156.0",
