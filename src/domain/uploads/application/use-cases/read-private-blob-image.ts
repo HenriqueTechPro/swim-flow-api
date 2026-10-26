@@ -41,6 +41,14 @@ export class ReadPrivateBlobImageUseCase {
       throw new AppError(404, 'Private media unavailable');
     }
 
+    const activeId = await this.records.findActiveMediaId(
+      record.target,
+      record.resourceId,
+    );
+    if (activeId !== record.id) {
+      throw new AppError(404, 'Private media unavailable');
+    }
+
     const blob = await this.blobs.get(record.objectKey, record.verifiedEtag);
     if (
       !blob ||
