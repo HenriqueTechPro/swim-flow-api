@@ -19,7 +19,7 @@ describe('UpdateParentUseCase', () => {
 
     const { parent } = await sut.execute(existingParent.id, {
       name: 'Responsavel Atualizado',
-      cpf: '987.654.321-00',
+      cpf: '111.444.777-35',
       birthDate: '1985-08-20',
       photo: null,
       childrenIds: ['student-1'],
@@ -40,7 +40,7 @@ describe('UpdateParentUseCase', () => {
     await expect(() =>
       sut.execute('missing-parent', {
         name: 'Responsavel Atualizado',
-        cpf: '987.654.321-00',
+        cpf: '111.444.777-35',
         birthDate: '1985-08-20',
         photo: null,
         childrenIds: ['student-1'],
