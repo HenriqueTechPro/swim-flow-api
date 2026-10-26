@@ -12,6 +12,7 @@ const UPLOAD = '33333333-3333-4333-8333-333333333333';
 const verified = {
   id: UPLOAD,
   status: 'VERIFIED',
+  storageProvider: 'R2',
   verifiedEtag: ETAG,
   uploadedById: ACTOR,
   target: 'student-photo',

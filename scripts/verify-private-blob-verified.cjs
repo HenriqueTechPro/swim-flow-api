@@ -42,15 +42,25 @@ async function main() {
         declaredContentType: 'image/jpeg',
         declaredSizeBytes: 128,
         status: 'VERIFIED',
+        storageProvider: 'BLOB',
         verifiedAt,
         verifiedEtag: etag,
-        ticketExpiresAt: new Date(verifiedAt.getTime() + 86_400_000),
+        ticketExpiresAt: null,
       },
     });
     assert.equal(created.status, 'VERIFIED');
     assert.equal(created.verifiedEtag, etag);
+    assert.equal(created.storageProvider, 'BLOB');
+    assert.equal(created.ticketExpiresAt, null);
     assert.equal(created.objectKey, key);
 
+    // Provider-specific lifecycle constraints must fail closed.
+    await assert.rejects(prisma.privateMediaObject.update({
+      where: { id }, data: { ticketExpiresAt: new Date(verifiedAt.getTime() + 100000) },
+    }));
+    await assert.rejects(prisma.privateMediaObject.update({
+      where: { id }, data: { storageProvider: 'R2' },
+    }));
     // Never allow an unversioned VERIFIED row.
     await assert.rejects(prisma.privateMediaObject.update({
       where: { id }, data: { verifiedEtag: null },

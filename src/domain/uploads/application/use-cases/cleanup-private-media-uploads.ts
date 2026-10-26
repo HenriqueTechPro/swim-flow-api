@@ -29,6 +29,7 @@ export class CleanupPrivateMediaUploadsUseCase {
     let failed = 0;
 
     for (const candidate of candidates) {
+      if (candidate.storageProvider !== 'R2') continue;
       if (candidate.status === 'PENDING') {
         const claimed = await this.objects.rejectIfPending(
           candidate.id,

@@ -29,6 +29,7 @@ export class ReadPrivateBlobImageUseCase {
     if (
       !record ||
       record.status !== 'VERIFIED' ||
+      record.storageProvider !== 'BLOB' ||
       !isStrongPrivateMediaEtag(record.verifiedEtag) ||
       !(await canAccessPrivateMediaRecord(
         actorId,
@@ -37,6 +38,14 @@ export class ReadPrivateBlobImageUseCase {
         this.resources,
       ))
     ) {
+      throw new AppError(404, 'Private media unavailable');
+    }
+
+    const activeId = await this.records.findActiveMediaId(
+      record.target,
+      record.resourceId,
+    );
+    if (activeId !== record.id) {
       throw new AppError(404, 'Private media unavailable');
     }
 

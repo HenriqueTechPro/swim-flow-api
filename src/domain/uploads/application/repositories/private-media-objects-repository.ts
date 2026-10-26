@@ -34,7 +34,12 @@ export type PrivateMediaStatus =
   | 'REJECTED'
   | 'DELETED';
 
-export interface PrivateMediaObjectRecord extends PendingPrivateMediaObject {
+export interface PrivateMediaObjectRecord extends Omit<
+  PendingPrivateMediaObject,
+  'ticketExpiresAt'
+> {
+  storageProvider: 'R2' | 'BLOB';
+  ticketExpiresAt: Date | null;
   status: PrivateMediaStatus;
   verifiedAt: Date | null;
   verifiedEtag: string | null;
@@ -54,6 +59,24 @@ export abstract class PrivateMediaObjectsRepository {
   ): Promise<void>;
 
   abstract findById(id: string): Promise<PrivateMediaObjectRecord | null>;
+
+  /** Current binding only; never infer an active image from a UUID alone. */
+  abstract findActiveMediaId(
+    target: ManagedUploadTarget,
+    resourceId: string,
+  ): Promise<string | null>;
+
+  /**
+   * Optimistic reference swap. When expectedMediaId is null, attach only if no
+   * current image exists; otherwise replace only that exact old media ID.
+   * Database FK enforces same target/resource + BLOB/VERIFIED status.
+   */
+  abstract assignActiveVerifiedBlob(input: {
+    target: ManagedUploadTarget;
+    resourceId: string;
+    mediaId: string;
+    expectedMediaId: string | null;
+  }): Promise<boolean>;
 
   /** PENDING -> VERIFIED only after byte/HEAD verification and expiry. */
   abstract markVerifiedIfPending(

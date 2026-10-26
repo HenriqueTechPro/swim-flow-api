@@ -908,14 +908,34 @@ model PrivateMediaObject {
   declaredContentType String @map("declared_content_type") @db.VarChar(32)
   declaredSizeBytes Int @map("declared_size_bytes")
   status String @default("PENDING") @db.VarChar(16)
-  ticketExpiresAt DateTime @map("ticket_expires_at") @db.Timestamptz(6)
+  storageProvider String @default("R2") @map("storage_provider") @db.VarChar(16)
+  ticketExpiresAt DateTime? @map("ticket_expires_at") @db.Timestamptz(6)
   verifiedAt DateTime? @map("verified_at") @db.Timestamptz(6)
   verifiedEtag String? @map("verified_etag") @db.VarChar(128)
+  activeBindings PrivateMediaActiveBinding[]
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  @@unique([id, target, resourceId, storageProvider, status])
   @@index([target, resourceId, status])
   @@index([uploadedById, status])
   @@index([status, ticketExpiresAt])
   @@map("private_media_objects")
 }
+
+// One ACTIVE Vercel Blob image per resource. A composite FK enforces that
+// the linked object belongs to this EXACT target and is VERIFIED on BLOB.
+model PrivateMediaActiveBinding {
+  target String @db.VarChar(32)
+  resourceId String @map("resource_id") @db.Uuid
+  mediaId String @unique @map("media_id") @db.Uuid
+  storageProvider String @default("BLOB") @map("storage_provider") @db.VarChar(16)
+  status String @default("VERIFIED") @db.VarChar(16)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  media PrivateMediaObject @relation(fields: [mediaId, target, resourceId, storageProvider, status], references: [id, target, resourceId, storageProvider, status], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([target, resourceId])
+  @@map("private_media_active_bindings")
+}
+

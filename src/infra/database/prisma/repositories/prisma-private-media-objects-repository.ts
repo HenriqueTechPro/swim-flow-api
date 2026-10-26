@@ -21,6 +21,7 @@ function toRecord(record: PrivateMediaObject): PrivateMediaObjectRecord {
       record.declaredContentType as PendingPrivateMediaObject['declaredContentType'],
     declaredSizeBytes: record.declaredSizeBytes,
     ticketExpiresAt: record.ticketExpiresAt,
+    storageProvider: record.storageProvider as 'R2' | 'BLOB',
     status: record.status as PrivateMediaStatus,
     verifiedAt: record.verifiedAt,
     verifiedEtag: record.verifiedEtag,
@@ -49,6 +50,7 @@ export class PrismaPrivateMediaObjectsRepository extends PrivateMediaObjectsRepo
         declaredContentType: input.declaredContentType,
         declaredSizeBytes: input.declaredSizeBytes,
         status: 'PENDING',
+        storageProvider: 'R2',
         ticketExpiresAt: input.ticketExpiresAt,
       },
       select: { id: true },
@@ -58,12 +60,6 @@ export class PrismaPrivateMediaObjectsRepository extends PrivateMediaObjectsRepo
   async createVerifiedBlob(
     input: VerifiedPrivateBlobMediaObject,
   ): Promise<void> {
-    // The legacy table requires ticket_expires_at even for server-mediated
-    // uploads. This future timestamp satisfies that historical CHECK; it is
-    // NOT a real client ticket, nor used by the VERIFIED cleanup query.
-    const legacyTicketExpiry = new Date(
-      input.verifiedAt.getTime() + 86_400_000,
-    );
     await this.prisma.privateMediaObject.create({
       data: {
         id: input.id,
@@ -75,12 +71,68 @@ export class PrismaPrivateMediaObjectsRepository extends PrivateMediaObjectsRepo
         declaredContentType: input.declaredContentType,
         declaredSizeBytes: input.declaredSizeBytes,
         status: 'VERIFIED',
+        storageProvider: 'BLOB',
         verifiedAt: input.verifiedAt,
         verifiedEtag: input.verifiedEtag,
-        ticketExpiresAt: legacyTicketExpiry,
+        ticketExpiresAt: null,
       },
       select: { id: true },
     });
+  }
+
+  async findActiveMediaId(
+    target: ManagedUploadTarget,
+    resourceId: string,
+  ): Promise<string | null> {
+    const binding = await this.prisma.privateMediaActiveBinding.findUnique({
+      where: { target_resourceId: { target, resourceId } },
+      select: { mediaId: true },
+    });
+    return binding?.mediaId ?? null;
+  }
+
+  async assignActiveVerifiedBlob(input: {
+    target: ManagedUploadTarget;
+    resourceId: string;
+    mediaId: string;
+    expectedMediaId: string | null;
+  }): Promise<boolean> {
+    if (input.expectedMediaId !== null) {
+      const changed = await this.prisma.privateMediaActiveBinding.updateMany({
+        where: {
+          target: input.target,
+          resourceId: input.resourceId,
+          mediaId: input.expectedMediaId,
+        },
+        data: { mediaId: input.mediaId },
+      });
+      return changed.count === 1;
+    }
+    try {
+      await this.prisma.privateMediaActiveBinding.create({
+        data: {
+          target: input.target,
+          resourceId: input.resourceId,
+          mediaId: input.mediaId,
+          storageProvider: 'BLOB',
+          status: 'VERIFIED',
+        },
+        select: { mediaId: true },
+      });
+      return true;
+    } catch (error: unknown) {
+      // Only an optimistic UNIQUE conflict is a lost race. Invalid FK and
+      // other database failures MUST propagate (never masquerade as CAS).
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        error.code === 'P2002'
+      ) {
+        return false;
+      }
+      throw error;
+    }
   }
 
   async findById(id: string): Promise<PrivateMediaObjectRecord | null> {
@@ -97,7 +149,12 @@ export class PrismaPrivateMediaObjectsRepository extends PrivateMediaObjectsRepo
     verifiedEtag: string,
   ): Promise<boolean> {
     const updated = await this.prisma.privateMediaObject.updateMany({
-      where: { id, status: 'PENDING', ticketExpiresAt: { lte: cutoff } },
+      where: {
+        id,
+        status: 'PENDING',
+        storageProvider: 'R2',
+        ticketExpiresAt: { lte: cutoff },
+      },
       data: { status: 'VERIFIED', verifiedAt, verifiedEtag },
     });
     return updated.count === 1;
@@ -121,6 +178,7 @@ export class PrismaPrivateMediaObjectsRepository extends PrivateMediaObjectsRepo
     const records = await this.prisma.privateMediaObject.findMany({
       where: {
         status: { in: ['PENDING', 'REJECTED'] },
+        storageProvider: 'R2',
         ticketExpiresAt: { lte: cutoff },
       },
       take: limit,
@@ -131,7 +189,7 @@ export class PrismaPrivateMediaObjectsRepository extends PrivateMediaObjectsRepo
 
   async markDeletedIfRejected(id: string): Promise<boolean> {
     const updated = await this.prisma.privateMediaObject.updateMany({
-      where: { id, status: 'REJECTED' },
+      where: { id, status: 'REJECTED', storageProvider: 'R2' },
       data: { status: 'DELETED' },
     });
     return updated.count === 1;
