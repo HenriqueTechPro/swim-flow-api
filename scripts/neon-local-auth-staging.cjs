@@ -22,6 +22,7 @@ const EXPECTED = Object.freeze({
 const ADDITIONAL_MIGRATION_BLOBS = Object.freeze({
   '20261025000000_private_media_object_metadata': '18443faa28d55ee13eec99bc3bda472e6e5822d8',
   '20261025010000_private_media_verified_etag': '90514b5e7b7fc9f76eee8f747012d8eed02ba8ab',
+  '20261025020000_private_blob_binding_lifecycle': 'fbd1c0d478c8d7edc8207a0b96a71b5b5fc370f0',
 });
 const HISTORICAL_MIGRATIONS = Object.keys(EXPECTED).length;
 const APPROVED_MIGRATIONS = HISTORICAL_MIGRATIONS +
