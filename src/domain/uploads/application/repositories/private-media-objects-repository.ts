@@ -34,7 +34,10 @@ export type PrivateMediaStatus =
   | 'REJECTED'
   | 'DELETED';
 
-export interface PrivateMediaObjectRecord extends Omit<PendingPrivateMediaObject, 'ticketExpiresAt'> {
+export interface PrivateMediaObjectRecord extends Omit<
+  PendingPrivateMediaObject,
+  'ticketExpiresAt'
+> {
   storageProvider: 'R2' | 'BLOB';
   ticketExpiresAt: Date | null;
   status: PrivateMediaStatus;
