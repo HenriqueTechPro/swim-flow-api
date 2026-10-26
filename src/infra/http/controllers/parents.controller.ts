@@ -68,7 +68,8 @@ export class ParentsController {
   @Post()
   @Permissions('parents:write')
   async create(
-    @Body(new ZodValidationPipe(createParentRequestSchema)) body: CreateParentDto,
+    @Body(new ZodValidationPipe(createParentRequestSchema))
+    body: CreateParentDto,
   ) {
     const { parent } = await this.createParent.execute(
       ParentRequestMapper.toCreate(body),
@@ -80,7 +81,8 @@ export class ParentsController {
   @Permissions('parents:write')
   async update(
     @Param('id', new ParseUUIDPipe()) id: string,
-    @Body(new ZodValidationPipe(updateParentRequestSchema)) body: UpdateParentDto,
+    @Body(new ZodValidationPipe(updateParentRequestSchema))
+    body: UpdateParentDto,
   ) {
     const { parent } = await this.updateParent.execute(
       id,
