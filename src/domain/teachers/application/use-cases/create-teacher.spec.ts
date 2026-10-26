@@ -14,7 +14,7 @@ describe('CreateTeacherUseCase', () => {
   it('creates a teacher', async () => {
     const { teacher } = await sut.execute({
       name: 'Professor API',
-      cpf: '123.456.789-00',
+      cpf: '529.982.247-25',
       birthDate: '1990-06-15',
       email: 'professor.api@example.com',
       phone: '(71) 99999-1234',
