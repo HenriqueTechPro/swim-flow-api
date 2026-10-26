@@ -40,7 +40,7 @@ describe('ParentsController (e2e)', () => {
       .post('/api/parents')
       .send({
         name: 'Responsavel E2E',
-        cpf: '987.654.321-00',
+        cpf: '111.444.777-35',
         birthDate: '1985-08-20',
         photo: null,
         childrenIds: ['88888888-8888-4888-8888-888888888888'],
@@ -64,7 +64,7 @@ describe('ParentsController (e2e)', () => {
       .put(`/api/parents/${parentId}`)
       .send({
         name: 'Responsavel E2E Atualizado',
-        cpf: '987.654.321-00',
+        cpf: '111.444.777-35',
         birthDate: '1985-08-20',
         photo: null,
         childrenIds: ['88888888-8888-4888-8888-888888888888'],
