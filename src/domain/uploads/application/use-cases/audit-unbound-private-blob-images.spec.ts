@@ -87,11 +87,13 @@ describe('Read-only, 30-day Blob orphan audit (zero Blob/network calls)', () => 
   });
 
   it('refuses to return raw storage keys, secrets, file names or media IDs', async () => {
-    const { audit } = setup([{
-      ...oldRow(0),
-      objectKey: 'private/students/secret/profile.jpg',
-      verifiedEtag: '"etag"',
-    }]);
+    const { audit } = setup([
+      {
+        ...oldRow(0),
+        objectKey: 'private/students/secret/profile.jpg',
+        verifiedEtag: '"etag"',
+      },
+    ]);
     const result = await audit.execute(NOW);
     expect(JSON.stringify(result)).not.toContain('objectKey');
     expect(JSON.stringify(result)).not.toContain('etag');
