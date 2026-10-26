@@ -10,8 +10,13 @@ describe('CPF algorithm', () => {
 
   it('rejects impossible documents and invalid input shapes', () => {
     for (const cpf of [
-      '', '00000000000', '111.111.111-11', '529.982.247-26',
-      '12345678901', '529.982.247', '529 982 247 25',
+      '',
+      '00000000000',
+      '111.111.111-11',
+      '529.982.247-26',
+      '12345678901',
+      '529.982.247',
+      '529 982 247 25',
     ]) {
       expect(isValidCpf(cpf)).toBe(false);
     }
