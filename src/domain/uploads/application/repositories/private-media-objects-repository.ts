@@ -49,7 +49,9 @@ export abstract class PrivateMediaObjectsRepository {
   abstract createPending(input: PendingPrivateMediaObject): Promise<void>;
 
   /** Insert a server-processed Blob image directly as VERIFIED, atomically. */
-  abstract createVerifiedBlob(input: VerifiedPrivateBlobMediaObject): Promise<void>;
+  abstract createVerifiedBlob(
+    input: VerifiedPrivateBlobMediaObject,
+  ): Promise<void>;
 
   abstract findById(id: string): Promise<PrivateMediaObjectRecord | null>;
 
