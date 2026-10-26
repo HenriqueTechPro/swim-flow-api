@@ -31,6 +31,7 @@ export interface VerifiedPrivateBlobMediaObject {
 export type PrivateMediaStatus =
   | 'PENDING'
   | 'VERIFIED'
+  | 'GC_CLAIMED'
   | 'REJECTED'
   | 'DELETED';
 
@@ -43,6 +44,7 @@ export interface PrivateMediaObjectRecord extends Omit<
   status: PrivateMediaStatus;
   verifiedAt: Date | null;
   verifiedEtag: string | null;
+  cleanupClaimedAt: Date | null;
 }
 
 /**
@@ -96,6 +98,20 @@ export abstract class PrivateMediaObjectsRepository {
       verifiedAt: Date;
     }>
   >;
+
+  /**
+   * Reserve ONLY an old, unbound, VERIFIED BLOB row without touching bytes.
+   *
+   * Must lock the media row FOR UPDATE in a transaction BEFORE checking the
+   * active binding: FK KEY SHARE for concurrent assignments then serializes
+   * against status->GC_CLAIMED. Returns false if ineligible or race lost.
+   * This is NOT a remote deletion capability.
+   */
+  abstract claimUnboundVerifiedBlobForCleanup(
+    mediaId: string,
+    cutoff: Date,
+    claimedAt: Date,
+  ): Promise<boolean>;
 
   /** PENDING -> VERIFIED only after byte/HEAD verification and expiry. */
   abstract markVerifiedIfPending(

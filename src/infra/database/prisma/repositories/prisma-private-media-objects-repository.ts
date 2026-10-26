@@ -25,6 +25,7 @@ function toRecord(record: PrivateMediaObject): PrivateMediaObjectRecord {
     status: record.status as PrivateMediaStatus,
     verifiedAt: record.verifiedAt,
     verifiedEtag: record.verifiedEtag,
+    cleanupClaimedAt: record.cleanupClaimedAt,
   };
 }
 
@@ -190,6 +191,73 @@ export class PrismaPrivateMediaObjectsRepository extends PrivateMediaObjectsRepo
         declaredSizeBytes: item.declaredSizeBytes,
         verifiedAt: item.verifiedAt,
       };
+    });
+  }
+
+  async claimUnboundVerifiedBlobForCleanup(
+    mediaId: string,
+    cutoff: Date,
+    claimedAt: Date,
+  ): Promise<boolean> {
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        mediaId,
+      ) ||
+      !(cutoff instanceof Date) ||
+      !Number.isFinite(cutoff.getTime()) ||
+      !(claimedAt instanceof Date) ||
+      !Number.isFinite(claimedAt.getTime()) ||
+      cutoff.getTime() > claimedAt.getTime()
+    ) {
+      throw new Error('invalid-private-blob-cleanup-claim');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      // Parent FOR UPDATE conflicts with a child FK's KEY SHARE lock. This
+      // serializes any concurrent binding BEFORE the separate fresh read,
+      // unlike a single UPDATE with a stale NOT EXISTS snapshot.
+      const locked = await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT "id"
+        FROM "private_media_objects"
+        WHERE "id" = ${mediaId}::uuid
+          AND "storage_provider" = 'BLOB'
+          AND "status" = 'VERIFIED'
+          AND "ticket_expires_at" IS NULL
+          AND "cleanup_claimed_at" IS NULL
+          AND "created_at" <= ${cutoff}
+          AND "verified_at" <= ${cutoff}
+          AND "verified_etag" IS NOT NULL
+        FOR UPDATE
+      `;
+      if (locked.length !== 1) return false;
+
+      // Fresh statement after locking parent: committed FK insertion now
+      // visible, and new assignments must wait for transaction completion.
+      const active = await tx.privateMediaActiveBinding.findUnique({
+        where: { mediaId },
+        select: { mediaId: true },
+      });
+      if (active) return false;
+
+      const changed = await tx.privateMediaObject.updateMany({
+        where: {
+          id: mediaId,
+          storageProvider: 'BLOB',
+          status: 'VERIFIED',
+          ticketExpiresAt: null,
+          cleanupClaimedAt: null,
+          createdAt: { lte: cutoff },
+          verifiedAt: { lte: cutoff },
+        },
+        data: {
+          status: 'GC_CLAIMED',
+          cleanupClaimedAt: claimedAt,
+        },
+      });
+      if (changed.count !== 1) {
+        throw new Error('private-blob-cleanup-claim-concurrency');
+      }
+      return true;
     });
   }
 

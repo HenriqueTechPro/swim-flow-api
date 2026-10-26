@@ -30,6 +30,7 @@ describe('Prisma private media compare-and-swap transitions', () => {
       updateMany: jest.fn(),
       findUnique: jest.fn(),
     },
+    $transaction: jest.fn(),
     privateMediaObject: {
       create: jest.fn(),
       findUnique: jest.fn(),
@@ -220,6 +221,108 @@ describe('Prisma private media compare-and-swap transitions', () => {
     await expect(
       repository.listUnboundVerifiedBlobCandidates(CUTOFF, 25),
     ).rejects.toThrow('invalid-private-blob-audit-metadata');
+  });
+
+  it('claims BLOB metadata only after row-lock and fresh active FK lookup', async () => {
+    const tx = {
+      $queryRaw: jest.fn().mockResolvedValue([{ id: UUID }]),
+      privateMediaActiveBinding: {
+        findUnique: jest.fn().mockResolvedValue(null),
+      },
+      privateMediaObject: {
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+      },
+    };
+    prisma.$transaction.mockImplementation(
+      async (callback: (t: typeof tx) => unknown) => callback(tx),
+    );
+    expect(
+      await repository.claimUnboundVerifiedBlobForCleanup(
+        UUID,
+        CUTOFF,
+        VERIFIED_AT,
+      ),
+    ).toBe(true);
+    expect(tx.$queryRaw).toHaveBeenCalledTimes(1);
+    expect(tx.privateMediaActiveBinding.findUnique).toHaveBeenCalledWith({
+      where: { mediaId: UUID },
+      select: { mediaId: true },
+    });
+    expect(tx.privateMediaObject.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: UUID,
+        storageProvider: 'BLOB',
+        status: 'VERIFIED',
+        ticketExpiresAt: null,
+        cleanupClaimedAt: null,
+        createdAt: { lte: CUTOFF },
+        verifiedAt: { lte: CUTOFF },
+      },
+      data: { status: 'GC_CLAIMED', cleanupClaimedAt: VERIFIED_AT },
+    });
+    expect(tx.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
+      tx.privateMediaActiveBinding.findUnique.mock.invocationCallOrder[0],
+    );
+    expect(
+      tx.privateMediaActiveBinding.findUnique.mock.invocationCallOrder[0],
+    ).toBeLessThan(
+      tx.privateMediaObject.updateMany.mock.invocationCallOrder[0],
+    );
+
+    tx.privateMediaActiveBinding.findUnique.mockResolvedValueOnce({
+      mediaId: UUID,
+    });
+    expect(
+      await repository.claimUnboundVerifiedBlobForCleanup(
+        UUID,
+        CUTOFF,
+        VERIFIED_AT,
+      ),
+    ).toBe(false);
+    expect(tx.privateMediaObject.updateMany).toHaveBeenCalledTimes(1);
+
+    tx.$queryRaw.mockResolvedValueOnce([]);
+    expect(
+      await repository.claimUnboundVerifiedBlobForCleanup(
+        UUID,
+        CUTOFF,
+        VERIFIED_AT,
+      ),
+    ).toBe(false);
+    expect(tx.privateMediaObject.updateMany).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects invalid claim inputs and never silently accepts lost CAS', async () => {
+    const tx = {
+      $queryRaw: jest.fn().mockResolvedValue([{ id: UUID }]),
+      privateMediaActiveBinding: {
+        findUnique: jest.fn().mockResolvedValue(null),
+      },
+      privateMediaObject: {
+        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+      },
+    };
+    prisma.$transaction.mockImplementation(
+      async (callback: (t: typeof tx) => unknown) => callback(tx),
+    );
+    await expect(
+      repository.claimUnboundVerifiedBlobForCleanup(
+        'invalid-id',
+        CUTOFF,
+        VERIFIED_AT,
+      ),
+    ).rejects.toThrow('invalid-private-blob-cleanup-claim');
+    await expect(
+      repository.claimUnboundVerifiedBlobForCleanup(
+        UUID,
+        new Date('invalid'),
+        VERIFIED_AT,
+      ),
+    ).rejects.toThrow('invalid-private-blob-cleanup-claim');
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    await expect(
+      repository.claimUnboundVerifiedBlobForCleanup(UUID, CUTOFF, VERIFIED_AT),
+    ).rejects.toThrow('private-blob-cleanup-claim-concurrency');
   });
 
   it('atomically verifies only PENDING whose PUT grace is over', async () => {
