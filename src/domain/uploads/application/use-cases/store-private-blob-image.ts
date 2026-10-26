@@ -74,9 +74,8 @@ export class StorePrivateBlobImageUseCase {
       }
       throw error;
     }
-    const resourceId = input.target === 'profile-avatar'
-      ? actorId
-      : input.resourceId!;
+    const resourceId =
+      input.target === 'profile-avatar' ? actorId : input.resourceId!;
     if (!(await this.authorize(actorId, input.target, resourceId))) {
       throw new AppError(404, 'Private media unavailable');
     }
