@@ -1,0 +1,47 @@
+name: Private Vercel Blob disposable smoke — MANUAL ONLY
+
+# NO push, pull_request, schedule, workflow_call, deploy, or production use.
+on:
+  workflow_dispatch:
+    inputs:
+      approval:
+        description: 'Type I_APPROVE_DISPOSABLE_PRIVATE_BLOB_SMOKE_ONLY'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: swimflow-disposable-private-blob-smoke
+  cancel-in-progress: false
+
+jobs:
+  disposable-blob:
+    if: github.ref == 'refs/heads/main' && inputs.approval == 'I_APPROVE_DISPOSABLE_PRIVATE_BLOB_SMOKE_ONLY'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    environment: blob-smoke
+    env:
+      NODE_ENV: test
+      SWIMFLOW_PRIVATE_BLOB_ENABLED: 'false'
+      SWIMFLOW_PRIVATE_MEDIA_S3_ENABLED: 'false'
+      SWIMFLOW_R2_STORAGE_ENABLED: 'false'
+      BLOB_SMOKE_APPROVAL: ${{ inputs.approval }}
+      BLOB_SMOKE_STORE_NAME: ${{ vars.BLOB_SMOKE_STORE_NAME }}
+      BLOB_SMOKE_STORE_ID: ${{ vars.BLOB_SMOKE_STORE_ID }}
+      BLOB_SMOKE_READ_WRITE_TOKEN: ${{ secrets.BLOB_SMOKE_READ_WRITE_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked SDK dependencies
+        run: npm ci
+      - name: Assert disposable Blob token matches assigned test store
+        run: npm run blob:smoke:guard:test
+      - name: Manual synthetic PNG integration test
+        run: npm run blob:smoke:live
