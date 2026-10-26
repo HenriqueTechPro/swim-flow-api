@@ -63,7 +63,7 @@ export class StorePrivateBlobImageUseCase {
     try {
       validatePrivateMediaUpload(actorId, {
         target: input.target,
-        resourceId: input.target === 'profile-avatar' ? undefined : input.resourceId,
+        resourceId: input.resourceId,
         fileName: 'image',
         contentType: input.contentType,
         fileSizeBytes: size,
