@@ -19,7 +19,7 @@ describe('UpdateTeacherUseCase', () => {
 
     const { teacher } = await sut.execute(existingTeacher.id, {
       name: 'Professor Atualizado',
-      cpf: '123.456.789-00',
+      cpf: '529.982.247-25',
       birthDate: '1989-04-10',
       email: 'professor.updated@example.com',
       phone: '(71) 99999-5678',
@@ -41,7 +41,7 @@ describe('UpdateTeacherUseCase', () => {
     await expect(() =>
       sut.execute('missing-teacher', {
         name: 'Professor Atualizado',
-        cpf: '123.456.789-00',
+        cpf: '529.982.247-25',
         birthDate: '1989-04-10',
         email: 'professor.updated@example.com',
         phone: '(71) 99999-5678',
