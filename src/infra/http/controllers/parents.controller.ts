@@ -15,7 +15,10 @@ import {
   type CreateParentDto,
   type UpdateParentDto,
 } from '@/shared/contracts/management';
-import { createParentRequestSchema, updateParentRequestSchema } from '@/shared/contracts/cpf-management-requests';
+import {
+  createParentRequestSchema,
+  updateParentRequestSchema,
+} from '@/shared/contracts/cpf-management-requests';
 import { CreateParentUseCase } from '@/domain/parents/application/use-cases/create-parent';
 import { DeleteParentUseCase } from '@/domain/parents/application/use-cases/delete-parent';
 import { ListParentsUseCase } from '@/domain/parents/application/use-cases/list-parents';
