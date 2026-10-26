@@ -40,7 +40,7 @@ describe('TeachersController (e2e)', () => {
       .post('/api/teachers')
       .send({
         name: 'Professor E2E',
-        cpf: '123.456.789-00',
+        cpf: '529.982.247-25',
         birthDate: '1990-06-15',
         email: 'professor.e2e@example.com',
         phone: '(71) 99999-1234',
@@ -62,7 +62,7 @@ describe('TeachersController (e2e)', () => {
       .put(`/api/teachers/${teacherId}`)
       .send({
         name: 'Professor E2E Atualizado',
-        cpf: '123.456.789-00',
+        cpf: '529.982.247-25',
         birthDate: '1989-04-10',
         email: 'professor.e2e.updated@example.com',
         phone: '(71) 99999-5678',

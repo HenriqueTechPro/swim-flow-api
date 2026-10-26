@@ -7,7 +7,7 @@ export function makeParent(override: MakeParentOverride = {}): Parent {
     id: override.id ?? crypto.randomUUID(),
     name: override.name ?? 'Responsavel Teste',
     photo: override.photo,
-    cpf: override.cpf ?? '987.654.321-00',
+    cpf: override.cpf ?? '111.444.777-35',
     birthDate: override.birthDate ?? '1985-08-20',
     childrenIds: override.childrenIds ?? [],
     children: override.children ?? [],

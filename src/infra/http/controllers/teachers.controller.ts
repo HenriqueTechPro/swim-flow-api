@@ -12,18 +12,23 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
-  createTeacherSchema,
-  updateTeacherSchema,
   type CreateTeacherDto,
   type UpdateTeacherDto,
 } from '@/shared/contracts/management';
+import {
+  createTeacherRequestSchema,
+  updateTeacherRequestSchema,
+} from '@/shared/contracts/cpf-management-requests';
 import { CreateTeacherUseCase } from '@/domain/teachers/application/use-cases/create-teacher';
 import { DeleteTeacherUseCase } from '@/domain/teachers/application/use-cases/delete-teacher';
 import { ListTeachersUseCase } from '@/domain/teachers/application/use-cases/list-teachers';
 import { GetTeacherAccountLinkUseCase } from '@/domain/teachers/application/use-cases/get-teacher-account-link';
 import { LinkTeacherAccountUseCase } from '@/domain/teachers/application/use-cases/link-teacher-account';
 import { UnlinkTeacherAccountUseCase } from '@/domain/teachers/application/use-cases/unlink-teacher-account';
-import { linkTeacherAccountSchema, type LinkTeacherAccountDto } from '@/shared/contracts/teacher-accounts';
+import {
+  linkTeacherAccountSchema,
+  type LinkTeacherAccountDto,
+} from '@/shared/contracts/teacher-accounts';
 import { CurrentUser } from '@/infra/auth/current-user.decorator';
 import type { AuthUser } from '@/infra/auth/auth.types';
 import { UpdateTeacherUseCase } from '@/domain/teachers/application/use-cases/update-teacher';
@@ -75,7 +80,8 @@ export class TeachersController {
   @Post()
   @Permissions('teachers:write')
   async create(
-    @Body(new ZodValidationPipe(createTeacherSchema)) body: CreateTeacherDto,
+    @Body(new ZodValidationPipe(createTeacherRequestSchema))
+    body: CreateTeacherDto,
   ) {
     const { teacher } = await this.createTeacher.execute(
       TeacherRequestMapper.toCreate(body),
@@ -87,7 +93,8 @@ export class TeachersController {
   @Permissions('teachers:write')
   async update(
     @Param('id', new ParseUUIDPipe()) id: string,
-    @Body(new ZodValidationPipe(updateTeacherSchema)) body: UpdateTeacherDto,
+    @Body(new ZodValidationPipe(updateTeacherRequestSchema))
+    body: UpdateTeacherDto,
   ) {
     const { teacher } = await this.updateTeacher.execute(
       id,
@@ -107,13 +114,16 @@ export class TeachersController {
   async linkAccount(
     @Param('id', new ParseUUIDPipe()) id: string,
     @CurrentUser() user: AuthUser,
-    @Body(new ZodValidationPipe(linkTeacherAccountSchema)) body: LinkTeacherAccountDto,
+    @Body(new ZodValidationPipe(linkTeacherAccountSchema))
+    body: LinkTeacherAccountDto,
   ) {
-    return { data: await this.linkTeacherAccount.execute({
-      teacherId: id,
-      profileId: body.profileId,
-      actorProfileId: user.id,
-    }) };
+    return {
+      data: await this.linkTeacherAccount.execute({
+        teacherId: id,
+        profileId: body.profileId,
+        actorProfileId: user.id,
+      }),
+    };
   }
 
   @Delete(':id/account')
@@ -122,10 +132,12 @@ export class TeachersController {
     @Param('id', new ParseUUIDPipe()) id: string,
     @CurrentUser() user: AuthUser,
   ) {
-    return { data: await this.unlinkTeacherAccount.execute({
-      teacherId: id,
-      actorProfileId: user.id,
-    }) };
+    return {
+      data: await this.unlinkTeacherAccount.execute({
+        teacherId: id,
+        actorProfileId: user.id,
+      }),
+    };
   }
 
   @Delete(':id')

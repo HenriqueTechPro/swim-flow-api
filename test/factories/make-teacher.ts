@@ -7,7 +7,7 @@ export function makeTeacher(override: MakeTeacherOverride = {}): Teacher {
     id: override.id ?? crypto.randomUUID(),
     name: override.name ?? 'Professor Teste',
     photo: override.photo,
-    cpf: override.cpf ?? '123.456.789-00',
+    cpf: override.cpf ?? '529.982.247-25',
     speciality: override.speciality ?? 'Nado Livre',
     categories: override.categories ?? ['Mirim'],
     experience: override.experience ?? 5,
