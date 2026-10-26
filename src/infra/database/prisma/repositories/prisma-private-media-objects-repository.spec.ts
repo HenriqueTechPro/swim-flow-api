@@ -240,7 +240,7 @@ describe('Prisma private media compare-and-swap transitions', () => {
     prisma.privateMediaObject.updateMany.mockResolvedValue({ count: 0 });
     expect(await repository.rejectIfPending(UUID, CUTOFF)).toBe(false);
     expect(prisma.privateMediaObject.updateMany).toHaveBeenCalledWith({
-      where: { id: UUID, status: 'PENDING', ticketExpiresAt: { lte: CUTOFF } },
+      where: { id: UUID, status: 'PENDING', storageProvider: 'R2', ticketExpiresAt: { lte: CUTOFF } },
       data: { status: 'REJECTED' },
     });
   });
