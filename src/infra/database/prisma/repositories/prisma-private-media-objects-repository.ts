@@ -145,12 +145,14 @@ export class PrismaPrivateMediaObjectsRepository extends PrivateMediaObjectsRepo
   async listUnboundVerifiedBlobCandidates(
     cutoff: Date,
     limit: number,
-  ): Promise<ReadonlyArray<{
-    id: string;
-    target: ManagedUploadTarget;
-    declaredSizeBytes: number;
-    verifiedAt: Date;
-  }>> {
+  ): Promise<
+    ReadonlyArray<{
+      id: string;
+      target: ManagedUploadTarget;
+      declaredSizeBytes: number;
+      verifiedAt: Date;
+    }>
+  > {
     if (
       !(cutoff instanceof Date) ||
       !Number.isFinite(cutoff.getTime()) ||
@@ -211,7 +213,12 @@ export class PrismaPrivateMediaObjectsRepository extends PrivateMediaObjectsRepo
 
   async rejectIfPending(id: string, cutoff: Date): Promise<boolean> {
     const updated = await this.prisma.privateMediaObject.updateMany({
-      where: { id, status: 'PENDING', storageProvider: 'R2', ticketExpiresAt: { lte: cutoff } },
+      where: {
+        id,
+        status: 'PENDING',
+        storageProvider: 'R2',
+        ticketExpiresAt: { lte: cutoff },
+      },
       data: { status: 'REJECTED' },
     });
     return updated.count === 1;
