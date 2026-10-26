@@ -78,7 +78,8 @@ export class ReconcileClaimedPrivateBlobImageUseCase {
         current?.storageProvider === 'BLOB' &&
         current.status === 'DELETED' &&
         current.verifiedEtag === etag &&
-        current.cleanupClaimedAt?.getTime() === record.cleanupClaimedAt.getTime() &&
+        current.cleanupClaimedAt?.getTime() ===
+          record.cleanupClaimedAt.getTime() &&
         current.cleanupCompletedAt
       ) {
         return { status: 'ALREADY_COMPLETED' as const };
