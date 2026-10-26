@@ -24,6 +24,7 @@ const pending = {
   declaredSizeBytes: 1000,
   ticketExpiresAt: EXPIRY,
   status: 'PENDING' as const,
+  storageProvider: 'R2' as const,
   verifiedAt: null,
   verifiedEtag: null,
 };
