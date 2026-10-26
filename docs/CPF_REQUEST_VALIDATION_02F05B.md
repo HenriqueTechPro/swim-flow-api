@@ -7,7 +7,7 @@ Antes desta mudança, os endpoints POST/PUT aceitavam CPF arbitrário, mesmo qua
 
 ## Entrega
 - `src/shared/utils/cpf.ts`: validador de CPF com dígitos verificadores e recusa de sequências repetidas e formatos desconhecidos.
-- `createTeacherSchema` e `createParentSchema` na API verificam CPF quando preenchido. Contratos de atualização herdam a regra.
+- `cpf-management-requests.ts` envolve os contratos legados em schemas estritos, usados exclusivamente no POST/PUT dos controllers de professores e responsáveis. Os contratos antigos continuam intactos.
 - Válidos com ou sem máscara continuam aceitos; ausente, `null` e vazio seguem permitidos (campo opcional).
 - Fixtures de unidade/e2e corrigidas para não utilizar CPFs fictícios inválidos como se fossem válidos.
 - Testes de contratos e algoritmo cobrindo entradas aceitas e rejeitadas.
