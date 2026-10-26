@@ -37,6 +37,9 @@ export abstract class PrivateBlobStorageRepository {
     expectedEtag: string,
   ): Promise<ReadPrivateBlob | null>;
 
+  /** Private, server-only metadata check; null means confirmed not found. */
+  abstract stat(pathname: string): Promise<StoredPrivateBlob | null>;
+
   /** Only a privileged internal retention/cleanup operation may call this. */
   abstract delete(pathname: string, etag: string): Promise<void>;
 }

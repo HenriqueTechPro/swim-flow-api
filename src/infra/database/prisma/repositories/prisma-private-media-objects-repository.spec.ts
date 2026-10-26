@@ -325,6 +325,51 @@ describe('Prisma private media compare-and-swap transitions', () => {
     ).rejects.toThrow('private-blob-cleanup-claim-concurrency');
   });
 
+  it('finalizes only the matching claimed Blob ETag, timestamp and no active FK', async () => {
+    prisma.privateMediaObject.updateMany.mockResolvedValueOnce({ count: 1 });
+    expect(
+      await repository.completeClaimedBlobCleanup(
+        UUID,
+        ETAG,
+        VERIFIED_AT,
+        new Date(VERIFIED_AT.getTime() + 1000),
+      ),
+    ).toBe(true);
+    expect(prisma.privateMediaObject.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: UUID,
+        storageProvider: 'BLOB',
+        status: 'GC_CLAIMED',
+        cleanupClaimedAt: VERIFIED_AT,
+        cleanupCompletedAt: null,
+        ticketExpiresAt: null,
+        verifiedEtag: ETAG,
+        activeBindings: { none: {} },
+      },
+      data: {
+        status: 'DELETED',
+        cleanupCompletedAt: new Date(VERIFIED_AT.getTime() + 1000),
+      },
+    });
+    prisma.privateMediaObject.updateMany.mockResolvedValueOnce({ count: 0 });
+    expect(
+      await repository.completeClaimedBlobCleanup(
+        UUID,
+        ETAG,
+        VERIFIED_AT,
+        new Date(VERIFIED_AT.getTime() + 1000),
+      ),
+    ).toBe(false);
+    await expect(
+      repository.completeClaimedBlobCleanup(
+        UUID,
+        'bad-etag',
+        VERIFIED_AT,
+        VERIFIED_AT,
+      ),
+    ).rejects.toThrow('invalid-private-blob-cleanup-completion');
+  });
+
   it('atomically verifies only PENDING whose PUT grace is over', async () => {
     prisma.privateMediaObject.updateMany.mockResolvedValue({ count: 1 });
     expect(

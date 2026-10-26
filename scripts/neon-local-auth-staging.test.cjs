@@ -26,7 +26,7 @@ function after() {
     local_migration_ok: 1, identity_rows: 0, token_rows: 0, local_constraints: 9 };
 }
 
-test('checks two frozen migrations and four additive media migrations offline', () => {
+test('checks two frozen migrations and five additive media migrations offline', () => {
   assert.equal(verifyVersionedMigrations(), true);
 });
 
@@ -67,7 +67,7 @@ test('check mode does not call any database action', async () => {
     inspectAfter: unexpected,
     status: unexpected,
   });
-  assert.deepEqual(result, { verifiedFiles: 6, wroteDatabase: false });
+  assert.deepEqual(result, { verifiedFiles: 7, wroteDatabase: false });
 });
 
 test('retired one-time local-auth runner refuses applying new media migrations', async () => {

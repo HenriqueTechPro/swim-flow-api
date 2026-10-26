@@ -1,4 +1,4 @@
-import { del, get, head, put } from '@vercel/blob';
+import { BlobNotFoundError, del, get, head, put } from '@vercel/blob';
 import { MAX_PRIVATE_IMAGE_BYTES } from '@/domain/uploads/application/services/private-media-upload-policy';
 import { verifyPrivateImageObject } from '@/domain/uploads/application/services/verify-private-media-upload';
 import { isStrongPrivateMediaEtag } from '@/domain/uploads/application/services/private-media-etag-policy';
@@ -208,6 +208,25 @@ export class VercelPrivateBlobStorageRepository extends PrivateBlobStorageReposi
       contentType: received.blob.contentType,
       stream,
     };
+  }
+
+  async stat(pathname: string): Promise<StoredPrivateBlob | null> {
+    requirePrivatePathname(pathname);
+    try {
+      const remote = await this.sdk.head(pathname, { token: this.token });
+      requireBlobMetadata(pathname, remote);
+      return {
+        pathname: remote.pathname,
+        etag: remote.etag,
+        contentType: remote.contentType,
+        sizeBytes: remote.size,
+      };
+    } catch (error) {
+      // Other failures (auth, network, wrong ETag, service outage) NEVER
+      // mean the object was deleted. Retry later without marking DELETED.
+      if (error instanceof BlobNotFoundError) return null;
+      throw error;
+    }
   }
 
   async delete(pathname: string, etag: string): Promise<void> {

@@ -913,6 +913,7 @@ model PrivateMediaObject {
   verifiedAt DateTime? @map("verified_at") @db.Timestamptz(6)
   verifiedEtag String? @map("verified_etag") @db.VarChar(128)
   cleanupClaimedAt DateTime? @map("cleanup_claimed_at") @db.Timestamptz(6)
+  cleanupCompletedAt DateTime? @map("cleanup_completed_at") @db.Timestamptz(6)
   activeBindings PrivateMediaActiveBinding[]
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)

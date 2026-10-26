@@ -24,6 +24,7 @@ const ADDITIONAL_MIGRATION_BLOBS = Object.freeze({
   '20261025010000_private_media_verified_etag': '90514b5e7b7fc9f76eee8f747012d8eed02ba8ab',
   '20261025020000_private_blob_binding_lifecycle': 'b814ec47156693ecc5282a60a71394aa20b34217',
   '20261026000000_private_blob_cleanup_claim': '66f8215e1c06fafc29212759eea48eeda0f4e14b',
+  '20261026010000_private_blob_cleanup_completion': 'be4beab2f829fea46005b8191a89060252286a97',
 });
 const HISTORICAL_MIGRATIONS = Object.keys(EXPECTED).length;
 const APPROVED_MIGRATIONS = HISTORICAL_MIGRATIONS +
