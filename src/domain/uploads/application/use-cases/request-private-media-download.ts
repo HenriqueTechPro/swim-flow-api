@@ -30,6 +30,7 @@ export class RequestPrivateMediaDownloadUseCase {
     if (
       !record ||
       record.status !== 'VERIFIED' ||
+      record.storageProvider !== 'R2' ||
       !isStrongPrivateMediaEtag(record.verifiedEtag) ||
       !(await canAccessPrivateMediaRecord(
         actorId,
