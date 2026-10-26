@@ -119,7 +119,7 @@ async function main() {
       oldId, '"wrong-etag"', claimed.cleanupClaimedAt, now,
     ), false);
     assert.equal(await repository.completeClaimedBlobCleanup(
-      oldId, etag, new Date(claimed.cleanupClaimedAt.getTime() + 1), now,
+      oldId, etag, new Date(claimed.cleanupClaimedAt.getTime() - 1), now,
     ), false);
     assert.equal(await repository.completeClaimedBlobCleanup(
       activeId, etag, now, now,
