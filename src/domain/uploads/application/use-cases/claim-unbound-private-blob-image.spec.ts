@@ -23,7 +23,9 @@ describe('Internal-only atomic cleanup claim (NO Blob calls)', () => {
       deletedObjects: 0,
     });
     expect(records.claimUnboundVerifiedBlobForCleanup).toHaveBeenCalledWith(
-      MEDIA, CUTOFF, NOW,
+      MEDIA,
+      CUTOFF,
+      NOW,
     );
   });
 
