@@ -26,6 +26,7 @@ function toRecord(record: PrivateMediaObject): PrivateMediaObjectRecord {
     verifiedAt: record.verifiedAt,
     verifiedEtag: record.verifiedEtag,
     cleanupClaimedAt: record.cleanupClaimedAt,
+    cleanupCompletedAt: record.cleanupCompletedAt,
   };
 }
 
@@ -259,6 +260,40 @@ export class PrismaPrivateMediaObjectsRepository extends PrivateMediaObjectsRepo
       }
       return true;
     });
+  }
+
+  async completeClaimedBlobCleanup(
+    mediaId: string,
+    etag: string,
+    claimedAt: Date,
+    completedAt: Date,
+  ): Promise<boolean> {
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(mediaId) ||
+      !/^"[A-Za-z0-9-]{1,120}"$/.test(etag) ||
+      !(claimedAt instanceof Date) ||
+      !Number.isFinite(claimedAt.getTime()) ||
+      !(completedAt instanceof Date) ||
+      !Number.isFinite(completedAt.getTime()) ||
+      completedAt.getTime() < claimedAt.getTime()
+    ) {
+      throw new Error('invalid-private-blob-cleanup-completion');
+    }
+
+    const changed = await this.prisma.privateMediaObject.updateMany({
+      where: {
+        id: mediaId,
+        storageProvider: 'BLOB',
+        status: 'GC_CLAIMED',
+        cleanupClaimedAt: claimedAt,
+        cleanupCompletedAt: null,
+        ticketExpiresAt: null,
+        verifiedEtag: etag,
+        activeBindings: { none: {} },
+      },
+      data: { status: 'DELETED', cleanupCompletedAt: completedAt },
+    });
+    return changed.count === 1;
   }
 
   async markVerifiedIfPending(
