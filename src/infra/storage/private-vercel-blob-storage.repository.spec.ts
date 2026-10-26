@@ -54,7 +54,7 @@ describe('Private Vercel Blob transport (SDK mocked, zero cloud calls)', () => {
     expect(() => new VercelPrivateBlobStorageRepository('short')).toThrow(
       'invalid-private-blob-credentials',
     );
-    expect(() =>
+    expect(
       createVercelPrivateBlobStorageRepository({
         provider: 'vercel-blob',
         access: 'private',
