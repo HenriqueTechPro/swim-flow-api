@@ -62,21 +62,30 @@ describe('Optimistic binding of only one VERIFIED private Blob per resource', ()
       expectedMediaId: PREVIOUS,
     });
     api.records.assignActiveVerifiedBlob.mockResolvedValueOnce(false);
-    await expect(api.service.execute(ACTOR, MEDIA, PREVIOUS)).rejects.toMatchObject({
+    await expect(
+      api.service.execute(ACTOR, MEDIA, PREVIOUS),
+    ).rejects.toMatchObject({
       statusCode: 409,
     });
   });
 
   it('fails before DB modification if role revoked or resource disappears', async () => {
     const api = setup();
-    api.profiles.findByUserId.mockResolvedValueOnce({ id: ACTOR, role: 'teacher' });
-    await expect(api.service.execute(ACTOR, MEDIA, null)).rejects.toMatchObject({
-      statusCode: 404,
+    api.profiles.findByUserId.mockResolvedValueOnce({
+      id: ACTOR,
+      role: 'teacher',
     });
+    await expect(api.service.execute(ACTOR, MEDIA, null)).rejects.toMatchObject(
+      {
+        statusCode: 404,
+      },
+    );
     api.resources.existsForTarget.mockResolvedValueOnce(false);
-    await expect(api.service.execute(ACTOR, MEDIA, null)).rejects.toMatchObject({
-      statusCode: 404,
-    });
+    await expect(api.service.execute(ACTOR, MEDIA, null)).rejects.toMatchObject(
+      {
+        statusCode: 404,
+      },
+    );
     expect(api.records.assignActiveVerifiedBlob).not.toHaveBeenCalled();
   });
 
@@ -89,7 +98,9 @@ describe('Optimistic binding of only one VERIFIED private Blob per resource', ()
       { verifiedEtag: null },
     ]) {
       api.records.findById.mockResolvedValueOnce({ ...verified, ...change });
-      await expect(api.service.execute(ACTOR, MEDIA, null)).rejects.toMatchObject({
+      await expect(
+        api.service.execute(ACTOR, MEDIA, null),
+      ).rejects.toMatchObject({
         statusCode: 404,
       });
     }
@@ -109,16 +120,22 @@ describe('Optimistic binding of only one VERIFIED private Blob per resource', ()
     }
     api.profiles.findByUserId.mockResolvedValue({ id: ACTOR, role: 'user' });
     api.records.findById.mockResolvedValueOnce({
-      ...verified, target: 'profile-avatar', resourceId: ACTOR,
+      ...verified,
+      target: 'profile-avatar',
+      resourceId: ACTOR,
     });
-    await expect(api.service.execute(ACTOR, MEDIA, null)).resolves.toHaveProperty(
-      'status', 'ACTIVE',
-    );
+    await expect(
+      api.service.execute(ACTOR, MEDIA, null),
+    ).resolves.toHaveProperty('status', 'ACTIVE');
     api.records.findById.mockResolvedValueOnce({
-      ...verified, target: 'profile-avatar', resourceId: STUDENT,
+      ...verified,
+      target: 'profile-avatar',
+      resourceId: STUDENT,
     });
-    await expect(api.service.execute(ACTOR, MEDIA, null)).rejects.toMatchObject({
-      statusCode: 404,
-    });
+    await expect(api.service.execute(ACTOR, MEDIA, null)).rejects.toMatchObject(
+      {
+        statusCode: 404,
+      },
+    );
   });
 });
