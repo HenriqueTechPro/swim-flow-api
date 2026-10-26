@@ -29,6 +29,7 @@ export class ReadPrivateBlobImageUseCase {
     if (
       !record ||
       record.status !== 'VERIFIED' ||
+      record.storageProvider !== 'BLOB' ||
       !isStrongPrivateMediaEtag(record.verifiedEtag) ||
       !(await canAccessPrivateMediaRecord(
         actorId,
