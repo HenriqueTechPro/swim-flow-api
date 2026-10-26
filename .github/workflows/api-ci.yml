@@ -62,6 +62,8 @@ jobs:
           FORMAT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           npm run format:changed -- "$FORMAT_BASE_SHA" "$FORMAT_HEAD_SHA" --check
+      - name: Guard private Blob manual smoke environment (offline only)
+        run: npm run blob:smoke:guard:test
       - name: Guarded first admin bootstrap tests
         run: npm run bootstrap:first-admin:test
       - name: Resend isolated delivery tests (network mocked, no account access)
