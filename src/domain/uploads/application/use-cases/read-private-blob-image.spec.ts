@@ -33,7 +33,11 @@ function setup() {
       etag: ETAG,
       sizeBytes: 8,
       contentType: 'image/jpeg',
-      stream: { async *[Symbol.asyncIterator]() { yield new Uint8Array(8); } },
+      stream: {
+        async *[Symbol.asyncIterator]() {
+          yield new Uint8Array(8);
+        },
+      },
     }),
   };
   const useCase = new ReadPrivateBlobImageUseCase(
@@ -93,8 +97,11 @@ describe('Authenticated private Blob stream', () => {
   it('rejects changed bytes metadata, missing blob and malformed IDs', async () => {
     const api = setup();
     api.blobs.get.mockResolvedValueOnce({
-      pathname: KEY, etag: ETAG, sizeBytes: 99,
-      contentType: 'image/jpeg', stream: {},
+      pathname: KEY,
+      etag: ETAG,
+      sizeBytes: 99,
+      contentType: 'image/jpeg',
+      stream: {},
     });
     await expect(api.useCase.execute(ACTOR, MEDIA)).rejects.toMatchObject({
       statusCode: 404,
@@ -116,7 +123,9 @@ describe('Authenticated private Blob stream', () => {
       target: 'profile-avatar',
       resourceId: ACTOR,
     });
-    await expect(api.useCase.execute(ACTOR, MEDIA)).resolves.toHaveProperty('stream');
+    await expect(api.useCase.execute(ACTOR, MEDIA)).resolves.toHaveProperty(
+      'stream',
+    );
     api.records.findById.mockResolvedValue({
       ...api.record,
       target: 'profile-avatar',
