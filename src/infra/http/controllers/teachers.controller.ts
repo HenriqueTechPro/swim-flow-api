@@ -15,7 +15,10 @@ import {
   type CreateTeacherDto,
   type UpdateTeacherDto,
 } from '@/shared/contracts/management';
-import { createTeacherRequestSchema, updateTeacherRequestSchema } from '@/shared/contracts/cpf-management-requests';
+import {
+  createTeacherRequestSchema,
+  updateTeacherRequestSchema,
+} from '@/shared/contracts/cpf-management-requests';
 import { CreateTeacherUseCase } from '@/domain/teachers/application/use-cases/create-teacher';
 import { DeleteTeacherUseCase } from '@/domain/teachers/application/use-cases/delete-teacher';
 import { ListTeachersUseCase } from '@/domain/teachers/application/use-cases/list-teachers';
