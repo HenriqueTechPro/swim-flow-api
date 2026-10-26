@@ -103,7 +103,7 @@ describe('Blob private upload use case: conservative current ACL + clean bytes',
       resourceId: STUDENT,
       contentType: 'image/png',
       bytes: RAW,
-    })).resolves.toMatchObject({ status: 'VERIFIED' });
+    })).rejects.toMatchObject({ statusCode: 400 });
   });
 
   it('fails closed after role revocation during processing', async () => {
