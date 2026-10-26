@@ -213,8 +213,7 @@ async function main() {
     await db.$disconnect();
   }
 }
-void main().catch((error) => {
-  process.stderr.write('TEMP_DIAGNOSTIC_GC:' + String(error?.name || 'Error') + ':' + String(error?.code || 'none') + ':' + String(error?.message || '').slice(0,900) + '\n');
+void main().catch(() => {
   process.stderr.write('Disposable Blob GC claim integrity test failed.\n');
   process.exitCode = 1;
 });
