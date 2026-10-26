@@ -49,6 +49,9 @@ export class ConfirmPrivateMediaUploadUseCase {
       throw new AppError(404, 'Private media unavailable');
     }
 
+    if (record.storageProvider !== 'R2') {
+      throw new AppError(404, 'Private media unavailable');
+    }
     if (record.status === 'VERIFIED') {
       return { uploadId, status: 'VERIFIED' as const };
     }
