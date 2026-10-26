@@ -12,11 +12,10 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
-  createParentSchema,
-  updateParentSchema,
   type CreateParentDto,
   type UpdateParentDto,
 } from '@/shared/contracts/management';
+import { createParentRequestSchema, updateParentRequestSchema } from '@/shared/contracts/cpf-management-requests';
 import { CreateParentUseCase } from '@/domain/parents/application/use-cases/create-parent';
 import { DeleteParentUseCase } from '@/domain/parents/application/use-cases/delete-parent';
 import { ListParentsUseCase } from '@/domain/parents/application/use-cases/list-parents';
@@ -66,7 +65,7 @@ export class ParentsController {
   @Post()
   @Permissions('parents:write')
   async create(
-    @Body(new ZodValidationPipe(createParentSchema)) body: CreateParentDto,
+    @Body(new ZodValidationPipe(createParentRequestSchema)) body: CreateParentDto,
   ) {
     const { parent } = await this.createParent.execute(
       ParentRequestMapper.toCreate(body),
@@ -78,7 +77,7 @@ export class ParentsController {
   @Permissions('parents:write')
   async update(
     @Param('id', new ParseUUIDPipe()) id: string,
-    @Body(new ZodValidationPipe(updateParentSchema)) body: UpdateParentDto,
+    @Body(new ZodValidationPipe(updateParentRequestSchema)) body: UpdateParentDto,
   ) {
     const { parent } = await this.updateParent.execute(
       id,
