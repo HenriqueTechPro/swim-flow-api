@@ -37,7 +37,7 @@ ALTER TABLE "private_media_objects"
 -- Composite FK requires an exact resource, provider and VERIFIED state.
 -- PostgreSQL then prevents linking a pending R2 object, a foreign child
 -- photo or any blob whose state has been downgraded.
-CREATE UNIQUE INDEX "private_media_objects_id_target_resource_id_storage_provider_status_key"
+CREATE UNIQUE INDEX "private_media_objects_id_target_resource_id_storage_provide_key"
   ON "private_media_objects"("id", "target", "resource_id", "storage_provider", "status");
 
 CREATE TABLE "private_media_active_bindings" (
@@ -58,7 +58,7 @@ CREATE UNIQUE INDEX "private_media_active_bindings_media_id_key"
   ON "private_media_active_bindings"("media_id");
 
 ALTER TABLE "private_media_active_bindings"
-  ADD CONSTRAINT "private_media_active_bindings_media_id_target_resource_id_storage_provider_status_fkey"
+  ADD CONSTRAINT "private_media_active_bindings_media_id_target_resource_id__fkey"
   FOREIGN KEY ("media_id", "target", "resource_id", "storage_provider", "status")
   REFERENCES "private_media_objects"("id", "target", "resource_id", "storage_provider", "status")
   ON DELETE RESTRICT ON UPDATE RESTRICT;
