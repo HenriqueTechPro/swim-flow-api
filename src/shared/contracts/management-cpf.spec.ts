@@ -52,7 +52,7 @@ describe('CPF validation on NestJS create and update DTOs', () => {
     }
   });
 
-  it('rejects bad check digits, repeated and malformed values for create and update', () => {
+  it('rejects invalid CPFs for create and update', () => {
     for (const cpf of [
       '529.982.247-26',
       '52998224726',
