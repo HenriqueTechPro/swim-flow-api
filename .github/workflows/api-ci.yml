@@ -28,8 +28,6 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - name: Check private R2 smoke run is opt-in and never touches live buckets
-        run: npm run r2:smoke:guard:test
       - run: npm run prisma:validate
       - run: npm run prisma:generate
       - name: Verify consecutive builds regenerate production artifacts

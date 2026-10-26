@@ -31,8 +31,11 @@ export abstract class PrivateBlobStorageRepository {
   /** The adapter must always set access: private and allowOverwrite: false. */
   abstract put(input: PrivateBlobWrite): Promise<StoredPrivateBlob>;
 
-  /** Caller must have up-to-date permission to access this stored record. */
-  abstract get(pathname: string): Promise<ReadPrivateBlob | null>;
+  /** Caller must have current ACL and the VERIFIED record ETag. */
+  abstract get(
+    pathname: string,
+    expectedEtag: string,
+  ): Promise<ReadPrivateBlob | null>;
 
   /** Only a privileged internal retention/cleanup operation may call this. */
   abstract delete(pathname: string, etag: string): Promise<void>;
