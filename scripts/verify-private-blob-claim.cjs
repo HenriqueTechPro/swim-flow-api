@@ -114,6 +114,40 @@ async function main() {
       data: { status: 'GC_CLAIMED', cleanupClaimedAt: now },
     }));
 
+    // Completion is a separate CAS: strong ETag and exact claim timestamp.
+    assert.equal(await repository.completeClaimedBlobCleanup(
+      oldId, '"wrong-etag"', claimed.cleanupClaimedAt, now,
+    ), false);
+    assert.equal(await repository.completeClaimedBlobCleanup(
+      oldId, etag, new Date(claimed.cleanupClaimedAt.getTime() + 1), now,
+    ), false);
+    assert.equal(await repository.completeClaimedBlobCleanup(
+      activeId, etag, now, now,
+    ), false);
+    assert.equal(await repository.completeClaimedBlobCleanup(
+      oldId, etag, claimed.cleanupClaimedAt, now,
+    ), true);
+    assert.equal(await repository.completeClaimedBlobCleanup(
+      oldId, etag, claimed.cleanupClaimedAt, now,
+    ), false);
+    const completed = await db.privateMediaObject.findUniqueOrThrow({
+      where: { id: oldId },
+    });
+    assert.equal(completed.status, 'DELETED');
+    assert.equal(completed.verifiedEtag, etag);
+    assert.equal(completed.cleanupClaimedAt.getTime(), claimed.cleanupClaimedAt.getTime());
+    assert.equal(completed.cleanupCompletedAt.getTime(), now.getTime());
+    await assert.rejects(db.privateMediaActiveBinding.update({
+      where: {
+        target_resourceId: { target: 'student-photo', resourceId: resource },
+      },
+      data: { mediaId: oldId },
+    }));
+    await assert.rejects(db.privateMediaObject.update({
+      where: { id: youngId },
+      data: { status: 'DELETED', cleanupCompletedAt: now },
+    }));
+
     // Deterministic reverse race: hold FOR UPDATE, then insert the FK
     // binding inside the holder's transaction; a concurrent real claim
     // must block, then observe the new active link and refuse the claim.
