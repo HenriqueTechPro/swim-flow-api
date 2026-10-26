@@ -27,7 +27,10 @@ function setup() {
     declaredSizeBytes: 8,
     declaredContentType: 'image/jpeg',
   };
-  const records = { findById: jest.fn().mockResolvedValue(record) };
+  const records = {
+    findById: jest.fn().mockResolvedValue(record),
+    findActiveMediaId: jest.fn().mockResolvedValue(MEDIA),
+  };
   const blobs = {
     get: jest.fn().mockResolvedValue({
       pathname: KEY,
@@ -61,6 +64,19 @@ describe('Authenticated private Blob stream', () => {
       'X-Content-Type-Options': 'nosniff',
     });
     expect(api.blobs.get).toHaveBeenCalledWith(KEY, ETAG);
+  });
+
+  it('never downloads an unbound or replaced Blob even if its ETag remains VERIFIED', async () => {
+    const api = setup();
+    api.records.findActiveMediaId.mockResolvedValueOnce(null);
+    await expect(api.useCase.execute(ACTOR, MEDIA)).rejects.toMatchObject({
+      statusCode: 404,
+    });
+    api.records.findActiveMediaId.mockResolvedValueOnce(STUDENT);
+    await expect(api.useCase.execute(ACTOR, MEDIA)).rejects.toMatchObject({
+      statusCode: 404,
+    });
+    expect(api.blobs.get).not.toHaveBeenCalled();
   });
 
   it('fails closed for revoked roles and deleted student', async () => {
