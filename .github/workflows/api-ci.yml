@@ -28,6 +28,10 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - name: Temporary PR68 formatting snapshot (remove before merge)
+        run: |
+          node node_modules/prettier/bin/prettier.cjs --write -- src/domain/uploads/application/use-cases/reconcile-claimed-private-blob-image.spec.ts src/domain/uploads/application/use-cases/reconcile-claimed-private-blob-image.ts src/infra/database/prisma/repositories/prisma-private-media-objects-repository.spec.ts src/infra/database/prisma/repositories/prisma-private-media-objects-repository.ts src/infra/storage/private-vercel-blob-storage.repository.spec.ts
+          node -e 'const fs = require("node:fs"); for (const f of ["src/domain/uploads/application/use-cases/reconcile-claimed-private-blob-image.spec.ts","src/domain/uploads/application/use-cases/reconcile-claimed-private-blob-image.ts","src/infra/database/prisma/repositories/prisma-private-media-objects-repository.spec.ts","src/infra/database/prisma/repositories/prisma-private-media-objects-repository.ts","src/infra/storage/private-vercel-blob-storage.repository.spec.ts"]) console.log("FMT_SNAPSHOT:" + f + ":" + JSON.stringify(fs.readFileSync(f, "utf8")))'
       - run: npm run prisma:validate
       - run: npm run prisma:generate
       - name: Verify consecutive builds regenerate production artifacts
