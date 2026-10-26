@@ -29,9 +29,10 @@ export class SharpPrivateBlobImageProcessor extends PrivateBlobImageProcessor {
     ) {
       throw new Error('invalid-private-image-input-size');
     }
-    const normalized = declaredContentType.toLowerCase() === 'image/jpg'
-      ? 'image/jpeg'
-      : declaredContentType.toLowerCase();
+    const normalized =
+      declaredContentType.toLowerCase() === 'image/jpg'
+        ? 'image/jpeg'
+        : declaredContentType.toLowerCase();
     const expectedFormat = ACCEPTED_FORMATS[normalized];
     if (!expectedFormat) {
       throw new Error('invalid-private-image-input-format');
