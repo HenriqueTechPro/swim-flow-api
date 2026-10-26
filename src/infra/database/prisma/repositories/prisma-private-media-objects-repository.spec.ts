@@ -209,12 +209,14 @@ describe('Prisma private media compare-and-swap transitions', () => {
   });
 
   it('refuses to classify unverified metadata as a cleanup candidate', async () => {
-    prisma.privateMediaObject.findMany.mockResolvedValueOnce([{
-      id: UUID,
-      target: 'student-photo',
-      declaredSizeBytes: 100,
-      verifiedAt: null,
-    }]);
+    prisma.privateMediaObject.findMany.mockResolvedValueOnce([
+      {
+        id: UUID,
+        target: 'student-photo',
+        declaredSizeBytes: 100,
+        verifiedAt: null,
+      },
+    ]);
     await expect(
       repository.listUnboundVerifiedBlobCandidates(CUTOFF, 25),
     ).rejects.toThrow('invalid-private-blob-audit-metadata');
@@ -240,7 +242,12 @@ describe('Prisma private media compare-and-swap transitions', () => {
     prisma.privateMediaObject.updateMany.mockResolvedValue({ count: 0 });
     expect(await repository.rejectIfPending(UUID, CUTOFF)).toBe(false);
     expect(prisma.privateMediaObject.updateMany).toHaveBeenCalledWith({
-      where: { id: UUID, status: 'PENDING', storageProvider: 'R2', ticketExpiresAt: { lte: CUTOFF } },
+      where: {
+        id: UUID,
+        status: 'PENDING',
+        storageProvider: 'R2',
+        ticketExpiresAt: { lte: CUTOFF },
+      },
       data: { status: 'REJECTED' },
     });
   });
