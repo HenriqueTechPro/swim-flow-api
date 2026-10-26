@@ -20,6 +20,7 @@ const row = {
   verifiedAt: null,
   verifiedEtag: null,
   status: 'PENDING',
+  storageProvider: 'R2',
 };
 
 describe('Prisma private media compare-and-swap transitions', () => {
@@ -76,9 +77,10 @@ describe('Prisma private media compare-and-swap transitions', () => {
         declaredContentType: 'image/jpeg',
         declaredSizeBytes: 500,
         status: 'VERIFIED',
+        storageProvider: 'BLOB',
         verifiedAt: VERIFIED_AT,
         verifiedEtag: ETAG,
-        ticketExpiresAt: new Date('2026-10-26T17:00:00.000Z'),
+        ticketExpiresAt: null,
       },
       select: { id: true },
     });
