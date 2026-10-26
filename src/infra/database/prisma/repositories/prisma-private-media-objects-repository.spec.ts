@@ -25,7 +25,7 @@ const row = {
 
 describe('Prisma private media compare-and-swap transitions', () => {
   const prisma = {
-    privateMediaActiveBinding: { create: jest.fn(), updateMany: jest.fn() },
+    privateMediaActiveBinding: { create: jest.fn(), updateMany: jest.fn(), findUnique: jest.fn() },
     privateMediaObject: {
       create: jest.fn(),
       findUnique: jest.fn(),
@@ -85,6 +85,19 @@ describe('Prisma private media compare-and-swap transitions', () => {
       },
       select: { id: true },
     });
+  });
+
+  it('returns only the currently bound media ID for an exact resource', async () => {
+    prisma.privateMediaActiveBinding.findUnique.mockResolvedValueOnce({ mediaId: UUID });
+    expect(await repository.findActiveMediaId('student-photo', row.resourceId)).toBe(UUID);
+    expect(prisma.privateMediaActiveBinding.findUnique).toHaveBeenCalledWith({
+      where: {
+        target_resourceId: { target: 'student-photo', resourceId: row.resourceId },
+      },
+      select: { mediaId: true },
+    });
+    prisma.privateMediaActiveBinding.findUnique.mockResolvedValueOnce(null);
+    expect(await repository.findActiveMediaId('student-photo', row.resourceId)).toBeNull();
   });
 
   it('assigns first Blob image only if there is no current binding', async () => {
