@@ -27,11 +27,11 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - name: Temporary Sharp lock snapshot — remove before merge
-        run: |
-          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-          node -e 'const fs = require("node:fs"); console.log("LOCK_B64:" + fs.readFileSync("package-lock.json").toString("base64"))'
       - run: npm ci
+      - name: Temporary PR64 Prettier snapshot — remove before merge
+        run: |
+          node node_modules/prettier/bin/prettier.cjs --write -- src/domain/uploads/application/repositories/private-media-objects-repository.ts src/domain/uploads/application/use-cases/read-private-blob-image.spec.ts src/domain/uploads/application/use-cases/store-private-blob-image.spec.ts src/domain/uploads/application/use-cases/store-private-blob-image.ts src/infra/database/prisma/repositories/prisma-private-media-objects-repository.ts src/infra/storage/sharp-private-blob-image-processor.spec.ts src/infra/storage/sharp-private-blob-image-processor.ts
+          node -e 'const fs = require("node:fs"); for (const f of ["src/domain/uploads/application/repositories/private-media-objects-repository.ts","src/domain/uploads/application/use-cases/read-private-blob-image.spec.ts","src/domain/uploads/application/use-cases/store-private-blob-image.spec.ts","src/domain/uploads/application/use-cases/store-private-blob-image.ts","src/infra/database/prisma/repositories/prisma-private-media-objects-repository.ts","src/infra/storage/sharp-private-blob-image-processor.spec.ts","src/infra/storage/sharp-private-blob-image-processor.ts"]) console.log("FMT_SNAPSHOT:" + f + ":" + JSON.stringify(fs.readFileSync(f, "utf8")))'
       - run: npm run prisma:validate
       - run: npm run prisma:generate
       - name: Verify consecutive builds regenerate production artifacts
