@@ -88,12 +88,14 @@ export abstract class PrivateMediaObjectsRepository {
   abstract listUnboundVerifiedBlobCandidates(
     cutoff: Date,
     limit: number,
-  ): Promise<ReadonlyArray<{
-    id: string;
-    target: ManagedUploadTarget;
-    declaredSizeBytes: number;
-    verifiedAt: Date;
-  }>>;
+  ): Promise<
+    ReadonlyArray<{
+      id: string;
+      target: ManagedUploadTarget;
+      declaredSizeBytes: number;
+      verifiedAt: Date;
+    }>
+  >;
 
   /** PENDING -> VERIFIED only after byte/HEAD verification and expiry. */
   abstract markVerifiedIfPending(
