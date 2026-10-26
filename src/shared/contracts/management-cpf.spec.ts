@@ -37,10 +37,16 @@ describe('CPF validation on NestJS create and update DTOs', () => {
       '52998224725',
       '529.982.247-25',
     ]) {
-      for (const schema of [createTeacherRequestSchema, updateTeacherRequestSchema]) {
+      for (const schema of [
+        createTeacherRequestSchema,
+        updateTeacherRequestSchema,
+      ]) {
         expect(schema.safeParse({ ...teacher, cpf }).success).toBe(true);
       }
-      for (const schema of [createParentRequestSchema, updateParentRequestSchema]) {
+      for (const schema of [
+        createParentRequestSchema,
+        updateParentRequestSchema,
+      ]) {
         expect(schema.safeParse({ ...parent, cpf }).success).toBe(true);
       }
     }
@@ -55,7 +61,10 @@ describe('CPF validation on NestJS create and update DTOs', () => {
       '52998224725x',
       '529.982.247',
     ]) {
-      for (const schema of [createTeacherRequestSchema, updateTeacherRequestSchema]) {
+      for (const schema of [
+        createTeacherRequestSchema,
+        updateTeacherRequestSchema,
+      ]) {
         const result = schema.safeParse({ ...teacher, cpf });
         expect(result.success).toBe(false);
         if (!result.success) {
@@ -64,7 +73,10 @@ describe('CPF validation on NestJS create and update DTOs', () => {
           ).toBe(true);
         }
       }
-      for (const schema of [createParentRequestSchema, updateParentRequestSchema]) {
+      for (const schema of [
+        createParentRequestSchema,
+        updateParentRequestSchema,
+      ]) {
         const result = schema.safeParse({ ...parent, cpf });
         expect(result.success).toBe(false);
         if (!result.success) {
