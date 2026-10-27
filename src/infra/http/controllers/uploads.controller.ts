@@ -94,7 +94,7 @@ export class UploadsController {
         fileSize: MAX_PRIVATE_IMAGE_BYTES,
         files: 1,
         fields: 2,
-        parts: 3,
+        parts: 4,
       },
     }),
   )
