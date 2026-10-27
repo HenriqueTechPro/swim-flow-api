@@ -17,6 +17,7 @@ export interface ListEventsRepositoryParams extends PaginationParams {
 }
 
 export abstract class EventsRepository {
+  abstract findById(id: string): Promise<Event | null>;
   abstract list(
     params?: ListEventsRepositoryParams,
   ): Promise<PaginatedResult<Event>>;

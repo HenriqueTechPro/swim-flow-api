@@ -12,6 +12,10 @@ import { makeTraining } from '../factories/make-training';
 export class InMemoryTrainingsRepository implements TrainingsRepository {
   public items: Training[] = [];
 
+  async findById(id: string): Promise<Training | null> {
+    return this.items.find((item) => item.id === id) ?? null;
+  }
+
   async list(params?: ListTrainingsRepositoryParams) {
     const search = params?.search?.trim().toLowerCase();
     const type = params?.type?.trim();

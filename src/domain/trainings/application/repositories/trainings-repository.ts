@@ -18,6 +18,7 @@ export interface ListTrainingsRepositoryParams extends PaginationParams {
 }
 
 export abstract class TrainingsRepository {
+  abstract findById(id: string): Promise<Training | null>;
   abstract list(
     params?: ListTrainingsRepositoryParams,
   ): Promise<PaginatedResult<Training>>;

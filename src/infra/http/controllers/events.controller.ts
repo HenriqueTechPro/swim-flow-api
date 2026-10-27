@@ -19,6 +19,7 @@ import {
 } from '@/shared/contracts/management';
 import { CreateEventUseCase } from '@/domain/events/application/use-cases/create-event';
 import { DeleteEventUseCase } from '@/domain/events/application/use-cases/delete-event';
+import { GetEventUseCase } from '@/domain/events/application/use-cases/get-event';
 import { ListEventsUseCase } from '@/domain/events/application/use-cases/list-events';
 import { UpdateEventUseCase } from '@/domain/events/application/use-cases/update-event';
 import { normalizePaginationParams } from '@/domain/shared/pagination/pagination-utils';
@@ -39,6 +40,7 @@ import { EventPresenter } from '../presenters/event.presenter';
 export class EventsController {
   constructor(
     private readonly listEvents: ListEventsUseCase,
+    private readonly getEvent: GetEventUseCase,
     private readonly createEvent: CreateEventUseCase,
     private readonly updateEvent: UpdateEventUseCase,
     private readonly deleteEvent: DeleteEventUseCase,
@@ -65,6 +67,13 @@ export class EventsController {
       status,
     });
     return { data: events.map(EventPresenter.toHTTP), meta };
+  }
+
+  @Get(':id')
+  @Permissions('events:read')
+  async show(@Param('id', new ParseUUIDPipe()) id: string) {
+    const { event } = await this.getEvent.execute(id);
+    return { data: EventPresenter.toHTTP(event) };
   }
 
   @Post()

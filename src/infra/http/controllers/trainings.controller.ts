@@ -19,6 +19,7 @@ import {
 } from '@/shared/contracts/management';
 import { CreateTrainingUseCase } from '@/domain/trainings/application/use-cases/create-training';
 import { DeleteTrainingUseCase } from '@/domain/trainings/application/use-cases/delete-training';
+import { GetTrainingUseCase } from '@/domain/trainings/application/use-cases/get-training';
 import { ListTrainingsUseCase } from '@/domain/trainings/application/use-cases/list-trainings';
 import { UpdateTrainingUseCase } from '@/domain/trainings/application/use-cases/update-training';
 import { normalizePaginationParams } from '@/domain/shared/pagination/pagination-utils';
@@ -39,6 +40,7 @@ import { TrainingPresenter } from '../presenters/training.presenter';
 export class TrainingsController {
   constructor(
     private readonly listTrainings: ListTrainingsUseCase,
+    private readonly getTraining: GetTrainingUseCase,
     private readonly createTraining: CreateTrainingUseCase,
     private readonly updateTraining: UpdateTrainingUseCase,
     private readonly deleteTraining: DeleteTrainingUseCase,
@@ -67,6 +69,13 @@ export class TrainingsController {
       poolId,
     });
     return { data: trainings.map(TrainingPresenter.toHTTP), meta };
+  }
+
+  @Get(':id')
+  @Permissions('trainings:read')
+  async show(@Param('id', new ParseUUIDPipe()) id: string) {
+    const { training } = await this.getTraining.execute(id);
+    return { data: TrainingPresenter.toHTTP(training) };
   }
 
   @Post()

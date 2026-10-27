@@ -60,6 +60,16 @@ export class PrismaTrainingsRepository implements TrainingsRepository {
     private readonly env: EnvService,
   ) {}
 
+  async findById(id: string) {
+    const record = await this.prisma.training.findUnique({
+      where: { id },
+      include: trainingInclude,
+    });
+    return record
+      ? PrismaTrainingMapper.toDomain(record as unknown as PrismaTrainingRecord)
+      : null;
+  }
+
   async list(params?: ListTrainingsRepositoryParams) {
     const { page, perPage } = normalizePaginationParams(params);
     const search = params?.search?.trim();

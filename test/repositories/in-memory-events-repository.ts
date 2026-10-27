@@ -12,6 +12,10 @@ import { makeEvent } from '../factories/make-event';
 export class InMemoryEventsRepository implements EventsRepository {
   public items: Event[] = [];
 
+  async findById(id: string): Promise<Event | null> {
+    return this.items.find((item) => item.id === id) ?? null;
+  }
+
   async list(params?: ListEventsRepositoryParams) {
     const search = params?.search?.trim().toLowerCase();
     const type = params?.type?.trim();

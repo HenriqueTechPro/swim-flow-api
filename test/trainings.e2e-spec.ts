@@ -60,6 +60,12 @@ describe('TrainingsController (e2e)', () => {
     const trainingId = createResponse.body.data.id as string;
     expect(createResponse.body.data.title).toBe('Treino E2E');
 
+    const detailResponse = await request(app.getHttpServer())
+      .get(`/api/trainings/${trainingId}`)
+      .expect(200);
+    expect(detailResponse.body.data.id).toBe(trainingId);
+    expect(detailResponse.body.data.title).toBe('Treino E2E');
+
     const updateResponse = await request(app.getHttpServer())
       .put(`/api/trainings/${trainingId}`)
       .send({
@@ -98,6 +104,15 @@ describe('TrainingsController (e2e)', () => {
       .get('/api/trainings')
       .expect(200);
     expect(listFinal.body.data).toEqual([]);
+  });
+
+  it('returns 404 for a missing record and 400 for an invalid UUID', async () => {
+    await request(app.getHttpServer())
+      .get('/api/trainings/11111111-1111-4111-8111-111111111111')
+      .expect(404);
+    await request(app.getHttpServer())
+      .get('/api/trainings/not-an-id')
+      .expect(400);
   });
 
   it('filters and paginates trainings list', async () => {

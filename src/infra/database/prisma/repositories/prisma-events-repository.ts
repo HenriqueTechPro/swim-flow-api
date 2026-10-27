@@ -45,6 +45,15 @@ export class PrismaEventsRepository implements EventsRepository {
     private readonly env: EnvService,
   ) {}
 
+  async findById(id: string) {
+    const record = await this.prisma.event.findUnique({
+      where: { id },
+    });
+    return record
+      ? PrismaEventMapper.toDomain(record as unknown as PrismaEventRecord)
+      : null;
+  }
+
   async list(params?: ListEventsRepositoryParams) {
     const { page, perPage } = normalizePaginationParams(params);
     const search = params?.search?.trim();

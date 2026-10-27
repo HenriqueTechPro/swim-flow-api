@@ -46,6 +46,7 @@ import { UpdateClassTeacherRoleUseCase } from '@/domain/classes/application/use-
 import { UpdateClassUseCase } from '@/domain/classes/application/use-cases/update-class';
 import { CreateEventUseCase } from '@/domain/events/application/use-cases/create-event';
 import { DeleteEventUseCase } from '@/domain/events/application/use-cases/delete-event';
+import { GetEventUseCase } from '@/domain/events/application/use-cases/get-event';
 import { ListEventsUseCase } from '@/domain/events/application/use-cases/list-events';
 import { UpdateEventUseCase } from '@/domain/events/application/use-cases/update-event';
 import { CreateExStudentUseCase } from '@/domain/ex-students/application/use-cases/create-ex-student';
@@ -88,6 +89,7 @@ import { ListTeachersUseCase } from '@/domain/teachers/application/use-cases/lis
 import { UpdateTeacherUseCase } from '@/domain/teachers/application/use-cases/update-teacher';
 import { CreateTrainingUseCase } from '@/domain/trainings/application/use-cases/create-training';
 import { DeleteTrainingUseCase } from '@/domain/trainings/application/use-cases/delete-training';
+import { GetTrainingUseCase } from '@/domain/trainings/application/use-cases/get-training';
 import { ListTrainingsUseCase } from '@/domain/trainings/application/use-cases/list-trainings';
 import { UpdateTrainingUseCase } from '@/domain/trainings/application/use-cases/update-training';
 import { CreateManagedUploadUseCase } from '@/domain/uploads/application/use-cases/create-managed-upload';
@@ -164,6 +166,7 @@ export const useCaseProviders: Provider[] = [
   provideUseCase(CreateEventUseCase, EventsRepository),
   provideUseCase(DeleteEventUseCase, EventsRepository),
   provideUseCase(ListEventsUseCase, EventsRepository),
+  provideUseCase(GetEventUseCase, EventsRepository),
   provideUseCase(UpdateEventUseCase, EventsRepository),
   provideUseCase(CreateExStudentUseCase, ExStudentsRepository),
   provideUseCase(DeleteExStudentUseCase, ExStudentsRepository),
@@ -209,6 +212,7 @@ export const useCaseProviders: Provider[] = [
   provideUseCase(CreateTrainingUseCase, TrainingsRepository),
   provideUseCase(DeleteTrainingUseCase, TrainingsRepository),
   provideUseCase(ListTrainingsUseCase, TrainingsRepository),
+  provideUseCase(GetTrainingUseCase, TrainingsRepository),
   provideUseCase(UpdateTrainingUseCase, TrainingsRepository),
   {
     provide: CreateManagedUploadUseCase,
