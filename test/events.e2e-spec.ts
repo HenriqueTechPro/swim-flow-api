@@ -94,7 +94,7 @@ describe('EventsController (e2e)', () => {
     expect(listFinal.body.data).toEqual([]);
   });
 
-  it('returns 404 for a missing record and 400 for an invalid UUID', async () => {
+  it('returns 400 for invalid UUID and 404 when absent', async () => {
     await request(app.getHttpServer())
       .get('/api/events/11111111-1111-4111-8111-111111111111')
       .expect(404);
