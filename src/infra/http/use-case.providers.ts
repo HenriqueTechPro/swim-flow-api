@@ -174,6 +174,7 @@ export const useCaseProviders: Provider[] = [
   provideUseCase(CreateParentUseCase, ParentsRepository),
   provideUseCase(DeleteParentUseCase, ParentsRepository),
   provideUseCase(ListParentsUseCase, ParentsRepository),
+  provideUseCase(GetParentUseCase, ParentsRepository),
   provideUseCase(UpdateParentUseCase, ParentsRepository),
   provideUseCase(CreatePoolUseCase, PoolsRepository),
   provideUseCase(DeletePoolUseCase, PoolsRepository),
