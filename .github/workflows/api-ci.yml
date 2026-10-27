@@ -28,6 +28,8 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - name: Temporary changed-file Prettier formatting diagnosis
+        run: node scripts/temporary-prettier-diagnostic.cjs
       - run: npm run prisma:validate
       - run: npm run prisma:generate
       - name: Verify consecutive builds regenerate production artifacts
