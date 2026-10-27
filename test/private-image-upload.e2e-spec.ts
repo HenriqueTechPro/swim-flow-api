@@ -1,10 +1,20 @@
-import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  jest,
+} from '@jest/globals';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import type { App } from 'supertest/types';
 import { JwtAuthGuard } from '@/infra/auth/jwt-auth.guard';
 import { PrivateImageUploadService } from '@/infra/http/services/private-image-upload.service';
-import { createAuthenticatedE2EApp, createE2EApp } from './utils/create-e2e-app';
+import {
+  createAuthenticatedE2EApp,
+  createE2EApp,
+} from './utils/create-e2e-app';
 
 const ACTOR_ID = '11111111-1111-4111-8111-111111111111';
 const STUDENT_ID = '22222222-2222-4222-8222-222222222222';
@@ -41,13 +51,16 @@ describe('POST /api/uploads/private-image (e2e)', () => {
     await app.close();
   });
 
-  it('accepts an image with target UUID, returning only a verified media ID', async () => {
+  it('returns opaque verified media receipt after upload', async () => {
     const bytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 13, 10, 26, 10]);
     const response = await request(app.getHttpServer())
       .post('/api/uploads/private-image')
       .field('target', 'student-photo')
       .field('resourceId', STUDENT_ID)
-      .attach('file', bytes, { filename: 'photo.png', contentType: 'image/png' })
+      .attach('file', bytes, {
+        filename: 'photo.png',
+        contentType: 'image/png',
+      })
       .expect(201);
 
     expect(response.body).toEqual({
@@ -64,7 +77,7 @@ describe('POST /api/uploads/private-image (e2e)', () => {
     });
   });
 
-  it('permits own profile image and does not allow targeting another user', async () => {
+  it('allows own profile but rejects resource ID on avatar', async () => {
     await request(app.getHttpServer())
       .post('/api/uploads/private-image')
       .field('target', 'profile-avatar')
@@ -83,7 +96,7 @@ describe('POST /api/uploads/private-image (e2e)', () => {
       .expect(400);
   });
 
-  it('rejects absent file, bad MIME, invalid UUID, and oversized upload', async () => {
+  it('rejects bad multipart file, type, UUID and oversized bytes', async () => {
     await request(app.getHttpServer())
       .post('/api/uploads/private-image')
       .field('target', 'student-photo')
@@ -95,7 +108,8 @@ describe('POST /api/uploads/private-image (e2e)', () => {
       .field('target', 'student-photo')
       .field('resourceId', STUDENT_ID)
       .attach('file', Buffer.alloc(8), {
-        filename: 'attack.svg', contentType: 'image/svg+xml',
+        filename: 'attack.svg',
+        contentType: 'image/svg+xml',
       })
       .expect(400);
 
