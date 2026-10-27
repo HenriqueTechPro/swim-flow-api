@@ -15,13 +15,15 @@ describe('LocalAuthDirectoryService', () => {
   beforeEach(() => {
     identities = {
       signInWithPassword: jest.fn().mockResolvedValue(identity),
-      listUsers: jest.fn().mockResolvedValue([{
-        id: 'user-1',
-        email: 'coach@example.invalid',
-        createdAt: new Date('2026-10-01T00:00:00.000Z'),
-        lastSignInAt: null,
-        emailConfirmedAt: null,
-      }]),
+      listUsers: jest.fn().mockResolvedValue([
+        {
+          id: 'user-1',
+          email: 'coach@example.invalid',
+          createdAt: new Date('2026-10-01T00:00:00.000Z'),
+          lastSignInAt: null,
+          emailConfirmedAt: null,
+        },
+      ]),
     } as unknown as jest.Mocked<LocalPasswordIdentityService>;
 
     envService = {
