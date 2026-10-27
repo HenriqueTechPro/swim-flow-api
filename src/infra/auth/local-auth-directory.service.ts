@@ -8,8 +8,9 @@ import { EnvService } from '@/infra/env/env.service';
 import { LocalPasswordIdentityService } from './local-password-identity.service';
 
 /**
- * Neon identity adapter. Login is the only legacy-contract method enabled
- * during the staged cutover; all other legacy methods fail closed.
+ * Neon identity adapter. Password login and read-only administrator
+ * directory listing use local PostgreSQL identities; remaining legacy
+ * identity-provider operations continue to fail closed.
  */
 @Injectable()
 export class LocalAuthDirectoryService extends AuthDirectoryRepository {
@@ -59,11 +60,7 @@ export class LocalAuthDirectoryService extends AuthDirectoryRepository {
   }
 
   listUsers(): Promise<AuthDirectoryUser[]> {
-    return Promise.reject(
-      new ServiceUnavailableException(
-        'Legacy user directory is not configured',
-      ),
-    );
+    return this.identities.listUsers();
   }
 
   deleteUser(): Promise<void> {
