@@ -21,6 +21,7 @@ import {
 } from '@/shared/contracts/cpf-management-requests';
 import { CreateParentUseCase } from '@/domain/parents/application/use-cases/create-parent';
 import { DeleteParentUseCase } from '@/domain/parents/application/use-cases/delete-parent';
+import { GetParentUseCase } from '@/domain/parents/application/use-cases/get-parent';
 import { ListParentsUseCase } from '@/domain/parents/application/use-cases/list-parents';
 import { UpdateParentUseCase } from '@/domain/parents/application/use-cases/update-parent';
 import { normalizePaginationParams } from '@/domain/shared/pagination/pagination-utils';
