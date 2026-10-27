@@ -31,6 +31,13 @@ const levelReferenceData = [
 export class InMemoryStudentsRepository implements StudentsRepository {
   public items: Student[] = [];
 
+  async findById(id: string, teacherProfileId?: string): Promise<Student | null> {
+    // In-memory repository intentionally has no class/profile relationships;
+    // authorized-scoping behavior is verified through Prisma repository tests.
+    if (teacherProfileId) return null;
+    return this.items.find((student) => student.id === id) ?? null;
+  }
+
   async list(
     params?: PaginationParams & {
       search?: string;
