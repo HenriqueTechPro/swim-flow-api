@@ -86,8 +86,16 @@ describe('StudentsController (e2e)', () => {
   it('returns only near-date active students with no full roster or contact details', async () => {
     const birthSuffix = new Date().toISOString().slice(5, 10);
     studentsRepository.items.push(
-      makeStudent({ name: 'Aniversariante', birthDate: `2015-${birthSuffix}`, status: 'Ativo' }),
-      makeStudent({ name: 'Ex-atleta', birthDate: `2016-${birthSuffix}`, status: 'Inativo' }),
+      makeStudent({
+        name: 'Aniversariante',
+        birthDate: `2015-${birthSuffix}`,
+        status: 'Ativo',
+      }),
+      makeStudent({
+        name: 'Ex-atleta',
+        birthDate: `2016-${birthSuffix}`,
+        status: 'Inativo',
+      }),
     );
 
     const response = await request(app.getHttpServer())
