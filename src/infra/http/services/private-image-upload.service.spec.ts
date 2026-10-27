@@ -17,7 +17,7 @@ describe('PrivateImageUploadService', () => {
   });
 
   it('passes bytes through existing audited use case without rewriting authorization', async () => {
-    const execute = jest.fn().mockResolvedValue({
+    const execute = jest.fn<StorePrivateBlobImageUseCase['execute']>().mockResolvedValue({
       uploadId: 'media-id',
       status: 'VERIFIED',
     });
