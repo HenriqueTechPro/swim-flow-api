@@ -32,6 +32,11 @@ const categoryReferenceData: ClassCategoryReference[] = CATEGORY_GROUPS.flatMap(
 export class InMemoryClassesRepository implements ClassesRepository {
   public items: ClassEntity[] = [];
 
+  async findById(id: string, teacherProfileId?: string): Promise<ClassEntity | null> {
+    if (teacherProfileId) return null;
+    return this.items.find((classItem) => classItem.id === id) ?? null;
+  }
+
   async list(params?: ListClassesRepositoryParams) {
     const search = params?.search?.trim().toLowerCase();
     const category = params?.category?.trim();
