@@ -15,6 +15,7 @@ describe('LocalAuthDirectoryService', () => {
   beforeEach(() => {
     identities = {
       signInWithPassword: jest.fn().mockResolvedValue(identity),
+      listUsers: jest.fn().mockResolvedValue([{ id: 'user-1', email: 'coach@example.invalid', createdAt: new Date('2026-10-01'), lastSignInAt: null, emailConfirmedAt: null }]),
     } as unknown as jest.Mocked<LocalPasswordIdentityService>;
 
     envService = {
@@ -51,6 +52,14 @@ describe('LocalAuthDirectoryService', () => {
     ).rejects.toBeInstanceOf(ServiceUnavailableException);
   });
 
+  it('delegates administrator directory reads to the Neon identity projection', async () => {
+    const adapter = new LocalAuthDirectoryService(identities, envService);
+    await expect(adapter.listUsers()).resolves.toMatchObject([
+      { id: 'user-1', email: 'coach@example.invalid' },
+    ]);
+    expect(identities.listUsers).toHaveBeenCalledTimes(1);
+  });
+
   it('fails closed for unsupported legacy management and reset operations', async () => {
     envService = { localPasswordLoginEnabled: true } as EnvService;
     const adapter = new LocalAuthDirectoryService(identities, envService);
@@ -74,9 +83,6 @@ describe('LocalAuthDirectoryService', () => {
         redirectTo: 'https://example.invalid',
       }),
     ).rejects.toBeInstanceOf(ServiceUnavailableException);
-    await expect(adapter.listUsers()).rejects.toBeInstanceOf(
-      ServiceUnavailableException,
-    );
     await expect(adapter.deleteUser('user-1')).rejects.toBeInstanceOf(
       ServiceUnavailableException,
     );
