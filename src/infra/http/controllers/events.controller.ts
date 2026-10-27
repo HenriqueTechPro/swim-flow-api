@@ -40,6 +40,7 @@ import { EventPresenter } from '../presenters/event.presenter';
 export class EventsController {
   constructor(
     private readonly listEvents: ListEventsUseCase,
+    private readonly getEvent: GetEventUseCase,
     private readonly createEvent: CreateEventUseCase,
     private readonly updateEvent: UpdateEventUseCase,
     private readonly deleteEvent: DeleteEventUseCase,
@@ -66,6 +67,13 @@ export class EventsController {
       status,
     });
     return { data: events.map(EventPresenter.toHTTP), meta };
+  }
+
+  @Get(':id')
+  @Permissions('events:read')
+  async show(@Param('id', new ParseUUIDPipe()) id: string) {
+    const { event } = await this.getEvent.execute(id);
+    return { data: EventPresenter.toHTTP(event) };
   }
 
   @Post()
