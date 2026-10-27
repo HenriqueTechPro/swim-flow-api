@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { compare, hash } from 'bcryptjs';
-import type { AuthIdentity } from '@/domain/auth/application/repositories/auth-directory-repository';
+import type { AuthDirectoryUser, AuthIdentity } from '@/domain/auth/application/repositories/auth-directory-repository';
 import { PrismaService } from '@/infra/database/prisma/prisma.service';
 
 const BCRYPT_COST = 12;
@@ -80,6 +80,33 @@ export class LocalPasswordIdentityService {
       email: identity.email,
       fullName: identity.profile.fullName || null,
     };
+  }
+
+  /**
+   * Administrative directory projection. The HTTP route is guarded by
+   * JWT + admin role + auth:manage-users; no credential data is selected.
+   * Disabled identities are deliberately excluded from active access.
+   */
+  async listUsers(): Promise<AuthDirectoryUser[]> {
+    const identities = await this.prisma.localAuthIdentity.findMany({
+      where: { disabledAt: null },
+      select: {
+        userId: true,
+        email: true,
+        createdAt: true,
+        lastSignInAt: true,
+        emailConfirmedAt: true,
+      },
+      orderBy: [{ createdAt: 'asc' }],
+    });
+
+    return identities.map((identity) => ({
+      id: identity.userId,
+      email: identity.email,
+      createdAt: identity.createdAt,
+      lastSignInAt: identity.lastSignInAt,
+      emailConfirmedAt: identity.emailConfirmedAt,
+    }));
   }
 
   async hashPasswordForProvisioning(password: string): Promise<string> {
