@@ -15,6 +15,7 @@ export function makeTeacher(override: MakeTeacherOverride = {}): Teacher {
     email: override.email ?? 'professor.teste@example.com',
     status: override.status ?? 'Ativo',
     studentsCount: override.studentsCount ?? 0,
+    assignedClasses: override.assignedClasses ?? [],
     birthDate: override.birthDate ?? '1990-06-15',
     address: override.address,
     bio: override.bio ?? '',
