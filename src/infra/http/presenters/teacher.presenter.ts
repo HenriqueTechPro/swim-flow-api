@@ -14,6 +14,7 @@ export class TeacherPresenter {
       email: teacher.email,
       status: teacher.status,
       studentsCount: teacher.studentsCount,
+      assignedClasses: teacher.assignedClasses ?? [],
       birthDate: teacher.birthDate,
       address: teacher.address,
       bio: teacher.bio,
