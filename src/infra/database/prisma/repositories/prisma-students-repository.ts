@@ -31,7 +31,7 @@ const studentInclude = {
   level: { select: { name: true } },
   guardians: {
     orderBy: [{ isPrimary: 'desc' as const }, { createdAt: 'asc' as const }],
-    select: { parentId: true, isPrimary: true, parent: { select: { name: true } } },
+    select: { parentId: true, isPrimary: true, parent: { select: { name: true, phone: true } } },
   },
   studentClasses: {
     where: { toDate: null },
