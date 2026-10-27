@@ -1,4 +1,7 @@
-import { PrismaTeacherMapper, type PrismaTeacherRecord } from './prisma-teacher-mapper';
+import {
+  PrismaTeacherMapper,
+  type PrismaTeacherRecord,
+} from './prisma-teacher-mapper';
 
 const teacher: PrismaTeacherRecord = {
   id: 'teacher-1',
@@ -31,9 +34,13 @@ const teacher: PrismaTeacherRecord = {
 
 describe('PrismaTeacherMapper class relation summary', () => {
   it('maps class id, name and coach role without fetching the full class roster', () => {
-    const mapped = PrismaTeacherMapper.toDomain(teacher, new Map([
-      ['class-1', 7], ['class-2', 4],
-    ]));
+    const mapped = PrismaTeacherMapper.toDomain(
+      teacher,
+      new Map([
+        ['class-1', 7],
+        ['class-2', 4],
+      ]),
+    );
     expect(mapped.studentsCount).toBe(11);
     expect(mapped.assignedClasses).toEqual([
       { classId: 'class-2', name: 'Mirim II', role: 'assistant_coach' },
@@ -43,7 +50,8 @@ describe('PrismaTeacherMapper class relation summary', () => {
 
   it('returns an empty assignment list for teachers without classes', () => {
     const mapped = PrismaTeacherMapper.toDomain(
-      { ...teacher, classTeachers: [] }, new Map(),
+      { ...teacher, classTeachers: [] },
+      new Map(),
     );
     expect(mapped.assignedClasses).toEqual([]);
     expect(mapped.studentsCount).toBe(0);
