@@ -42,6 +42,7 @@ import { ParentPresenter } from '../presenters/parent.presenter';
 export class ParentsController {
   constructor(
     private readonly listParents: ListParentsUseCase,
+    private readonly getParent: GetParentUseCase,
     private readonly createParent: CreateParentUseCase,
     private readonly updateParent: UpdateParentUseCase,
     private readonly deleteParent: DeleteParentUseCase,
@@ -64,6 +65,13 @@ export class ParentsController {
       status,
     });
     return { data: parents.map(ParentPresenter.toHTTP), meta };
+  }
+
+  @Get(':id')
+  @Permissions('parents:read')
+  async show(@Param('id', new ParseUUIDPipe()) id: string) {
+    const { parent } = await this.getParent.execute(id);
+    return { data: ParentPresenter.toHTTP(parent) };
   }
 
   @Post()
