@@ -22,6 +22,7 @@ import { TeachersController } from './controllers/teachers.controller';
 import { TrainingsController } from './controllers/trainings.controller';
 import { UploadsController } from './controllers/uploads.controller';
 import { useCaseProviders } from './use-case.providers';
+import { privateImageUploadProvider } from './services/private-image-upload.provider';
 
 @Module({
   imports: [DatabaseModule, AuthModule, EnvModule],
@@ -51,6 +52,7 @@ import { useCaseProviders } from './use-case.providers';
       useExisting: SupabaseManagedUploadsRepository,
     },
     ...useCaseProviders,
+    privateImageUploadProvider,
   ],
 })
 export class HttpModule {}
