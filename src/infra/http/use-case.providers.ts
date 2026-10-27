@@ -46,6 +46,7 @@ import { UpdateClassTeacherRoleUseCase } from '@/domain/classes/application/use-
 import { UpdateClassUseCase } from '@/domain/classes/application/use-cases/update-class';
 import { CreateEventUseCase } from '@/domain/events/application/use-cases/create-event';
 import { DeleteEventUseCase } from '@/domain/events/application/use-cases/delete-event';
+import { GetEventUseCase } from '@/domain/events/application/use-cases/get-event';
 import { ListEventsUseCase } from '@/domain/events/application/use-cases/list-events';
 import { UpdateEventUseCase } from '@/domain/events/application/use-cases/update-event';
 import { CreateExStudentUseCase } from '@/domain/ex-students/application/use-cases/create-ex-student';
