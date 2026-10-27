@@ -22,7 +22,7 @@ describe('EventsController GET by UUID (e2e)', () => {
     await app.close();
   });
 
-  it('returns the selected event and keeps the existing presenter contract', async () => {
+  it('keeps event details in the existing presenter contract', async () => {
     const event = makeEvent({ title: 'Festival Detail' });
     repository.items.push(event);
 
