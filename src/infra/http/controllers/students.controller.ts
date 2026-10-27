@@ -21,6 +21,7 @@ import { CreateStudentUseCase } from '@/domain/students/application/use-cases/cr
 import { DeleteStudentUseCase } from '@/domain/students/application/use-cases/delete-student';
 import { ListStudentReferenceDataUseCase } from '@/domain/students/application/use-cases/list-student-reference-data';
 import { ListStudentsUseCase } from '@/domain/students/application/use-cases/list-students';
+import { ListUpcomingBirthdaysUseCase } from '@/domain/students/application/use-cases/list-upcoming-birthdays';
 import { UpdateStudentUseCase } from '@/domain/students/application/use-cases/update-student';
 import { normalizePaginationParams } from '@/domain/shared/pagination/pagination-utils';
 import { JwtAuthGuard } from '@/infra/auth/jwt-auth.guard';
@@ -42,6 +43,7 @@ import { StudentPresenter } from '../presenters/student.presenter';
 export class StudentsController {
   constructor(
     private readonly listStudents: ListStudentsUseCase,
+    private readonly listUpcomingBirthdays: ListUpcomingBirthdaysUseCase,
     private readonly listStudentReferenceData: ListStudentReferenceDataUseCase,
     private readonly createStudent: CreateStudentUseCase,
     private readonly updateStudent: UpdateStudentUseCase,
@@ -54,6 +56,15 @@ export class StudentsController {
     return {
       data: await this.listStudentReferenceData.execute(),
     };
+  }
+
+  @Get('upcoming-birthdays')
+  @Permissions('students:read')
+  async upcomingBirthdays(@CurrentUser() user: AuthUser) {
+    const { birthdays } = await this.listUpcomingBirthdays.execute({
+      teacherProfileId: user.role === 'teacher' ? user.id : undefined,
+    });
+    return { data: birthdays };
   }
 
   @Get()
