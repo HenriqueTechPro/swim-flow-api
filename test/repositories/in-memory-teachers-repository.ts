@@ -11,6 +11,10 @@ import { makeTeacher } from '../factories/make-teacher';
 export class InMemoryTeachersRepository implements TeachersRepository {
   public items: Teacher[] = [];
 
+  async findById(id: string): Promise<Teacher | null> {
+    return this.items.find((teacher) => teacher.id === id) ?? null;
+  }
+
   async list(params?: {
     page?: number;
     perPage?: number;

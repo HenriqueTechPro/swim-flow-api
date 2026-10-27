@@ -32,6 +32,14 @@ const categoryReferenceData: ClassCategoryReference[] = CATEGORY_GROUPS.flatMap(
 export class InMemoryClassesRepository implements ClassesRepository {
   public items: ClassEntity[] = [];
 
+  async findById(
+    id: string,
+    teacherProfileId?: string,
+  ): Promise<ClassEntity | null> {
+    if (teacherProfileId) return null;
+    return this.items.find((classItem) => classItem.id === id) ?? null;
+  }
+
   async list(params?: ListClassesRepositoryParams) {
     const search = params?.search?.trim().toLowerCase();
     const category = params?.category?.trim();
@@ -262,7 +270,11 @@ export class InMemoryClassesRepository implements ClassesRepository {
       (item) => item.teacherId === input.teacherId,
     );
     if (!teacher) throw new AppError(404, 'Teacher not found in source class');
-    if (targetClass.classTeachers.some((item) => item.teacherId === input.teacherId)) {
+    if (
+      targetClass.classTeachers.some(
+        (item) => item.teacherId === input.teacherId,
+      )
+    ) {
       throw new AppError(409, 'Teacher already assigned to target class');
     }
 

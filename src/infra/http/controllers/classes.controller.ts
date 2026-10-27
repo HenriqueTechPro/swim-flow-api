@@ -29,6 +29,7 @@ import {
 import { AddClassTeacherUseCase } from '@/domain/classes/application/use-cases/add-class-teacher';
 import { CreateClassUseCase } from '@/domain/classes/application/use-cases/create-class';
 import { DeleteClassUseCase } from '@/domain/classes/application/use-cases/delete-class';
+import { GetClassUseCase } from '@/domain/classes/application/use-cases/get-class';
 import { ListClassesUseCase } from '@/domain/classes/application/use-cases/list-classes';
 import { RemoveClassTeacherUseCase } from '@/domain/classes/application/use-cases/remove-class-teacher';
 import { TransferClassTeacherUseCase } from '@/domain/classes/application/use-cases/transfer-class-teacher';
@@ -55,6 +56,7 @@ import { ClassPresenter } from '../presenters/class.presenter';
 export class ClassesController {
   constructor(
     private readonly listClasses: ListClassesUseCase,
+    private readonly getClass: GetClassUseCase,
     private readonly createClass: CreateClassUseCase,
     private readonly updateClass: UpdateClassUseCase,
     private readonly addClassTeacher: AddClassTeacherUseCase,
@@ -90,6 +92,19 @@ export class ClassesController {
       teacherProfileId: user?.role === 'teacher' ? user.id : undefined,
     });
     return { data: classes.map(ClassPresenter.toHTTP), meta };
+  }
+
+  @Get(':id')
+  @Permissions('classes:read')
+  async show(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @CurrentUser() user?: AuthUser,
+  ) {
+    const { classItem } = await this.getClass.execute(
+      id,
+      user?.role === 'teacher' ? user.id : undefined,
+    );
+    return { data: ClassPresenter.toHTTP(classItem) };
   }
 
   @Post()

@@ -54,6 +54,37 @@ export class PrismaStudentsRepository implements StudentsRepository {
     private readonly env: EnvService,
   ) {}
 
+  async findById(id: string, teacherProfileId?: string) {
+    const student = await this.prisma.student.findFirst({
+      where: {
+        id,
+        ...(teacherProfileId
+          ? {
+              studentClasses: {
+                some: {
+                  toDate: null,
+                  swimmingClass: {
+                    classTeachers: {
+                      some: {
+                        teacher: {
+                          profileId: teacherProfileId,
+                          status: 'Ativo',
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            }
+          : {}),
+      },
+      include: studentInclude,
+    });
+    return student
+      ? PrismaStudentMapper.toDomain(student as PrismaStudentRecord)
+      : null;
+  }
+
   async list(params?: ListStudentsRepositoryParams) {
     const { page, perPage } = normalizePaginationParams(params);
     const normalizedSearch = params?.search?.trim().toLowerCase() || '';

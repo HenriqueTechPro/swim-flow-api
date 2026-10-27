@@ -15,6 +15,7 @@ export class StudentPresenter {
       guardianPhone: student.guardianPhone,
       parentId: student.parentId,
       classId: student.classId,
+      classIds: student.classIds ?? (student.classId ? [student.classId] : []),
       phone: student.phone,
       status: student.status,
       achievements: student.achievements,

@@ -45,6 +45,10 @@ export interface ListStudentsRepositoryParams extends PaginationParams {
 }
 
 export abstract class StudentsRepository {
+  abstract findById(
+    id: string,
+    teacherProfileId?: string,
+  ): Promise<Student | null>;
   abstract list(
     params?: ListStudentsRepositoryParams,
   ): Promise<PaginatedResult<Student>>;

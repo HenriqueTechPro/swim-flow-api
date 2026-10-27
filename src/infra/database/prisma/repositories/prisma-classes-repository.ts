@@ -136,6 +136,30 @@ export class PrismaClassesRepository implements ClassesRepository {
     private readonly env: EnvService,
   ) {}
 
+  async findById(id: string, teacherProfileId?: string) {
+    const classItem = await this.prisma.swimmingClass.findFirst({
+      where: {
+        id,
+        ...(teacherProfileId
+          ? {
+              classTeachers: {
+                some: {
+                  teacher: {
+                    profileId: teacherProfileId,
+                    status: 'Ativo' as const,
+                  },
+                },
+              },
+            }
+          : {}),
+      },
+      include: classInclude,
+    });
+    return classItem
+      ? PrismaClassMapper.toDomain(classItem as PrismaClassRecord)
+      : null;
+  }
+
   async list(params?: ListClassesRepositoryParams) {
     const { page, perPage } = normalizePaginationParams(params);
     const search = params?.search?.trim();

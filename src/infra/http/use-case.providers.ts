@@ -37,6 +37,7 @@ import { UpdateProfileUseCase } from '@/domain/auth/application/use-cases/update
 import { AddClassTeacherUseCase } from '@/domain/classes/application/use-cases/add-class-teacher';
 import { CreateClassUseCase } from '@/domain/classes/application/use-cases/create-class';
 import { DeleteClassUseCase } from '@/domain/classes/application/use-cases/delete-class';
+import { GetClassUseCase } from '@/domain/classes/application/use-cases/get-class';
 import { ListClassesUseCase } from '@/domain/classes/application/use-cases/list-classes';
 import { RemoveClassTeacherUseCase } from '@/domain/classes/application/use-cases/remove-class-teacher';
 import { TransferClassStudentUseCase } from '@/domain/classes/application/use-cases/transfer-class-student';
@@ -75,11 +76,13 @@ import { UpdateResultUseCase } from '@/domain/results/application/use-cases/upda
 import { CreateStudentUseCase } from '@/domain/students/application/use-cases/create-student';
 import { DeleteStudentUseCase } from '@/domain/students/application/use-cases/delete-student';
 import { ListStudentReferenceDataUseCase } from '@/domain/students/application/use-cases/list-student-reference-data';
+import { GetStudentUseCase } from '@/domain/students/application/use-cases/get-student';
 import { ListStudentsUseCase } from '@/domain/students/application/use-cases/list-students';
 import { ListUpcomingBirthdaysUseCase } from '@/domain/students/application/use-cases/list-upcoming-birthdays';
 import { UpdateStudentUseCase } from '@/domain/students/application/use-cases/update-student';
 import { CreateTeacherUseCase } from '@/domain/teachers/application/use-cases/create-teacher';
 import { DeleteTeacherUseCase } from '@/domain/teachers/application/use-cases/delete-teacher';
+import { GetTeacherUseCase } from '@/domain/teachers/application/use-cases/get-teacher';
 import { ListTeachersUseCase } from '@/domain/teachers/application/use-cases/list-teachers';
 import { UpdateTeacherUseCase } from '@/domain/teachers/application/use-cases/update-teacher';
 import { CreateTrainingUseCase } from '@/domain/trainings/application/use-cases/create-training';
@@ -151,6 +154,7 @@ export const useCaseProviders: Provider[] = [
   provideUseCase(CreateClassUseCase, ClassesRepository),
   provideUseCase(DeleteClassUseCase, ClassesRepository),
   provideUseCase(ListClassesUseCase, ClassesRepository),
+  provideUseCase(GetClassUseCase, ClassesRepository),
   provideUseCase(RemoveClassTeacherUseCase, ClassesRepository),
   provideUseCase(TransferClassStudentUseCase, ClassesRepository),
   provideUseCase(TransferClassTeacherUseCase, ClassesRepository),
@@ -189,6 +193,7 @@ export const useCaseProviders: Provider[] = [
   provideUseCase(DeleteStudentUseCase, StudentsRepository),
   provideUseCase(ListStudentReferenceDataUseCase, StudentsRepository),
   provideUseCase(ListStudentsUseCase, StudentsRepository),
+  provideUseCase(GetStudentUseCase, StudentsRepository),
   provideUseCase(ListUpcomingBirthdaysUseCase, StudentsRepository),
   provideUseCase(UpdateStudentUseCase, StudentsRepository),
   provideUseCase(GetTeacherAccountLinkUseCase, TeacherAccountLinksRepository),
@@ -197,6 +202,7 @@ export const useCaseProviders: Provider[] = [
   provideUseCase(CreateTeacherUseCase, TeachersRepository),
   provideUseCase(DeleteTeacherUseCase, TeachersRepository),
   provideUseCase(ListTeachersUseCase, TeachersRepository),
+  provideUseCase(GetTeacherUseCase, TeachersRepository),
   provideUseCase(UpdateTeacherUseCase, TeachersRepository),
   provideUseCase(CreateTrainingUseCase, TrainingsRepository),
   provideUseCase(DeleteTrainingUseCase, TrainingsRepository),

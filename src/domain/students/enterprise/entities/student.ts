@@ -12,6 +12,8 @@ export interface Student {
   guardianPhone?: string;
   parentId?: string;
   classId?: string | null;
+  /** IDs of all current classes, for detail screens without downloading the full class directory. */
+  classIds?: string[];
   phone: string;
   status: string;
   achievements: number;
