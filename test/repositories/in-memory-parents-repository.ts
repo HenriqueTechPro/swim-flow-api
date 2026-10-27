@@ -12,6 +12,10 @@ import { makeParent } from '../factories/make-parent';
 export class InMemoryParentsRepository implements ParentsRepository {
   public items: Parent[] = [];
 
+  async findById(id: string): Promise<Parent | null> {
+    return this.items.find((item) => item.id === id) ?? null;
+  }
+
   async list(params?: ListParentsRepositoryParams) {
     const search = params?.search?.trim().toLowerCase();
     const status = params?.status?.trim();

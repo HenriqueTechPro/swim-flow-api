@@ -56,6 +56,7 @@ import { ReactivateExStudentUseCase } from '@/domain/ex-students/application/use
 import { UpdateExStudentUseCase } from '@/domain/ex-students/application/use-cases/update-ex-student';
 import { CreateParentUseCase } from '@/domain/parents/application/use-cases/create-parent';
 import { DeleteParentUseCase } from '@/domain/parents/application/use-cases/delete-parent';
+import { GetParentUseCase } from '@/domain/parents/application/use-cases/get-parent';
 import { ListParentsUseCase } from '@/domain/parents/application/use-cases/list-parents';
 import { UpdateParentUseCase } from '@/domain/parents/application/use-cases/update-parent';
 import { CreatePoolUseCase } from '@/domain/pools/application/use-cases/create-pool';
@@ -173,6 +174,7 @@ export const useCaseProviders: Provider[] = [
   provideUseCase(CreateParentUseCase, ParentsRepository),
   provideUseCase(DeleteParentUseCase, ParentsRepository),
   provideUseCase(ListParentsUseCase, ParentsRepository),
+  provideUseCase(GetParentUseCase, ParentsRepository),
   provideUseCase(UpdateParentUseCase, ParentsRepository),
   provideUseCase(CreatePoolUseCase, PoolsRepository),
   provideUseCase(DeletePoolUseCase, PoolsRepository),

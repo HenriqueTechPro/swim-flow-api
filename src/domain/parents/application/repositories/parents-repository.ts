@@ -16,6 +16,7 @@ export interface ListParentsRepositoryParams extends PaginationParams {
 }
 
 export abstract class ParentsRepository {
+  abstract findById(id: string): Promise<Parent | null>;
   abstract list(
     params?: ListParentsRepositoryParams,
   ): Promise<PaginatedResult<Parent>>;

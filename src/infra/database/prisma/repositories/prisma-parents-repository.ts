@@ -38,11 +38,24 @@ export class PrismaParentsRepository implements ParentsRepository {
     private readonly env: EnvService,
   ) {}
 
+  async findById(id: string) {
+    const parent = await this.prisma.parent.findUnique({
+      where: { id },
+      include: parentInclude,
+    });
+    if (!parent) return null;
+    return PrismaParentMapper.toDomain(parent as unknown as PrismaParentRecord);
+  }
+
   async list(params?: ListParentsRepositoryParams) {
     const { page, perPage } = normalizePaginationParams(params);
     const search = params?.search?.trim();
     const status = params?.status?.trim();
-    const cacheKey = `${buildPaginatedCacheKey('parents', page, perPage)}:${search ?? ''}:${status ?? ''}`;
+    const cacheKey = [
+      buildPaginatedCacheKey('parents', page, perPage),
+      search ?? '',
+      status ?? '',
+    ].join(':');
 
     return rememberPaginatedResult(
       this.cache,
@@ -60,9 +73,11 @@ export class PrismaParentsRepository implements ParentsRepository {
                   { profession: { contains: search, mode: 'insensitive' } },
                   {
                     studentGuardians: {
-                      some: { student: {
-                        name: { contains: search, mode: 'insensitive' },
-                      } },
+                      some: {
+                        student: {
+                          name: { contains: search, mode: 'insensitive' },
+                        },
+                      },
                     },
                   },
                 ],
