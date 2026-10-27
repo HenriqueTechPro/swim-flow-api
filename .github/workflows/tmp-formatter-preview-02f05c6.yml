@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - feat/paginated-relation-summaries-02f05c6-20261027
+  pull_request:
+    branches: [main]
 permissions:
   contents: read
 jobs:
