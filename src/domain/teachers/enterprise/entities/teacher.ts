@@ -10,6 +10,12 @@ export interface Teacher {
   email: string;
   status: 'Ativo' | 'Licença' | 'Inativo';
   studentsCount: number;
+  /** Lightweight class assignments from the same paginated teacher query. */
+  assignedClasses?: Array<{
+    classId: string;
+    name: string;
+    role: 'head_coach' | 'assistant_coach';
+  }>;
   birthDate?: string;
   address?: string;
   bio?: string;
