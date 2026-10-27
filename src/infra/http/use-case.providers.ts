@@ -212,6 +212,7 @@ export const useCaseProviders: Provider[] = [
   provideUseCase(CreateTrainingUseCase, TrainingsRepository),
   provideUseCase(DeleteTrainingUseCase, TrainingsRepository),
   provideUseCase(ListTrainingsUseCase, TrainingsRepository),
+  provideUseCase(GetTrainingUseCase, TrainingsRepository),
   provideUseCase(UpdateTrainingUseCase, TrainingsRepository),
   {
     provide: CreateManagedUploadUseCase,
