@@ -163,90 +163,102 @@ export class PrismaClassesRepository implements ClassesRepository {
     const cacheKey = `${buildPaginatedCacheKey('classes', page, perPage)}:${search ?? ''}:${category ?? ''}:${day ?? ''}:${status ?? ''}:${poolId ?? ''}:teacher:${teacherProfileId ?? 'admin'}`;
 
     const readPage = async () => {
-        const skip = (page - 1) * perPage;
-        const where = {
-          ...(teacherProfileId ? {
-            classTeachers: { some: {
-              teacher: { profileId: teacherProfileId, status: 'Ativo' as const },
-            } },
-          } : {}),
-          ...(categoryIds.length > 0
-            ? {
-                classCategories: {
-                  some: {
-                    categoryId: {
-                      in: categoryIds,
-                    },
+      const skip = (page - 1) * perPage;
+      const where = {
+        ...(teacherProfileId
+          ? {
+              classTeachers: {
+                some: {
+                  teacher: {
+                    profileId: teacherProfileId,
+                    status: 'Ativo' as const,
                   },
                 },
-              }
-            : {}),
-          ...(day
-            ? {
-                classSchedules: {
-                  some: {
-                    dayOfWeek: {
-                      in: getWeekdayLegacyVariants(day),
-                    },
+              },
+            }
+          : {}),
+        ...(categoryIds.length > 0
+          ? {
+              classCategories: {
+                some: {
+                  categoryId: {
+                    in: categoryIds,
                   },
                 },
-              }
-            : {}),
-          ...(status
-            ? { status: status as 'Ativa' | 'Pausada' | 'Encerrada' }
-            : {}),
-          ...(poolId ? { poolId } : {}),
-          ...(search
-            ? {
-                OR: [
-                  { name: { contains: search, mode: 'insensitive' as const } },
-                  {
-                    pool: {
-                      name: { contains: search, mode: 'insensitive' as const },
-                    },
+              },
+            }
+          : {}),
+        ...(day
+          ? {
+              classSchedules: {
+                some: {
+                  dayOfWeek: {
+                    in: getWeekdayLegacyVariants(day),
                   },
-                  {
-                    classTeachers: {
-                      some: {
-                        teacher: {
-                          name: {
-                            contains: search,
-                            mode: 'insensitive' as const,
-                          },
+                },
+              },
+            }
+          : {}),
+        ...(status
+          ? { status: status as 'Ativa' | 'Pausada' | 'Encerrada' }
+          : {}),
+        ...(poolId ? { poolId } : {}),
+        ...(search
+          ? {
+              OR: [
+                { name: { contains: search, mode: 'insensitive' as const } },
+                {
+                  pool: {
+                    name: { contains: search, mode: 'insensitive' as const },
+                  },
+                },
+                {
+                  classTeachers: {
+                    some: {
+                      teacher: {
+                        name: {
+                          contains: search,
+                          mode: 'insensitive' as const,
                         },
                       },
                     },
                   },
-                ],
-              }
-            : {}),
-        };
+                },
+              ],
+            }
+          : {}),
+      };
 
-        const [classes, total] = await this.prisma.$transaction([
-          this.prisma.swimmingClass.findMany({
-            where,
-            include: classInclude,
-            orderBy: { name: 'asc' },
-            skip,
-            take: perPage,
-          }),
-          this.prisma.swimmingClass.count({ where }),
-        ]);
+      const [classes, total] = await this.prisma.$transaction([
+        this.prisma.swimmingClass.findMany({
+          where,
+          include: classInclude,
+          orderBy: { name: 'asc' },
+          skip,
+          take: perPage,
+        }),
+        this.prisma.swimmingClass.count({ where }),
+      ]);
 
-        return createPaginatedResult(
-          (classes as unknown as PrismaClassRecord[]).map(
-            PrismaClassMapper.toDomain,
-          ),
-          total,
-          { page, perPage },
-        );
+      return createPaginatedResult(
+        (classes as unknown as PrismaClassRecord[]).map(
+          PrismaClassMapper.toDomain,
+        ),
+        total,
+        { page, perPage },
+      );
     };
 
     // Do not cache records scoped to a teacher: revoking a class assignment
     // must take effect on the next request, not after cache TTL expiry.
     return teacherProfileId
       ? readPage()
-      : rememberPaginatedResult(this.cache, cacheKey, this.env.cacheTtlSeconds, readPage);
+      : rememberPaginatedResult(
+          this.cache,
+          cacheKey,
+          this.env.cacheTtlSeconds,
+          readPage,
+        );
   }
 
   async listCategoryReferenceData() {
@@ -285,6 +297,8 @@ export class PrismaClassesRepository implements ClassesRepository {
     })) as unknown as PrismaClassRecord;
 
     await this.cache.deleteMatching('classes:list:');
+    // Teacher page now includes class names and coach roles; keep its cache coherent.
+    await this.cache.deleteMatching('teachers:list:');
     return PrismaClassMapper.toDomain(classItem);
   }
 
@@ -323,6 +337,8 @@ export class PrismaClassesRepository implements ClassesRepository {
     })) as unknown as PrismaClassRecord;
 
     await this.cache.deleteMatching('classes:list:');
+    // Teacher page now includes class names and coach roles; keep its cache coherent.
+    await this.cache.deleteMatching('teachers:list:');
     return PrismaClassMapper.toDomain(classItem);
   }
   async addTeacher(classId: string, input: AssignClassTeacherRepositoryInput) {
@@ -366,6 +382,8 @@ export class PrismaClassesRepository implements ClassesRepository {
     })) as unknown as PrismaClassRecord;
 
     await this.cache.deleteMatching('classes:list:');
+    // Teacher page now includes class names and coach roles; keep its cache coherent.
+    await this.cache.deleteMatching('teachers:list:');
     return PrismaClassMapper.toDomain(updated);
   }
 
@@ -412,6 +430,8 @@ export class PrismaClassesRepository implements ClassesRepository {
     })) as unknown as PrismaClassRecord;
 
     await this.cache.deleteMatching('classes:list:');
+    // Teacher page now includes class names and coach roles; keep its cache coherent.
+    await this.cache.deleteMatching('teachers:list:');
     return PrismaClassMapper.toDomain(updated);
   }
 
@@ -452,6 +472,8 @@ export class PrismaClassesRepository implements ClassesRepository {
     })) as unknown as PrismaClassRecord;
 
     await this.cache.deleteMatching('classes:list:');
+    // Teacher page now includes class names and coach roles; keep its cache coherent.
+    await this.cache.deleteMatching('teachers:list:');
     return PrismaClassMapper.toDomain(updated);
   }
 
@@ -518,6 +540,8 @@ export class PrismaClassesRepository implements ClassesRepository {
     })) as unknown as PrismaClassRecord;
 
     await this.cache.deleteMatching('classes:list:');
+    // Teacher page now includes class names and coach roles; keep its cache coherent.
+    await this.cache.deleteMatching('teachers:list:');
     return PrismaClassMapper.toDomain(updatedTarget);
   }
 
@@ -575,6 +599,8 @@ export class PrismaClassesRepository implements ClassesRepository {
     })) as unknown as PrismaClassRecord;
 
     await this.cache.deleteMatching('classes:list:');
+    // Teacher page now includes class names and coach roles; keep its cache coherent.
+    await this.cache.deleteMatching('teachers:list:');
     return PrismaClassMapper.toDomain(updatedTarget);
   }
 
@@ -591,9 +617,10 @@ export class PrismaClassesRepository implements ClassesRepository {
     });
 
     await this.cache.deleteMatching('classes:list:');
+    // Teacher page now includes class names and coach roles; keep its cache coherent.
+    await this.cache.deleteMatching('teachers:list:');
     return PrismaClassMapper.toDomain(existing);
   }
-
 
   private async replaceRelations(
     tx: ClassRelationsTx,
@@ -638,7 +665,8 @@ export class PrismaClassesRepository implements ClassesRepository {
       tx.classSchedule.deleteMany({ where: { classId } }),
     ]);
 
-    const normalizedTeachers = ClassTeacherPolicy.normalizeAssignments(classTeachers);
+    const normalizedTeachers =
+      ClassTeacherPolicy.normalizeAssignments(classTeachers);
 
     if (normalizedTeachers.length > 0) {
       await tx.classTeacher.createMany({
@@ -662,5 +690,3 @@ export class PrismaClassesRepository implements ClassesRepository {
     }
   }
 }
-
-

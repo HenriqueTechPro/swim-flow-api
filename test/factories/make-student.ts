@@ -13,6 +13,7 @@ export function makeStudent(override: MakeStudentOverride = {}): Student {
     category: override.category ?? 'Petiz 2',
     level: override.level ?? 'Iniciante',
     responsible: override.responsible ?? '',
+    guardianPhone: override.guardianPhone,
     parentId: override.parentId,
     classId: override.classId ?? null,
     phone: override.phone ?? '(71) 99999-0000',

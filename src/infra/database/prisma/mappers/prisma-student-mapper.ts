@@ -18,7 +18,7 @@ export interface PrismaStudentRecord {
   guardians: Array<{
     parentId: string;
     isPrimary: boolean;
-    parent: { name: string };
+    parent: { name: string; phone: string };
   }>;
   studentClasses: Array<{ classId: string }>;
 }
@@ -41,6 +41,7 @@ export class PrismaStudentMapper {
       category: formatCategoryLabel(student.category.name),
       level: student.level.name,
       responsible: primaryGuardian?.parent.name ?? '',
+      guardianPhone: primaryGuardian?.parent.phone,
       parentId: primaryGuardian?.parentId,
       classId: student.studentClasses[0]?.classId ?? null,
       phone: student.phone,

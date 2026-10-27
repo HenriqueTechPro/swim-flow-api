@@ -31,7 +31,11 @@ const studentInclude = {
   level: { select: { name: true } },
   guardians: {
     orderBy: [{ isPrimary: 'desc' as const }, { createdAt: 'asc' as const }],
-    select: { parentId: true, isPrimary: true, parent: { select: { name: true } } },
+    select: {
+      parentId: true,
+      isPrimary: true,
+      parent: { select: { name: true, phone: true } },
+    },
   },
   studentClasses: {
     where: { toDate: null },
@@ -54,76 +58,103 @@ export class PrismaStudentsRepository implements StudentsRepository {
     const normalizedCategory = params?.category?.trim() || '';
     const normalizedStatus = params?.status?.trim() || '';
     const categoryName = normalizedCategory
-      ? Object.values(SwimmingCategory).find((name) => name === parseCategoryValue(normalizedCategory))
-      : undefined;
-    const statusName = normalizedStatus
-      ? Object.values(EntityStatus).find((name) =>
-          name === (normalizedStatus === 'Licença' ? 'Licenca' : normalizedStatus),
+      ? Object.values(SwimmingCategory).find(
+          (name) => name === parseCategoryValue(normalizedCategory),
         )
       : undefined;
-    if ((normalizedCategory && !categoryName) || (normalizedStatus && !statusName)) {
+    const statusName = normalizedStatus
+      ? Object.values(EntityStatus).find(
+          (name) =>
+            name ===
+            (normalizedStatus === 'Licença' ? 'Licenca' : normalizedStatus),
+        )
+      : undefined;
+    if (
+      (normalizedCategory && !categoryName) ||
+      (normalizedStatus && !statusName)
+    ) {
       return createPaginatedResult([], 0, { page, perPage });
     }
     const teacherProfileId = params?.teacherProfileId;
     const cacheKey = `${buildPaginatedCacheKey('students', page, perPage)}:${normalizedSearch}:${normalizedCategory}:${normalizedStatus}:teacher:${teacherProfileId ?? 'admin'}`;
 
     const readPage = async () => {
-        const skip = (page - 1) * perPage;
-        const where: Prisma.StudentWhereInput = {
-          ...(teacherProfileId ? {
-            studentClasses: { some: {
-              toDate: null,
-              swimmingClass: { classTeachers: { some: {
-                teacher: { profileId: teacherProfileId, status: 'Ativo' },
-              } } },
-            } },
-          } : {}),
-          ...(categoryName ? { category: { name: categoryName } } : {}),
-          ...(statusName ? { status: statusName } : {}),
-          ...(normalizedSearch
-            ? {
-                OR: [
-                  {
-                    name: {
-                      contains: normalizedSearch,
-                      mode: 'insensitive' as const,
+      const skip = (page - 1) * perPage;
+      const where: Prisma.StudentWhereInput = {
+        ...(teacherProfileId
+          ? {
+              studentClasses: {
+                some: {
+                  toDate: null,
+                  swimmingClass: {
+                    classTeachers: {
+                      some: {
+                        teacher: {
+                          profileId: teacherProfileId,
+                          status: 'Ativo',
+                        },
+                      },
                     },
                   },
-                  {
-                    guardians: { some: { parent: {
-                      name: {
-                        contains: normalizedSearch,
-                        mode: 'insensitive' as const,
-                      },
-                    } } },
+                },
+              },
+            }
+          : {}),
+        ...(categoryName ? { category: { name: categoryName } } : {}),
+        ...(statusName ? { status: statusName } : {}),
+        ...(normalizedSearch
+          ? {
+              OR: [
+                {
+                  name: {
+                    contains: normalizedSearch,
+                    mode: 'insensitive' as const,
                   },
-                ],
-              }
-            : {}),
-        };
-        const [students, total] = await this.prisma.$transaction([
-          this.prisma.student.findMany({
-            include: studentInclude,
-            orderBy: { name: 'asc' },
-            where,
-            skip,
-            take: perPage,
-          }),
-          this.prisma.student.count({ where }),
-        ]);
+                },
+                {
+                  guardians: {
+                    some: {
+                      parent: {
+                        name: {
+                          contains: normalizedSearch,
+                          mode: 'insensitive' as const,
+                        },
+                      },
+                    },
+                  },
+                },
+              ],
+            }
+          : {}),
+      };
+      const [students, total] = await this.prisma.$transaction([
+        this.prisma.student.findMany({
+          include: studentInclude,
+          orderBy: { name: 'asc' },
+          where,
+          skip,
+          take: perPage,
+        }),
+        this.prisma.student.count({ where }),
+      ]);
 
-        return createPaginatedResult(
-          (students as PrismaStudentRecord[]).map(PrismaStudentMapper.toDomain),
-          total,
-          { page, perPage },
-        );
+      return createPaginatedResult(
+        (students as PrismaStudentRecord[]).map(PrismaStudentMapper.toDomain),
+        total,
+        { page, perPage },
+      );
     };
 
     // Do not cache records scoped to a teacher: revoking a class assignment
     // must take effect on the next request, not after cache TTL expiry.
     return teacherProfileId
       ? readPage()
-      : rememberPaginatedResult(this.cache, cacheKey, this.env.cacheTtlSeconds, readPage);
+      : rememberPaginatedResult(
+          this.cache,
+          cacheKey,
+          this.env.cacheTtlSeconds,
+          readPage,
+        );
   }
 
   async listReferenceData(): Promise<StudentReferenceData> {
@@ -168,7 +199,13 @@ export class PrismaStudentsRepository implements StudentsRepository {
       });
 
       if (input.parentId) {
-        await tx.studentGuardian.create({ data: { studentId: created.id, parentId: input.parentId, isPrimary: true } });
+        await tx.studentGuardian.create({
+          data: {
+            studentId: created.id,
+            parentId: input.parentId,
+            isPrimary: true,
+          },
+        });
       }
 
       if (input.seasonId) {
@@ -244,7 +281,9 @@ export class PrismaStudentsRepository implements StudentsRepository {
       });
       if (input.parentId) {
         await tx.studentGuardian.upsert({
-          where: { studentId_parentId: { studentId: id, parentId: input.parentId } },
+          where: {
+            studentId_parentId: { studentId: id, parentId: input.parentId },
+          },
           create: { studentId: id, parentId: input.parentId, isPrimary: true },
           update: { isPrimary: true },
         });
@@ -252,8 +291,14 @@ export class PrismaStudentsRepository implements StudentsRepository {
 
       if (input.seasonId) {
         await tx.studentSeasonCategory.upsert({
-          where: { studentId_seasonId: { studentId: id, seasonId: input.seasonId } },
-          create: { studentId: id, seasonId: input.seasonId, categoryId: input.categoryId },
+          where: {
+            studentId_seasonId: { studentId: id, seasonId: input.seasonId },
+          },
+          create: {
+            studentId: id,
+            seasonId: input.seasonId,
+            categoryId: input.categoryId,
+          },
           update: { categoryId: input.categoryId },
         });
       }

@@ -12,6 +12,7 @@ export class StudentPresenter {
       category: student.category,
       level: student.level,
       responsible: student.responsible,
+      guardianPhone: student.guardianPhone,
       parentId: student.parentId,
       classId: student.classId,
       phone: student.phone,
