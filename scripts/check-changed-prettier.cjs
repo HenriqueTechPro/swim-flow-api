@@ -47,6 +47,16 @@ function run(argv) {
   }
   process.stdout.write(`Prettier ${mode}: ${files.length} changed file(s).\n`);
   const cli = path.resolve(__dirname, '../node_modules/prettier/bin/prettier.cjs');
+  // Temporary 02F-05C15A diagnostic (removed before merge): report exact
+  // Prettier output for the previously unformatted touched Prisma repository.
+  const target = 'src/infra/database/prisma/repositories/prisma-parents-repository.ts';
+  execFileSync(process.execPath, [cli, '--write', '--', target], {
+    stdio: 'inherit',
+  });
+  const formatPatch = execFileSync('git', ['diff', '--', target], {
+    encoding: 'utf8',
+  });
+  process.stdout.write('TEMP_FORMAT_PATCH_START\\n' + formatPatch + 'TEMP_FORMAT_PATCH_END\\n');
   execFileSync(process.execPath, [cli, mode, '--', ...files], {
     stdio: 'inherit',
     maxBuffer: 16 * 1024 * 1024,
