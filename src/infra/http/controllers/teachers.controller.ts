@@ -21,6 +21,7 @@ import {
 } from '@/shared/contracts/cpf-management-requests';
 import { CreateTeacherUseCase } from '@/domain/teachers/application/use-cases/create-teacher';
 import { DeleteTeacherUseCase } from '@/domain/teachers/application/use-cases/delete-teacher';
+import { GetTeacherUseCase } from '@/domain/teachers/application/use-cases/get-teacher';
 import { ListTeachersUseCase } from '@/domain/teachers/application/use-cases/list-teachers';
 import { GetTeacherAccountLinkUseCase } from '@/domain/teachers/application/use-cases/get-teacher-account-link';
 import { LinkTeacherAccountUseCase } from '@/domain/teachers/application/use-cases/link-teacher-account';
@@ -50,6 +51,7 @@ import { TeacherPresenter } from '../presenters/teacher.presenter';
 export class TeachersController {
   constructor(
     private readonly listTeachers: ListTeachersUseCase,
+    private readonly getTeacher: GetTeacherUseCase,
     private readonly createTeacher: CreateTeacherUseCase,
     private readonly updateTeacher: UpdateTeacherUseCase,
     private readonly deleteTeacher: DeleteTeacherUseCase,
@@ -75,6 +77,15 @@ export class TeachersController {
       status: status && status !== 'all' ? status : undefined,
     });
     return { data: teachers.map(TeacherPresenter.toHTTP), meta };
+  }
+
+  @Get(':id')
+  @Permissions('teachers:read')
+  async show(
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    const { teacher } = await this.getTeacher.execute(id);
+    return { data: TeacherPresenter.toHTTP(teacher) };
   }
 
   @Post()
