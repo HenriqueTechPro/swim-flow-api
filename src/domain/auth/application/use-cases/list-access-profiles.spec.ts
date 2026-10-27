@@ -4,9 +4,27 @@ import { ListAccessProfilesUseCase } from './list-access-profiles';
 
 describe('ListAccessProfilesUseCase with local Neon identities', () => {
   const profiles = [
-    { id: 'pending', fullName: 'Pending User', role: 'teacher' as const, permissions: [], avatarUrl: null },
-    { id: 'active', fullName: 'Active Admin', role: 'admin' as const, permissions: [], avatarUrl: null },
-    { id: 'legacy', fullName: 'No linked local identity', role: 'user' as const, permissions: [], avatarUrl: null },
+    {
+      id: 'pending',
+      fullName: 'Pending User',
+      role: 'teacher' as const,
+      permissions: [],
+      avatarUrl: null,
+    },
+    {
+      id: 'active',
+      fullName: 'Active Admin',
+      role: 'admin' as const,
+      permissions: [],
+      avatarUrl: null,
+    },
+    {
+      id: 'legacy',
+      fullName: 'No linked local identity',
+      role: 'user' as const,
+      permissions: [],
+      avatarUrl: null,
+    },
   ];
   const directoryUsers = [
     {
@@ -45,7 +63,9 @@ describe('ListAccessProfilesUseCase with local Neon identities', () => {
       role: 'teacher',
       lastSignInAt: null,
     });
-    expect(JSON.stringify(result)).not.toMatch(/passwordHash|actionToken|refreshTokenHash/);
+    expect(JSON.stringify(result)).not.toMatch(
+      /passwordHash|actionToken|refreshTokenHash/,
+    );
     expect(listProfiles).toHaveBeenCalledTimes(1);
     expect(listUsers).toHaveBeenCalledTimes(1);
   });
