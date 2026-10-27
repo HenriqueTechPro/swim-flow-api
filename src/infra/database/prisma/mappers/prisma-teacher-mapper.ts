@@ -28,6 +28,8 @@ export interface PrismaTeacherRecord {
   }>;
   classTeachers: Array<{
     classId: string;
+    role: 'head_coach' | 'assistant_coach';
+    swimmingClass: { name: string };
   }>;
 }
 
@@ -60,6 +62,11 @@ export class PrismaTeacherMapper {
       email: teacher.email,
       status: formatEntityStatus(teacher.status),
       studentsCount,
+      assignedClasses: teacher.classTeachers.map((link) => ({
+        classId: link.classId,
+        name: link.swimmingClass.name,
+        role: link.role,
+      })),
       birthDate: teacher.birthDate
         ? teacher.birthDate.toISOString().slice(0, 10)
         : undefined,
