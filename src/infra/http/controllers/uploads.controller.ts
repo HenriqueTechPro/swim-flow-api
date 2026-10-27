@@ -80,6 +80,7 @@ export class UploadsController {
       ),
     };
   }
+
   /**
    * Verifies and stores one normalized JPEG in PRIVATE Vercel Blob.
    * This endpoint creates a VERIFIED candidate; it does not activate a photo
@@ -124,5 +125,4 @@ export class UploadsController {
       }),
     };
   }
-
 }
