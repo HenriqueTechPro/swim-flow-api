@@ -160,7 +160,9 @@ describe('LocalPasswordIdentityService', () => {
       orderBy: [{ createdAt: 'asc' }, { userId: 'asc' }],
     });
     const query = JSON.stringify(findMany.mock.calls[0][0]);
-    expect(query).not.toMatch(/passwordHash|tokenHash|actionTokens|refreshTokenHash/);
+    expect(query).not.toMatch(
+      /passwordHash|tokenHash|actionTokens|refreshTokenHash/,
+    );
   });
 
   it('returns an empty directory when no local identity is present', async () => {
