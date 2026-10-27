@@ -60,6 +60,15 @@ describe('ParentsController (e2e)', () => {
       '88888888-8888-4888-8888-888888888888',
     ]);
 
+    const detailResponse = await request(app.getHttpServer())
+      .get(`/api/parents/${parentId}`)
+      .expect(200);
+
+    expect(detailResponse.body.data.id).toBe(parentId);
+    expect(detailResponse.body.data.childrenIds).toEqual([
+      '88888888-8888-4888-8888-888888888888',
+    ]);
+
     const updateResponse = await request(app.getHttpServer())
       .put(`/api/parents/${parentId}`)
       .send({
@@ -99,6 +108,16 @@ describe('ParentsController (e2e)', () => {
       .get('/api/parents')
       .expect(200);
     expect(listFinal.body.data).toEqual([]);
+  });
+
+  it('returns 404 for an unknown parent and 400 for an invalid UUID', async () => {
+    await request(app.getHttpServer())
+      .get('/api/parents/11111111-1111-4111-8111-111111111111')
+      .expect(404);
+
+    await request(app.getHttpServer())
+      .get('/api/parents/not-an-id')
+      .expect(400);
   });
 
   it('filters and paginates parents list', async () => {
