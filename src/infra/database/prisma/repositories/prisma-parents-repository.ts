@@ -51,7 +51,11 @@ export class PrismaParentsRepository implements ParentsRepository {
     const { page, perPage } = normalizePaginationParams(params);
     const search = params?.search?.trim();
     const status = params?.status?.trim();
-    const cacheKey = `${buildPaginatedCacheKey('parents', page, perPage)}:${search ?? ''}:${status ?? ''}`;
+    const cacheKey = [
+      buildPaginatedCacheKey('parents', page, perPage),
+      search ?? '',
+      status ?? '',
+    ].join(':');
 
     return rememberPaginatedResult(
       this.cache,
