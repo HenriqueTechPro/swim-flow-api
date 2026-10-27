@@ -136,7 +136,13 @@ describe('LocalPasswordIdentityService', () => {
     ]);
 
     await expect(service.listUsers()).resolves.toEqual([
-      { id: userId, email: storedEmail, createdAt, lastSignInAt, emailConfirmedAt },
+      {
+        id: userId,
+        email: storedEmail,
+        createdAt,
+        lastSignInAt,
+        emailConfirmedAt,
+      },
     ]);
     expect(findMany).toHaveBeenCalledWith({
       where: { disabledAt: null },
