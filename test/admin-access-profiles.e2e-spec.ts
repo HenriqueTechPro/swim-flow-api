@@ -15,18 +15,21 @@ describe('Local access profiles admin listing (e2e)', () => {
   let app: INestApplication<App>;
   const listUsers = jest.fn().mockResolvedValue([
     {
-      id: 'admin-user', email: 'admin@example.invalid',
+      id: 'admin-user',
+      email: 'admin@example.invalid',
       createdAt: new Date('2026-10-01T00:00:00Z'),
       lastSignInAt: new Date('2026-10-12T00:00:00Z'),
       emailConfirmedAt: new Date('2026-10-01T00:00:00Z'),
     },
     {
-      id: 'pending-user', email: 'pending@example.invalid',
+      id: 'pending-user',
+      email: 'pending@example.invalid',
       createdAt: new Date('2026-10-24T00:00:00Z'),
-      lastSignInAt: null, emailConfirmedAt: null,
+      lastSignInAt: null,
+      emailConfirmedAt: null,
     },
   ]);
-  const role = (id: string) => id === 'admin-user' ? 'admin' : 'teacher';
+  const role = (id: string) => (id === 'admin-user' ? 'admin' : 'teacher');
 
   beforeAll(async () => {
     app = await createE2EApp((builder) =>
@@ -37,18 +40,25 @@ describe('Local access profiles admin listing (e2e)', () => {
         .useValue({
           list: async () => [
             {
-              id: 'admin-user', fullName: 'Local Admin',
-              role: 'admin', avatarUrl: null,
+              id: 'admin-user',
+              fullName: 'Local Admin',
+              role: 'admin',
+              avatarUrl: null,
               permissions: getPermissionsForRole('admin'),
             },
             {
-              id: 'pending-user', fullName: 'Invited Teacher',
-              role: 'teacher', avatarUrl: null,
+              id: 'pending-user',
+              fullName: 'Invited Teacher',
+              role: 'teacher',
+              avatarUrl: null,
               permissions: getPermissionsForRole('teacher'),
             },
           ],
           findByUserId: async (id: string) => ({
-            id, role: role(id), fullName: '', avatarUrl: null,
+            id,
+            role: role(id),
+            fullName: '',
+            avatarUrl: null,
             permissions: getPermissionsForRole(role(id)),
           }),
         })
@@ -60,11 +70,19 @@ describe('Local access profiles admin listing (e2e)', () => {
               user?: { id: string; email: string; sessionId: string };
             }>();
             const authorization = req.headers.authorization;
-            if (authorization !== 'Bearer admin' && authorization !== 'Bearer teacher') {
+            if (
+              authorization !== 'Bearer admin' &&
+              authorization !== 'Bearer teacher'
+            ) {
               throw new UnauthorizedException('Missing bearer token');
             }
-            const id = authorization === 'Bearer admin' ? 'admin-user' : 'teacher-user';
-            req.user = { id, email: `${id}@example.invalid`, sessionId: 'ci-session' };
+            const id =
+              authorization === 'Bearer admin' ? 'admin-user' : 'teacher-user';
+            req.user = {
+              id,
+              email: `${id}@example.invalid`,
+              sessionId: 'ci-session',
+            };
             return true;
           },
         }),
@@ -84,17 +102,25 @@ describe('Local access profiles admin listing (e2e)', () => {
       .expect(200);
     expect(response.body.data.profiles).toHaveLength(2);
     expect(response.body.data.profiles[0]).toMatchObject({
-      email: 'admin@example.invalid', role: 'admin', access_state: 'active',
+      email: 'admin@example.invalid',
+      role: 'admin',
+      access_state: 'active',
     });
     expect(response.body.data.profiles[1]).toMatchObject({
-      email: 'pending@example.invalid', role: 'teacher', access_state: 'invited',
+      email: 'pending@example.invalid',
+      role: 'teacher',
+      access_state: 'invited',
     });
-    expect(JSON.stringify(response.body)).not.toMatch(/passwordHash|tokenHash|disabledAt/);
+    expect(JSON.stringify(response.body)).not.toMatch(
+      /passwordHash|tokenHash|disabledAt/,
+    );
     expect(listUsers).toHaveBeenCalledTimes(1);
   });
 
   it('denies an unauthenticated user or teacher without leaking the directory', async () => {
-    await request(app.getHttpServer()).get('/api/auth/access-profiles').expect(401);
+    await request(app.getHttpServer())
+      .get('/api/auth/access-profiles')
+      .expect(401);
     await request(app.getHttpServer())
       .get('/api/auth/access-profiles')
       .set('Authorization', 'Bearer teacher')
