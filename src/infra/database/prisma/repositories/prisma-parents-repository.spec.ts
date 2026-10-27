@@ -72,9 +72,8 @@ describe('PrismaParentsRepository guardian synchronization', () => {
   });
 
   it('reads exactly one parent by UUID with linked students', async () => {
-    prisma.parent.findUnique.mockResolvedValueOnce(
-      await tx.parent.findUniqueOrThrow(),
-    );
+    const fixture = await tx.parent.findUniqueOrThrow();
+    prisma.parent.findUnique.mockResolvedValueOnce(fixture);
 
     const parent = await repo.findById(nextParent);
 
@@ -124,9 +123,8 @@ describe('PrismaParentsRepository guardian synchronization', () => {
   });
 
   it('deletes an adult without deleting any student record', async () => {
-    prisma.parent.findUnique.mockResolvedValueOnce(
-      await tx.parent.findUniqueOrThrow(),
-    );
+    const fixture = await tx.parent.findUniqueOrThrow();
+    prisma.parent.findUnique.mockResolvedValueOnce(fixture);
 
     await repo.remove(nextParent);
 
