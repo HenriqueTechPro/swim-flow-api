@@ -9,6 +9,7 @@ describe('LocalPasswordIdentityService', () => {
   const userId = '11111111-1111-4111-8111-111111111111';
 
   let findUnique: jest.Mock;
+  let findMany: jest.Mock;
   let updateMany: jest.Mock;
   let service: LocalPasswordIdentityService;
   let storedHash: string;
@@ -19,9 +20,10 @@ describe('LocalPasswordIdentityService', () => {
 
   beforeEach(() => {
     findUnique = jest.fn();
+    findMany = jest.fn().mockResolvedValue([]);
     updateMany = jest.fn().mockResolvedValue({ count: 1 });
     const prisma = {
-      localAuthIdentity: { findUnique, updateMany },
+      localAuthIdentity: { findUnique, findMany, updateMany },
     } as unknown as PrismaService;
     service = new LocalPasswordIdentityService(prisma);
   });
@@ -123,6 +125,36 @@ describe('LocalPasswordIdentityService', () => {
       service.signInWithPassword(storedEmail, password),
     ).rejects.toBeInstanceOf(UnauthorizedException);
     expect(updateMany).not.toHaveBeenCalled();
+  });
+
+  it('lists only non-disabled local access identities without selecting password hashes', async () => {
+    const createdAt = new Date('2026-10-01T00:00:00.000Z');
+    const lastSignInAt = new Date('2026-10-20T08:00:00.000Z');
+    const emailConfirmedAt = new Date('2026-10-02T00:00:00.000Z');
+    findMany.mockResolvedValue([
+      { userId, email: storedEmail, createdAt, lastSignInAt, emailConfirmedAt },
+    ]);
+
+    await expect(service.listUsers()).resolves.toEqual([
+      { id: userId, email: storedEmail, createdAt, lastSignInAt, emailConfirmedAt },
+    ]);
+    expect(findMany).toHaveBeenCalledWith({
+      where: { disabledAt: null },
+      select: {
+        userId: true,
+        email: true,
+        createdAt: true,
+        lastSignInAt: true,
+        emailConfirmedAt: true,
+      },
+      orderBy: [{ createdAt: 'asc' }],
+    });
+    const query = JSON.stringify(findMany.mock.calls[0][0]);
+    expect(query).not.toMatch(/passwordHash|tokenHash|refreshTokenHash/i);
+  });
+
+  it('returns an empty directory when there are no enabled identities', async () => {
+    await expect(service.listUsers()).resolves.toEqual([]);
   });
 
   it('generates bcrypt hashes without retaining the plaintext password', async () => {
