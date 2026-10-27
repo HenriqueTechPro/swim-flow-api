@@ -125,6 +125,52 @@ describe('LocalPasswordIdentityService', () => {
     expect(updateMany).not.toHaveBeenCalled();
   });
 
+  it('lists only enabled identities using a minimal non-sensitive column selection', async () => {
+    const findMany = jest.fn().mockResolvedValue([
+      {
+        userId,
+        email: storedEmail,
+        createdAt: new Date('2026-09-01T00:00:00.000Z'),
+        lastSignInAt: null,
+        emailConfirmedAt: new Date('2026-10-01T00:00:00.000Z'),
+      },
+    ]);
+    const service = new LocalPasswordIdentityService({
+      localAuthIdentity: { findMany },
+    } as unknown as PrismaService);
+
+    await expect(service.listUsers()).resolves.toEqual([
+      {
+        id: userId,
+        email: storedEmail,
+        createdAt: new Date('2026-09-01T00:00:00.000Z'),
+        lastSignInAt: null,
+        emailConfirmedAt: new Date('2026-10-01T00:00:00.000Z'),
+      },
+    ]);
+    expect(findMany).toHaveBeenCalledWith({
+      where: { disabledAt: null },
+      select: {
+        userId: true,
+        email: true,
+        createdAt: true,
+        lastSignInAt: true,
+        emailConfirmedAt: true,
+      },
+      orderBy: [{ createdAt: 'asc' }, { userId: 'asc' }],
+    });
+    const query = JSON.stringify(findMany.mock.calls[0][0]);
+    expect(query).not.toMatch(/passwordHash|tokenHash|actionTokens|refreshTokenHash/);
+  });
+
+  it('returns an empty directory when no local identity is present', async () => {
+    const findMany = jest.fn().mockResolvedValue([]);
+    const service = new LocalPasswordIdentityService({
+      localAuthIdentity: { findMany },
+    } as unknown as PrismaService);
+    await expect(service.listUsers()).resolves.toEqual([]);
+  });
+
   it('generates bcrypt hashes without retaining the plaintext password', async () => {
     const result = await service.hashPasswordForProvisioning(password);
     expect(result).not.toContain(password);
