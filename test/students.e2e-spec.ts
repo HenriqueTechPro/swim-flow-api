@@ -83,6 +83,27 @@ describe('StudentsController (e2e)', () => {
     expect(listFinal.body.data).toEqual([]);
   });
 
+  it('returns only near-date active students with no full roster or contact details', async () => {
+    const birthSuffix = new Date().toISOString().slice(5, 10);
+    studentsRepository.items.push(
+      makeStudent({ name: 'Aniversariante', birthDate: `2015-${birthSuffix}`, status: 'Ativo' }),
+      makeStudent({ name: 'Ex-atleta', birthDate: `2016-${birthSuffix}`, status: 'Inativo' }),
+    );
+
+    const response = await request(app.getHttpServer())
+      .get('/api/students/upcoming-birthdays')
+      .expect(200);
+
+    expect(response.body.data).toHaveLength(1);
+    expect(response.body.data[0]).toEqual({
+      id: studentsRepository.items[0].id,
+      name: 'Aniversariante',
+      birthDate: `2015-${birthSuffix}`,
+    });
+    expect(response.body.data[0]).not.toHaveProperty('phone');
+    expect(response.body.data[0]).not.toHaveProperty('parentId');
+  });
+
   it('filters and paginates students list', async () => {
     studentsRepository.items.push(
       makeStudent({
