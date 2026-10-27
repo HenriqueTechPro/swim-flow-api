@@ -23,8 +23,8 @@ describe('GetParentUseCase', () => {
   });
 
   it('responds with 404 if the parent does not exist', async () => {
-    await expect(useCase.execute('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')).rejects.toMatchObject({
-      statusCode: 404,
-    });
+    await expect(
+      useCase.execute('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),
+    ).rejects.toMatchObject({ statusCode: 404 });
   });
 });
