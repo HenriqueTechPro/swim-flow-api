@@ -14,6 +14,7 @@ import { PrivateImageUploadService } from '@/infra/http/services/private-image-u
 import {
   createAuthenticatedE2EApp,
   createE2EApp,
+  withDefaultTestOverrides,
 } from './utils/create-e2e-app';
 
 const ACTOR_ID = '11111111-1111-4111-8111-111111111111';
@@ -61,8 +62,13 @@ describe('POST /api/uploads/private-image (e2e)', () => {
         filename: 'photo.png',
         contentType: 'image/png',
       })
-      .expect(201);
+      .then((reply) => reply);
 
+    if (response.status !== 201) {
+      throw new Error(
+        `Private upload expected 201, received ${response.status}: ${JSON.stringify(response.body)}`,
+      );
+    }
     expect(response.body).toEqual({
       data: { uploadId: UPLOAD_ID, status: 'VERIFIED' },
     });
@@ -135,7 +141,7 @@ describe('POST /api/uploads/private-image (e2e)', () => {
 
 describe('Private upload closed-by-default (e2e)', () => {
   it('rejects unauthenticated requests before storage is accessed', async () => {
-    const app = await createE2EApp();
+    const app = await createE2EApp(withDefaultTestOverrides);
     try {
       await request(app.getHttpServer())
         .post('/api/uploads/private-image')
