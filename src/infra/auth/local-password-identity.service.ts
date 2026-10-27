@@ -1,6 +1,9 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { compare, hash } from 'bcryptjs';
-import type { AuthDirectoryUser, AuthIdentity } from '@/domain/auth/application/repositories/auth-directory-repository';
+import type {
+  AuthDirectoryUser,
+  AuthIdentity,
+} from '@/domain/auth/application/repositories/auth-directory-repository';
 import { PrismaService } from '@/infra/database/prisma/prisma.service';
 
 const BCRYPT_COST = 12;
