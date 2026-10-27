@@ -20,6 +20,7 @@ import {
 import { CreateStudentUseCase } from '@/domain/students/application/use-cases/create-student';
 import { DeleteStudentUseCase } from '@/domain/students/application/use-cases/delete-student';
 import { ListStudentReferenceDataUseCase } from '@/domain/students/application/use-cases/list-student-reference-data';
+import { GetStudentUseCase } from '@/domain/students/application/use-cases/get-student';
 import { ListStudentsUseCase } from '@/domain/students/application/use-cases/list-students';
 import { ListUpcomingBirthdaysUseCase } from '@/domain/students/application/use-cases/list-upcoming-birthdays';
 import { UpdateStudentUseCase } from '@/domain/students/application/use-cases/update-student';
@@ -43,6 +44,7 @@ import { StudentPresenter } from '../presenters/student.presenter';
 export class StudentsController {
   constructor(
     private readonly listStudents: ListStudentsUseCase,
+    private readonly getStudent: GetStudentUseCase,
     private readonly listUpcomingBirthdays: ListUpcomingBirthdaysUseCase,
     private readonly listStudentReferenceData: ListStudentReferenceDataUseCase,
     private readonly createStudent: CreateStudentUseCase,
@@ -88,6 +90,16 @@ export class StudentsController {
       teacherProfileId: user?.role === 'teacher' ? user.id : undefined,
     });
     return { data: students.map(StudentPresenter.toHTTP), meta };
+  }
+
+  @Get(':id')
+  @Permissions('students:read')
+  async show(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @CurrentUser() user?: AuthUser,
+  ) {
+    const { student } = await this.getStudent.execute(id, user?.role === 'teacher' ? user.id : undefined);
+    return { data: StudentPresenter.toHTTP(student) };
   }
 
   @Post()
