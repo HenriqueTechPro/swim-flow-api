@@ -19,6 +19,7 @@ import {
 } from '@/shared/contracts/management';
 import { CreateTrainingUseCase } from '@/domain/trainings/application/use-cases/create-training';
 import { DeleteTrainingUseCase } from '@/domain/trainings/application/use-cases/delete-training';
+import { GetTrainingUseCase } from '@/domain/trainings/application/use-cases/get-training';
 import { ListTrainingsUseCase } from '@/domain/trainings/application/use-cases/list-trainings';
 import { UpdateTrainingUseCase } from '@/domain/trainings/application/use-cases/update-training';
 import { normalizePaginationParams } from '@/domain/shared/pagination/pagination-utils';
