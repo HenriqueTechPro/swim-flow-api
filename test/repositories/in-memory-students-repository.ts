@@ -4,6 +4,7 @@ import { AppError } from '@/shared/errors/app-error';
 import type {
   CreateStudentRepositoryInput,
   StudentReferenceData,
+  ListUpcomingBirthdaysParams,
   UpdateStudentRepositoryInput,
 } from '@/domain/students/application/repositories/students-repository';
 import { StudentsRepository } from '@/domain/students/application/repositories/students-repository';
@@ -50,6 +51,17 @@ export class InMemoryStudentsRepository implements StudentsRepository {
     });
 
     return paginateItems(filtered, params);
+  }
+
+  async listUpcomingBirthdays(params: ListUpcomingBirthdaysParams) {
+    return this.items
+      .filter(
+        (student) =>
+          student.status === 'Ativo' &&
+          student.birthDate &&
+          params.dayKeys.includes(student.birthDate.slice(5, 10)),
+      )
+      .map(({ id, name, birthDate }) => ({ id, name, birthDate }));
   }
 
   async listReferenceData(): Promise<StudentReferenceData> {
