@@ -80,6 +80,19 @@ export class PrismaTeachersRepository implements TeachersRepository {
     private readonly env: EnvService,
   ) {}
 
+  async findById(id: string) {
+    const teacher = await this.prisma.teacher.findUnique({
+      where: { id },
+      include: teacherInclude,
+    });
+    if (!teacher) return null;
+    const typed = teacher as PrismaTeacherRecord;
+    const counts = await this.loadStudentCountsForClassIds(
+      typed.classTeachers.map((entry) => entry.classId),
+    );
+    return PrismaTeacherMapper.toDomain(typed, counts);
+  }
+
   async list(params?: ListTeachersRepositoryParams) {
     const { page, perPage } = normalizePaginationParams(params);
     const normalizedSearch = params?.search?.trim().toLowerCase() || '';
