@@ -19,6 +19,7 @@ import {
 } from '@/shared/contracts/management';
 import { CreateEventUseCase } from '@/domain/events/application/use-cases/create-event';
 import { DeleteEventUseCase } from '@/domain/events/application/use-cases/delete-event';
+import { GetEventUseCase } from '@/domain/events/application/use-cases/get-event';
 import { ListEventsUseCase } from '@/domain/events/application/use-cases/list-events';
 import { UpdateEventUseCase } from '@/domain/events/application/use-cases/update-event';
 import { normalizePaginationParams } from '@/domain/shared/pagination/pagination-utils';
