@@ -48,7 +48,9 @@ export abstract class StudentsRepository {
   abstract list(
     params?: ListStudentsRepositoryParams,
   ): Promise<PaginatedResult<Student>>;
-  abstract listUpcomingBirthdays(params: ListUpcomingBirthdaysParams): Promise<UpcomingBirthday[]>;
+  abstract listUpcomingBirthdays(
+    params: ListUpcomingBirthdaysParams,
+  ): Promise<UpcomingBirthday[]>;
   abstract listReferenceData(): Promise<StudentReferenceData>;
   abstract create(input: CreateStudentRepositoryInput): Promise<Student>;
   abstract update(
