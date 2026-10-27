@@ -5,9 +5,11 @@ import type { CacheRepository } from '@/infra/cache/cache-repository';
 import type { EnvService } from '@/infra/env/env.service';
 
 describe('PrismaStudentsRepository near-date projection', () => {
-  const queryRaw = jest.fn().mockResolvedValue([
-    { id: 'a', name: 'Ana', birthDate: new Date('2015-10-27T00:00:00.000Z') },
-  ]);
+  const queryRaw = jest
+    .fn()
+    .mockResolvedValue([
+      { id: 'a', name: 'Ana', birthDate: new Date('2015-10-27T00:00:00.000Z') },
+    ]);
   const repository = new PrismaStudentsRepository(
     { $queryRaw: queryRaw } as unknown as PrismaService,
     {} as CacheRepository,
