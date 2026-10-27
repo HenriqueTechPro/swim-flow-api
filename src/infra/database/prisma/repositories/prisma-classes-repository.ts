@@ -140,15 +140,24 @@ export class PrismaClassesRepository implements ClassesRepository {
     const classItem = await this.prisma.swimmingClass.findFirst({
       where: {
         id,
-        ...(teacherProfileId ? {
-          classTeachers: { some: {
-            teacher: { profileId: teacherProfileId, status: 'Ativo' as const },
-          } },
-        } : {}),
+        ...(teacherProfileId
+          ? {
+              classTeachers: {
+                some: {
+                  teacher: {
+                    profileId: teacherProfileId,
+                    status: 'Ativo' as const,
+                  },
+                },
+              },
+            }
+          : {}),
       },
       include: classInclude,
     });
-    return classItem ? PrismaClassMapper.toDomain(classItem as PrismaClassRecord) : null;
+    return classItem
+      ? PrismaClassMapper.toDomain(classItem as PrismaClassRecord)
+      : null;
   }
 
   async list(params?: ListClassesRepositoryParams) {

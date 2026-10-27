@@ -58,18 +58,31 @@ export class PrismaStudentsRepository implements StudentsRepository {
     const student = await this.prisma.student.findFirst({
       where: {
         id,
-        ...(teacherProfileId ? {
-          studentClasses: { some: {
-            toDate: null,
-            swimmingClass: { classTeachers: { some: {
-              teacher: { profileId: teacherProfileId, status: 'Ativo' },
-            } } },
-          } },
-        } : {}),
+        ...(teacherProfileId
+          ? {
+              studentClasses: {
+                some: {
+                  toDate: null,
+                  swimmingClass: {
+                    classTeachers: {
+                      some: {
+                        teacher: {
+                          profileId: teacherProfileId,
+                          status: 'Ativo',
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            }
+          : {}),
       },
       include: studentInclude,
     });
-    return student ? PrismaStudentMapper.toDomain(student as PrismaStudentRecord) : null;
+    return student
+      ? PrismaStudentMapper.toDomain(student as PrismaStudentRecord)
+      : null;
   }
 
   async list(params?: ListStudentsRepositoryParams) {

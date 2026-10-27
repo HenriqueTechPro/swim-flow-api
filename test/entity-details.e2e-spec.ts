@@ -32,13 +32,18 @@ describe('02F-05C11 GET detail routes', () => {
 
     app = await createAuthenticatedE2EApp((builder) =>
       builder
-        .overrideProvider(StudentsRepository).useValue(students)
-        .overrideProvider(ClassesRepository).useValue(classes)
-        .overrideProvider(TeachersRepository).useValue(teachers),
+        .overrideProvider(StudentsRepository)
+        .useValue(students)
+        .overrideProvider(ClassesRepository)
+        .useValue(classes)
+        .overrideProvider(TeachersRepository)
+        .useValue(teachers),
     );
   });
 
-  afterEach(async () => { await app.close(); });
+  afterEach(async () => {
+    await app.close();
+  });
 
   for (const [path, expectedName] of [
     ['students', 'Aluno individual'],
@@ -47,15 +52,18 @@ describe('02F-05C11 GET detail routes', () => {
   ] as const) {
     it(`GET /api/${path}/:id returns one item, 404 on missing, and 400 on invalid UUID`, async () => {
       const found = await request(app.getHttpServer())
-        .get(`/api/${path}/${ID}`).expect(200);
+        .get(`/api/${path}/${ID}`)
+        .expect(200);
       expect(found.body.data.id).toBe(ID);
       expect(found.body.data.name).toBe(expectedName);
       expect(found.body).not.toHaveProperty('meta');
 
       await request(app.getHttpServer())
-        .get(`/api/${path}/${MISSING}`).expect(404);
+        .get(`/api/${path}/${MISSING}`)
+        .expect(404);
       await request(app.getHttpServer())
-        .get(`/api/${path}/not-a-uuid`).expect(400);
+        .get(`/api/${path}/not-a-uuid`)
+        .expect(400);
     });
   }
 });

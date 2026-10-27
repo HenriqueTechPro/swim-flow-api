@@ -81,9 +81,7 @@ export class TeachersController {
 
   @Get(':id')
   @Permissions('teachers:read')
-  async show(
-    @Param('id', new ParseUUIDPipe()) id: string,
-  ) {
+  async show(@Param('id', new ParseUUIDPipe()) id: string) {
     const { teacher } = await this.getTeacher.execute(id);
     return { data: TeacherPresenter.toHTTP(teacher) };
   }

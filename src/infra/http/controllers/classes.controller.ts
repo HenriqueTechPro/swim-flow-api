@@ -100,7 +100,10 @@ export class ClassesController {
     @Param('id', new ParseUUIDPipe()) id: string,
     @CurrentUser() user?: AuthUser,
   ) {
-    const { classItem } = await this.getClass.execute(id, user?.role === 'teacher' ? user.id : undefined);
+    const { classItem } = await this.getClass.execute(
+      id,
+      user?.role === 'teacher' ? user.id : undefined,
+    );
     return { data: ClassPresenter.toHTTP(classItem) };
   }
 

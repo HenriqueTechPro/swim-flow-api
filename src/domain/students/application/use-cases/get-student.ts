@@ -5,7 +5,10 @@ export class GetStudentUseCase {
   constructor(private readonly studentsRepository: StudentsRepository) {}
 
   async execute(id: string, teacherProfileId?: string) {
-    const student = await this.studentsRepository.findById(id, teacherProfileId);
+    const student = await this.studentsRepository.findById(
+      id,
+      teacherProfileId,
+    );
     if (!student) throw new AppError(404, 'Student not found');
     return { student };
   }

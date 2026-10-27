@@ -25,39 +25,65 @@ describe('02F-05C11 scoped detail repositories', () => {
   });
 
   it('requires a current teacher assignment inside the student SQL query', async () => {
-    const repo = new PrismaStudentsRepository(prisma as unknown as PrismaService, cache, env);
+    const repo = new PrismaStudentsRepository(
+      prisma as unknown as PrismaService,
+      cache,
+      env,
+    );
     expect(await repo.findById(STUDENT_ID, TEACHER_PROFILE_ID)).toBeNull();
-    expect(prisma.student.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: {
-        id: STUDENT_ID,
-        studentClasses: { some: {
-          toDate: null,
-          swimmingClass: { classTeachers: { some: {
-            teacher: { profileId: TEACHER_PROFILE_ID, status: 'Ativo' },
-          } } },
-        } },
-      },
-    }));
+    expect(prisma.student.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: STUDENT_ID,
+          studentClasses: {
+            some: {
+              toDate: null,
+              swimmingClass: {
+                classTeachers: {
+                  some: {
+                    teacher: { profileId: TEACHER_PROFILE_ID, status: 'Ativo' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      }),
+    );
   });
 
   it('requires an active associated teacher in the class SQL query', async () => {
-    const repo = new PrismaClassesRepository(prisma as unknown as PrismaService, cache, env);
+    const repo = new PrismaClassesRepository(
+      prisma as unknown as PrismaService,
+      cache,
+      env,
+    );
     expect(await repo.findById(STUDENT_ID, TEACHER_PROFILE_ID)).toBeNull();
-    expect(prisma.swimmingClass.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: {
-        id: STUDENT_ID,
-        classTeachers: { some: {
-          teacher: { profileId: TEACHER_PROFILE_ID, status: 'Ativo' },
-        } },
-      },
-    }));
+    expect(prisma.swimmingClass.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: STUDENT_ID,
+          classTeachers: {
+            some: {
+              teacher: { profileId: TEACHER_PROFILE_ID, status: 'Ativo' },
+            },
+          },
+        },
+      }),
+    );
   });
 
   it('uses one indexed teacher lookup without listing all teachers', async () => {
-    const repo = new PrismaTeachersRepository(prisma as unknown as PrismaService, cache, env);
+    const repo = new PrismaTeachersRepository(
+      prisma as unknown as PrismaService,
+      cache,
+      env,
+    );
     expect(await repo.findById(STUDENT_ID)).toBeNull();
-    expect(prisma.teacher.findUnique).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: STUDENT_ID },
-    }));
+    expect(prisma.teacher.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: STUDENT_ID },
+      }),
+    );
   });
 });
