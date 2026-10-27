@@ -60,9 +60,9 @@ export class StudentsController {
 
   @Get('upcoming-birthdays')
   @Permissions('students:read')
-  async upcomingBirthdays(@CurrentUser() user: AuthUser) {
+  async upcomingBirthdays(@CurrentUser() user?: AuthUser) {
     const { birthdays } = await this.listUpcomingBirthdays.execute({
-      teacherProfileId: user.role === 'teacher' ? user.id : undefined,
+      teacherProfileId: user?.role === 'teacher' ? user.id : undefined,
     });
     return { data: birthdays };
   }
