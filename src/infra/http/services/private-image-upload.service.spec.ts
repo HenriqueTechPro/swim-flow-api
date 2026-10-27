@@ -17,10 +17,12 @@ describe('PrivateImageUploadService', () => {
   });
 
   it('passes bytes through existing audited use case without rewriting authorization', async () => {
-    const execute = jest.fn<StorePrivateBlobImageUseCase['execute']>().mockResolvedValue({
-      uploadId: 'media-id',
-      status: 'VERIFIED',
-    });
+    const execute = jest
+      .fn<StorePrivateBlobImageUseCase['execute']>()
+      .mockResolvedValue({
+        uploadId: 'media-id',
+        status: 'VERIFIED',
+      });
     const service = new PrivateImageUploadService({
       execute,
     } as unknown as StorePrivateBlobImageUseCase);
