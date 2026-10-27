@@ -10,7 +10,7 @@ import {
 export class PrivateImageUploadService {
   constructor(private readonly store: StorePrivateBlobImageUseCase | null) {}
 
-  execute(actorId: string, input: StorePrivateBlobImageInput) {
+  async execute(actorId: string, input: StorePrivateBlobImageInput) {
     if (!this.store) {
       throw new ServiceUnavailableException(
         'Private image storage is not configured',
