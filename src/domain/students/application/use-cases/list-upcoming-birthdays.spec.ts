@@ -37,6 +37,17 @@ describe('ListUpcomingBirthdaysUseCase', () => {
     expect(birthdays[0].birthDate).toBe('2012-02-29');
   });
 
+  it('forwards teacher-scoping information to the repository', async () => {
+    const spy = jest.spyOn(repository, 'listUpcomingBirthdays');
+    await sut.execute({
+      now: new Date('2026-10-27T12:00:00Z'),
+      teacherProfileId: 'teacher-profile-1',
+    });
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({ teacherProfileId: 'teacher-profile-1' }),
+    );
+  });
+
   it('does not misassign February 29 in actual leap years', async () => {
     repository.items.push(makeStudent({ id: 'leap', name: 'Salto', birthDate: '2012-02-29' }));
     const { birthdays } = await sut.execute({ now: new Date('2028-03-03T00:00:00Z') });
