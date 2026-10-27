@@ -38,6 +38,16 @@ export class PrismaParentsRepository implements ParentsRepository {
     private readonly env: EnvService,
   ) {}
 
+  async findById(id: string) {
+    const parent = await this.prisma.parent.findUnique({
+      where: { id },
+      include: parentInclude,
+    });
+    return parent
+      ? PrismaParentMapper.toDomain(parent as unknown as PrismaParentRecord)
+      : null;
+  }
+
   async list(params?: ListParentsRepositoryParams) {
     const { page, perPage } = normalizePaginationParams(params);
     const search = params?.search?.trim();
