@@ -53,6 +53,12 @@ describe('EventsController (e2e)', () => {
     const eventId = createResponse.body.data.id as string;
     expect(createResponse.body.data.title).toBe('Festival E2E');
 
+    const detailResponse = await request(app.getHttpServer())
+      .get(`/api/events/${eventId}`)
+      .expect(200);
+    expect(detailResponse.body.data.id).toBe(eventId);
+    expect(detailResponse.body.data.title).toBe('Festival E2E');
+
     const updateResponse = await request(app.getHttpServer())
       .put(`/api/events/${eventId}`)
       .send({
@@ -86,6 +92,15 @@ describe('EventsController (e2e)', () => {
       .get('/api/events')
       .expect(200);
     expect(listFinal.body.data).toEqual([]);
+  });
+
+  it('returns 404 for a missing record and 400 for an invalid UUID', async () => {
+    await request(app.getHttpServer())
+      .get('/api/events/11111111-1111-4111-8111-111111111111')
+      .expect(404);
+    await request(app.getHttpServer())
+      .get('/api/events/not-an-id')
+      .expect(400);
   });
 
   it('filters and paginates events list', async () => {
