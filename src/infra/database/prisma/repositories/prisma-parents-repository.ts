@@ -43,9 +43,10 @@ export class PrismaParentsRepository implements ParentsRepository {
       where: { id },
       include: parentInclude,
     });
-    return parent
-      ? PrismaParentMapper.toDomain(parent as unknown as PrismaParentRecord)
-      : null;
+    if (!parent) return null;
+    return PrismaParentMapper.toDomain(
+      parent as unknown as PrismaParentRecord,
+    );
   }
 
   async list(params?: ListParentsRepositoryParams) {
