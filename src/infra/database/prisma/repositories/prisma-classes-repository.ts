@@ -285,6 +285,8 @@ export class PrismaClassesRepository implements ClassesRepository {
     })) as unknown as PrismaClassRecord;
 
     await this.cache.deleteMatching('classes:list:');
+    // Teacher page now includes class names and coach roles; keep its cache coherent.
+    await this.cache.deleteMatching('teachers:list:');
     return PrismaClassMapper.toDomain(classItem);
   }
 
@@ -323,6 +325,8 @@ export class PrismaClassesRepository implements ClassesRepository {
     })) as unknown as PrismaClassRecord;
 
     await this.cache.deleteMatching('classes:list:');
+    // Teacher page now includes class names and coach roles; keep its cache coherent.
+    await this.cache.deleteMatching('teachers:list:');
     return PrismaClassMapper.toDomain(classItem);
   }
   async addTeacher(classId: string, input: AssignClassTeacherRepositoryInput) {
@@ -366,6 +370,8 @@ export class PrismaClassesRepository implements ClassesRepository {
     })) as unknown as PrismaClassRecord;
 
     await this.cache.deleteMatching('classes:list:');
+    // Teacher page now includes class names and coach roles; keep its cache coherent.
+    await this.cache.deleteMatching('teachers:list:');
     return PrismaClassMapper.toDomain(updated);
   }
 
@@ -412,6 +418,8 @@ export class PrismaClassesRepository implements ClassesRepository {
     })) as unknown as PrismaClassRecord;
 
     await this.cache.deleteMatching('classes:list:');
+    // Teacher page now includes class names and coach roles; keep its cache coherent.
+    await this.cache.deleteMatching('teachers:list:');
     return PrismaClassMapper.toDomain(updated);
   }
 
@@ -452,6 +460,8 @@ export class PrismaClassesRepository implements ClassesRepository {
     })) as unknown as PrismaClassRecord;
 
     await this.cache.deleteMatching('classes:list:');
+    // Teacher page now includes class names and coach roles; keep its cache coherent.
+    await this.cache.deleteMatching('teachers:list:');
     return PrismaClassMapper.toDomain(updated);
   }
 
@@ -518,6 +528,8 @@ export class PrismaClassesRepository implements ClassesRepository {
     })) as unknown as PrismaClassRecord;
 
     await this.cache.deleteMatching('classes:list:');
+    // Teacher page now includes class names and coach roles; keep its cache coherent.
+    await this.cache.deleteMatching('teachers:list:');
     return PrismaClassMapper.toDomain(updatedTarget);
   }
 
@@ -575,6 +587,8 @@ export class PrismaClassesRepository implements ClassesRepository {
     })) as unknown as PrismaClassRecord;
 
     await this.cache.deleteMatching('classes:list:');
+    // Teacher page now includes class names and coach roles; keep its cache coherent.
+    await this.cache.deleteMatching('teachers:list:');
     return PrismaClassMapper.toDomain(updatedTarget);
   }
 
@@ -591,6 +605,8 @@ export class PrismaClassesRepository implements ClassesRepository {
     });
 
     await this.cache.deleteMatching('classes:list:');
+    // Teacher page now includes class names and coach roles; keep its cache coherent.
+    await this.cache.deleteMatching('teachers:list:');
     return PrismaClassMapper.toDomain(existing);
   }
 
