@@ -73,9 +73,11 @@ export class PrismaParentsRepository implements ParentsRepository {
                   { profession: { contains: search, mode: 'insensitive' } },
                   {
                     studentGuardians: {
-                      some: { student: {
-                        name: { contains: search, mode: 'insensitive' },
-                      } },
+                      some: {
+                        student: {
+                          name: { contains: search, mode: 'insensitive' },
+                        },
+                      },
                     },
                   },
                 ],
