@@ -58,7 +58,11 @@ const teacherInclude = {
     select: { name: true },
   },
   classTeachers: {
-    select: { classId: true },
+    select: {
+      classId: true,
+      role: true,
+      swimmingClass: { select: { name: true } },
+    },
   },
 };
 
