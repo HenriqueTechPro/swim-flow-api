@@ -44,6 +44,7 @@ export class PrismaStudentMapper {
       guardianPhone: primaryGuardian?.parent.phone,
       parentId: primaryGuardian?.parentId,
       classId: student.studentClasses[0]?.classId ?? null,
+      classIds: student.studentClasses.map((entry) => entry.classId),
       phone: student.phone,
       status: formatEntityStatus(student.status),
       achievements: student.achievements,
