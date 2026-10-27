@@ -14,6 +14,8 @@ import {
   StudentsRepository,
   type CreateStudentRepositoryInput,
   type ListStudentsRepositoryParams,
+  type ListUpcomingBirthdaysParams,
+  type UpcomingBirthday,
   type StudentReferenceData,
   type UpdateStudentRepositoryInput,
 } from '@/domain/students/application/repositories/students-repository';
@@ -155,6 +157,49 @@ export class PrismaStudentsRepository implements StudentsRepository {
           this.env.cacheTtlSeconds,
           readPage,
         );
+  }
+
+  async listUpcomingBirthdays(
+    params: ListUpcomingBirthdaysParams,
+  ): Promise<UpcomingBirthday[]> {
+    if (params.dayKeys.length === 0) return [];
+
+    // Keep teacher scoping identical to list(): only currently enrolled
+    // students in classes assigned to the active linked teacher profile.
+    // Use bound parameters for the calendar keys and profile UUID.
+    const teacherScope = params.teacherProfileId
+      ? Prisma.sql`
+          AND EXISTS (
+            SELECT 1
+            FROM student_classes sc
+            JOIN classes c ON c.id = sc.class_id
+            JOIN class_teachers ct ON ct.class_id = c.id
+            JOIN teachers t ON t.id = ct.teacher_id
+            WHERE sc.student_id = s.id
+              AND sc.to_date IS NULL
+              AND t.profile_id = ${params.teacherProfileId}::uuid
+              AND t.status = 'Ativo'
+          )
+        `
+      : Prisma.empty;
+
+    const birthdays = await this.prisma.$queryRaw<
+      Array<{ id: string; name: string; birthDate: Date }>
+    >(Prisma.sql`
+      SELECT s.id, s.name, s.birth_date AS "birthDate"
+      FROM students s
+      WHERE s.status = 'Ativo'
+        AND s.birth_date IS NOT NULL
+        AND to_char(s.birth_date, 'MM-DD') IN (${Prisma.join(params.dayKeys)})
+        ${teacherScope}
+      ORDER BY s.name ASC, s.id ASC
+    `);
+
+    return birthdays.map((student) => ({
+      id: student.id,
+      name: student.name,
+      birthDate: student.birthDate.toISOString().slice(0, 10),
+    }));
   }
 
   async listReferenceData(): Promise<StudentReferenceData> {

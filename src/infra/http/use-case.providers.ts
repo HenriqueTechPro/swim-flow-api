@@ -76,6 +76,7 @@ import { CreateStudentUseCase } from '@/domain/students/application/use-cases/cr
 import { DeleteStudentUseCase } from '@/domain/students/application/use-cases/delete-student';
 import { ListStudentReferenceDataUseCase } from '@/domain/students/application/use-cases/list-student-reference-data';
 import { ListStudentsUseCase } from '@/domain/students/application/use-cases/list-students';
+import { ListUpcomingBirthdaysUseCase } from '@/domain/students/application/use-cases/list-upcoming-birthdays';
 import { UpdateStudentUseCase } from '@/domain/students/application/use-cases/update-student';
 import { CreateTeacherUseCase } from '@/domain/teachers/application/use-cases/create-teacher';
 import { DeleteTeacherUseCase } from '@/domain/teachers/application/use-cases/delete-teacher';
@@ -188,6 +189,7 @@ export const useCaseProviders: Provider[] = [
   provideUseCase(DeleteStudentUseCase, StudentsRepository),
   provideUseCase(ListStudentReferenceDataUseCase, StudentsRepository),
   provideUseCase(ListStudentsUseCase, StudentsRepository),
+  provideUseCase(ListUpcomingBirthdaysUseCase, StudentsRepository),
   provideUseCase(UpdateStudentUseCase, StudentsRepository),
   provideUseCase(GetTeacherAccountLinkUseCase, TeacherAccountLinksRepository),
   provideUseCase(LinkTeacherAccountUseCase, TeacherAccountLinksRepository),
@@ -213,4 +215,3 @@ export const useCaseProviders: Provider[] = [
       ),
   },
 ];
-
