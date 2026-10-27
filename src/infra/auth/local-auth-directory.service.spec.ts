@@ -15,6 +15,15 @@ describe('LocalAuthDirectoryService', () => {
   beforeEach(() => {
     identities = {
       signInWithPassword: jest.fn().mockResolvedValue(identity),
+      listUsers: jest.fn().mockResolvedValue([
+        {
+          id: 'user-1',
+          email: 'coach@example.invalid',
+          createdAt: new Date('2026-10-01T00:00:00.000Z'),
+          lastSignInAt: null,
+          emailConfirmedAt: null,
+        },
+      ]),
     } as unknown as jest.Mocked<LocalPasswordIdentityService>;
 
     envService = {
@@ -40,6 +49,14 @@ describe('LocalAuthDirectoryService', () => {
       ' COACH@EXAMPLE.INVALID ',
       'secret',
     );
+  });
+
+  it('lists local identity metadata through the Neon adapter without legacy credentials', async () => {
+    const adapter = new LocalAuthDirectoryService(identities, envService);
+    await expect(adapter.listUsers()).resolves.toEqual([
+      expect.objectContaining({ id: 'user-1', email: 'coach@example.invalid' }),
+    ]);
+    expect(identities.listUsers).toHaveBeenCalledTimes(1);
   });
 
   it('never accepts Supabase/Google access tokens through the legacy endpoint', async () => {
@@ -74,9 +91,6 @@ describe('LocalAuthDirectoryService', () => {
         redirectTo: 'https://example.invalid',
       }),
     ).rejects.toBeInstanceOf(ServiceUnavailableException);
-    await expect(adapter.listUsers()).rejects.toBeInstanceOf(
-      ServiceUnavailableException,
-    );
     await expect(adapter.deleteUser('user-1')).rejects.toBeInstanceOf(
       ServiceUnavailableException,
     );
