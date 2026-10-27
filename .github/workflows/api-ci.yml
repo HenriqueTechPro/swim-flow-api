@@ -28,12 +28,6 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - name: Temporary read-only formatting preview
-        run: |
-          node <<'NODE'
-          const fs=require('node:fs');const prettier=require('prettier');
-          (async()=>{for(const path of ["src/domain/students/application/repositories/students-repository.ts","src/domain/students/application/use-cases/list-upcoming-birthdays.spec.ts","src/infra/database/prisma/repositories/prisma-students-birthdays.spec.ts","src/infra/http/use-case.providers.ts","test/repositories/in-memory-students-repository.ts","test/students.e2e-spec.ts"]){const source=fs.readFileSync(path,'utf8');const cfg=await prettier.resolveConfig(path);const content=await prettier.format(source,{...cfg,filepath:path});const base64=Buffer.from(content).toString('base64');console.log('FMT_BEGIN '+path+' '+base64.length);for(let i=0;i<base64.length;i+=1500)console.log('FMT_CHUNK '+path+' '+base64.slice(i,i+1500));console.log('FMT_END '+path);}})().catch(e=>{console.error(e);process.exitCode=1});
-          NODE
       - run: npm run prisma:validate
       - run: npm run prisma:generate
       - name: Verify consecutive builds regenerate production artifacts
