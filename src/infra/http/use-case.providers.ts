@@ -166,6 +166,7 @@ export const useCaseProviders: Provider[] = [
   provideUseCase(CreateEventUseCase, EventsRepository),
   provideUseCase(DeleteEventUseCase, EventsRepository),
   provideUseCase(ListEventsUseCase, EventsRepository),
+  provideUseCase(GetEventUseCase, EventsRepository),
   provideUseCase(UpdateEventUseCase, EventsRepository),
   provideUseCase(CreateExStudentUseCase, ExStudentsRepository),
   provideUseCase(DeleteExStudentUseCase, ExStudentsRepository),
