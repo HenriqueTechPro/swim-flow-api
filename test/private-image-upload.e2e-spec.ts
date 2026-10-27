@@ -62,13 +62,8 @@ describe('POST /api/uploads/private-image (e2e)', () => {
         filename: 'photo.png',
         contentType: 'image/png',
       })
-      .then((reply) => reply);
+      .expect(201);
 
-    if (response.status !== 201) {
-      throw new Error(
-        `Private upload expected 201, received ${response.status}: ${JSON.stringify(response.body)}`,
-      );
-    }
     expect(response.body).toEqual({
       data: { uploadId: UPLOAD_ID, status: 'VERIFIED' },
     });
