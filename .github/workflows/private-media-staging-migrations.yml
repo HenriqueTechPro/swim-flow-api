@@ -1,0 +1,65 @@
+name: Apply ONLY private-media migrations to Neon staging — MANUAL
+
+# Strictly opt-in; merge, pushes, deployments, or scheduled jobs NEVER apply migrations.
+on:
+  workflow_dispatch:
+    inputs:
+      approval:
+        description: 'Type APPLY_ONLY_PRIVATE_MEDIA_MIGRATIONS_TO_NEON_STAGING'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: swimflow-neon-private-media-staging-schema
+  cancel-in-progress: false
+
+jobs:
+  private-media-staging:
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' &&
+          github.repository == 'HenriqueTechPro/swim-flow-api' &&
+          github.ref == 'refs/heads/main' &&
+          inputs.approval == 'APPLY_ONLY_PRIVATE_MEDIA_MIGRATIONS_TO_NEON_STAGING' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: swimflow-neon-staging
+    env:
+      NODE_ENV: test
+      NEON_PROJECT_ID: raspy-breeze-33258358
+      NEON_BRANCH_ID: br-gentle-wildflower-b7qrnd74
+      SWIMFLOW_PRIVATE_BLOB_ENABLED: 'false'
+      SWIMFLOW_PRIVATE_MEDIA_S3_ENABLED: 'false'
+      SWIMFLOW_R2_STORAGE_ENABLED: 'false'
+      SWIMFLOW_PRIVATE_STAGING_MIGRATION_APPROVAL: ${{ inputs.approval }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked API dependencies (NO database secrets)
+        run: npm ci
+      - name: Offline verify all seven pinned migration files
+        run: npm run private-media:staging -- --check
+      - name: Generate Prisma for current schema (offline placeholders only)
+        env:
+          DATABASE_URL: postgresql://offline:offline@localhost:5432/swimflow?schema=public
+          DIRECT_URL: postgresql://offline:offline@localhost:5432/swimflow?schema=public
+        run: |
+          npm run prisma:validate
+          npm run prisma:generate
+      - name: Validate dedicated TLS hosts and exact schema, then apply five migrations
+        env:
+          DATABASE_URL: ${{ secrets.SWIMFLOW_STAGING_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.SWIMFLOW_STAGING_DIRECT_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$DATABASE_URL"
+          test -n "$DIRECT_URL"
+          npm run private-media:staging -- --apply

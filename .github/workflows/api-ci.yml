@@ -53,6 +53,10 @@ jobs:
         run: npm run neon:local-auth:staging:test
       - name: Audit manual Neon staging workflow safety boundaries
         run: node --test scripts/neon-local-auth-dispatch.test.cjs
+      - name: Verify only fixed private-media staging migrations (offline)
+        run: |
+          npm run private-media:staging -- --check
+          npm run private-media:staging:test
       - name: Test incremental formatting file selection
         run: npm run format:changed:test
       - name: Enforce Prettier only on TypeScript changed by this PR

@@ -36,6 +36,8 @@
     "neon:staging:migrate:test": "node --test scripts/neon-staging-migrate.test.cjs",
     "neon:local-auth:staging": "node scripts/neon-local-auth-staging.cjs",
     "neon:local-auth:staging:test": "node --test scripts/neon-local-auth-staging.test.cjs",
+    "private-media:staging": "node scripts/private-media-staging-migrate.cjs",
+    "private-media:staging:test": "node --test scripts/private-media-staging-migrate.test.cjs",
     "render:blueprint:test": "node --test scripts/render-blueprint.test.cjs",
     "prisma:migrate:status": "prisma migrate status --schema prisma/schema.prisma",
     "bootstrap:first-admin:invite": "node scripts/bootstrap-first-admin.cjs --apply",
