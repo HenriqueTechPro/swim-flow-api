@@ -2,7 +2,12 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
   Post,
+  Res,
+  StreamableFile,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -10,6 +15,8 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { z } from 'zod';
+import { Readable } from 'node:stream';
+import type { Response } from 'express';
 import { CreateManagedUploadUseCase } from '@/domain/uploads/application/use-cases/create-managed-upload';
 import {
   createManagedUploadSchema,
@@ -26,6 +33,7 @@ import { RolesGuard } from '@/infra/auth/roles.guard';
 import { ZodValidationPipe } from '../pipes/zod-validation-pipe';
 import { MAX_PRIVATE_IMAGE_BYTES } from '@/domain/uploads/application/services/private-media-upload-policy';
 import { PrivateImageUploadService } from '../services/private-image-upload.service';
+import { PrivateImageAccessService } from '../services/private-image-access.service';
 
 const privateImageUploadSchema = z
   .object({
@@ -49,6 +57,11 @@ const privateImageUploadSchema = z
     }
   });
 
+const activatePrivateImageSchema = z
+  .object({ expectedMediaId: z.string().uuid().nullable() })
+  .strict();
+
+type ActivatePrivateImageBody = z.infer<typeof activatePrivateImageSchema>;
 type PrivateImageUploadBody = z.infer<typeof privateImageUploadSchema>;
 type UploadedImage = { buffer: Buffer; mimetype: string; size: number };
 
@@ -61,6 +74,7 @@ export class UploadsController {
   constructor(
     private readonly createManagedUpload: CreateManagedUploadUseCase,
     private readonly privateImageUpload: PrivateImageUploadService,
+    private readonly privateImageAccess: PrivateImageAccessService,
   ) {}
 
   @Post('signed-url')
@@ -128,5 +142,46 @@ export class UploadsController {
         bytes: file.buffer,
       }),
     };
+  }
+
+  /**
+   * Activate only a VERIFIED private Blob candidate that belongs to the
+   * actor's currently authorized resource. expectedMediaId is mandatory:
+   * null means first photo; a UUID performs an atomic replacement.
+   */
+  @Post('private-image/:uploadId/activate')
+  @Permissions('uploads:write')
+  async activatePrivateImage(
+    @CurrentUser() user: AuthUser,
+    @Param('uploadId', new ParseUUIDPipe()) uploadId: string,
+    @Body(new ZodValidationPipe(activatePrivateImageSchema))
+    body: ActivatePrivateImageBody,
+  ) {
+    return {
+      data: await this.privateImageAccess.activate(
+        user.id,
+        uploadId,
+        body.expectedMediaId,
+      ),
+    };
+  }
+
+  /**
+   * No public URL or redirect is ever issued. Domain authorization checks
+   * the CURRENT role, target existence and ACTIVE media binding before
+   * retrieving bytes from private storage.
+   */
+  @Get('private-image/:uploadId')
+  @Permissions('uploads:write')
+  async readPrivateImage(
+    @CurrentUser() user: AuthUser,
+    @Param('uploadId', new ParseUUIDPipe()) uploadId: string,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const image = await this.privateImageAccess.download(user.id, uploadId);
+    for (const [name, value] of Object.entries(image.headers)) {
+      response.setHeader(name, value);
+    }
+    return new StreamableFile(Readable.from(image.stream));
   }
 }
