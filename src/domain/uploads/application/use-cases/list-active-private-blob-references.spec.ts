@@ -27,10 +27,8 @@ function setup(role: string | null = 'admin') {
 describe('Private active references - scoped batch query', () => {
   it('preserves page order with nulls and one batch', async () => {
     const { useCase, records } = setup();
-    const result = await useCase.execute(ADMIN, 'student-photo', [
-      OTHER,
-      STUDENT,
-    ]);
+    const requested = [OTHER, STUDENT];
+    const result = await useCase.execute(ADMIN, 'student-photo', requested);
     expect(result).toEqual({
       references: [
         { resourceId: OTHER, mediaId: null },
@@ -38,9 +36,9 @@ describe('Private active references - scoped batch query', () => {
       ],
     });
     expect(records.findActiveMediaIds).toHaveBeenCalledTimes(1);
-    expect(records.findActiveMediaIds).toHaveBeenCalledWith('student-photo', [
-      OTHER,
-      STUDENT,
+    expect(records.findActiveMediaIds.mock.calls[0]).toEqual([
+      'student-photo',
+      requested,
     ]);
   });
 
