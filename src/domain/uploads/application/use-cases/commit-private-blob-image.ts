@@ -37,7 +37,8 @@ export class CommitPrivateBlobImageUseCase {
       (input.newMediaId !== null && !UUID.test(input.newMediaId)) ||
       (input.expectedMediaId !== null && !UUID.test(input.expectedMediaId)) ||
       (input.newMediaId === null && input.expectedMediaId === null) ||
-      (input.newMediaId !== null && input.newMediaId === input.expectedMediaId) ||
+      (input.newMediaId !== null &&
+        input.newMediaId === input.expectedMediaId) ||
       (input.expectedLegacyUrl !== null &&
         (typeof input.expectedLegacyUrl !== 'string' ||
           input.expectedLegacyUrl.length > 2048))
@@ -46,10 +47,15 @@ export class CommitPrivateBlobImageUseCase {
     }
 
     const actor = await this.profiles.findByUserId(actorId);
-    const authorized = actor && (input.target === 'profile-avatar'
-      ? input.resourceId === actorId
-      : actor.role === 'admin' &&
-        (await this.resources.existsForTarget(input.target, input.resourceId)));
+    const authorized =
+      actor &&
+      (input.target === 'profile-avatar'
+        ? input.resourceId === actorId
+        : actor.role === 'admin' &&
+          (await this.resources.existsForTarget(
+            input.target,
+            input.resourceId,
+          )));
     if (!authorized) {
       throw new AppError(404, 'Private media unavailable');
     }
@@ -76,7 +82,8 @@ export class CommitPrivateBlobImageUseCase {
 
     return {
       mediaId: input.newMediaId,
-      status: input.newMediaId === null ? 'REMOVED' as const : 'ACTIVE' as const,
+      status:
+        input.newMediaId === null ? ('REMOVED' as const) : ('ACTIVE' as const),
     };
   }
 }

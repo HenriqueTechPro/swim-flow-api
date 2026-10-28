@@ -57,12 +57,9 @@ describe('PrivateImageAccessService', () => {
     const execute = jest
       .fn<CommitPrivateBlobImageUseCase['execute']>()
       .mockResolvedValue({ mediaId: MEDIA, status: 'ACTIVE' });
-    const service = new PrivateImageAccessService(
-      null,
-      null,
-      null,
-      { execute } as unknown as CommitPrivateBlobImageUseCase,
-    );
+    const service = new PrivateImageAccessService(null, null, null, {
+      execute,
+    } as unknown as CommitPrivateBlobImageUseCase);
     const input = {
       target: 'profile-avatar' as const,
       resourceId: ACTOR,
