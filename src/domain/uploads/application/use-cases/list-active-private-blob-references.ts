@@ -25,7 +25,6 @@ export class ListActivePrivateBlobReferencesUseCase {
     if (
       !UUID.test(actorId) ||
       !['student-photo', 'teacher-photo', 'parent-photo', 'profile-avatar'].includes(target) ||
-      !Array.isArray(resourceIds) ||
       resourceIds.length < 1 ||
       resourceIds.length > 25 ||
       resourceIds.some((id) => typeof id !== 'string' || !UUID.test(id)) ||
@@ -47,7 +46,9 @@ export class ListActivePrivateBlobReferencesUseCase {
     // One DB query for the whole page. The composite FK guarantees that each
     // active binding points at a VERIFIED BLOB record for the same target.
     const active = await this.records.findActiveMediaIds(target, resourceIds);
-    const byResource = new Map(active.map(({ resourceId, mediaId }) => [resourceId, mediaId]));
+    const byResource = new Map<string, string>(
+      active.map(({ resourceId, mediaId }) => [resourceId, mediaId]),
+    );
     return {
       references: resourceIds.map((resourceId) => ({
         resourceId,
