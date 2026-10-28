@@ -1,5 +1,6 @@
 import { ServiceUnavailableException } from '@nestjs/common';
 import type { AssignPrivateBlobImageUseCase } from '@/domain/uploads/application/use-cases/assign-private-blob-image';
+import type { CommitPrivateBlobImageUseCase } from '@/domain/uploads/application/use-cases/commit-private-blob-image';
 import type { ReadPrivateBlobImageUseCase } from '@/domain/uploads/application/use-cases/read-private-blob-image';
 import { PrivateImageAccessService } from './private-image-access.service';
 import type { ListActivePrivateBlobReferencesUseCase } from '@/domain/uploads/application/use-cases/list-active-private-blob-references';
@@ -37,6 +38,43 @@ describe('PrivateImageAccessService', () => {
       references: [{ resourceId: ACTOR, mediaId: MEDIA }],
     });
     expect(execute).toHaveBeenCalledWith(ACTOR, 'profile-avatar', [ACTOR]);
+  });
+
+  it('keeps atomic commits disabled without private Blob configuration', async () => {
+    const service = new PrivateImageAccessService(null, null);
+    await expect(
+      service.commit(ACTOR, {
+        target: 'profile-avatar',
+        resourceId: ACTOR,
+        newMediaId: MEDIA,
+        expectedMediaId: null,
+        expectedLegacyUrl: null,
+      }),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+  });
+
+  it('delegates atomic commits to the authorized domain boundary', async () => {
+    const execute = jest
+      .fn<CommitPrivateBlobImageUseCase['execute']>()
+      .mockResolvedValue({ mediaId: MEDIA, status: 'ACTIVE' });
+    const service = new PrivateImageAccessService(
+      null,
+      null,
+      null,
+      { execute } as unknown as CommitPrivateBlobImageUseCase,
+    );
+    const input = {
+      target: 'profile-avatar' as const,
+      resourceId: ACTOR,
+      newMediaId: MEDIA,
+      expectedMediaId: null,
+      expectedLegacyUrl: null,
+    };
+    await expect(service.commit(ACTOR, input)).resolves.toEqual({
+      mediaId: MEDIA,
+      status: 'ACTIVE',
+    });
+    expect(execute).toHaveBeenCalledWith(ACTOR, input);
   });
 
   it('delegates binding and reading to audited domain use cases', async () => {

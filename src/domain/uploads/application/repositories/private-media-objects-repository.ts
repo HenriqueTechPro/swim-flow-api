@@ -53,6 +53,17 @@ export interface PrivateMediaObjectRecord extends Omit<
  * verification and cleanup. Each state transition checks the previous state
  * AND the signed PUT expiry in one DB statement.
  */
+export interface CommitPrivateBlobBindingInput {
+  target: ManagedUploadTarget;
+  resourceId: string;
+  /** null removes the current private image; a UUID atomically activates one. */
+  newMediaId: string | null;
+  /** The observed previous private image (null for first assignment). */
+  expectedMediaId: string | null;
+  /** The exact last-seen legacy photo URL, or null. No public URL is created. */
+  expectedLegacyUrl: string | null;
+}
+
 export abstract class PrivateMediaObjectsRepository {
   abstract createPending(input: PendingPrivateMediaObject): Promise<void>;
 
@@ -89,6 +100,15 @@ export abstract class PrivateMediaObjectsRepository {
     mediaId: string;
     expectedMediaId: string | null;
   }): Promise<boolean>;
+
+  /**
+   * Atomic migration boundary: compares and clears the legacy photo URL and
+   * CAS-updates (or CAS-deletes) the active private binding in ONE database
+   * transaction. On any conflict NEITHER modification may be committed.
+   */
+  abstract commitPrivateBlobBinding(
+    input: CommitPrivateBlobBindingInput,
+  ): Promise<boolean>;
 
   /**
    * Dry-run inventory ONLY: VERIFIED server Blob records old enough for

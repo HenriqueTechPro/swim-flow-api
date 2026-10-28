@@ -6,6 +6,7 @@ import {
   type PrivateMediaObjectRecord,
   type PrivateMediaStatus,
   type VerifiedPrivateBlobMediaObject,
+  type CommitPrivateBlobBindingInput,
 } from '@/domain/uploads/application/repositories/private-media-objects-repository';
 import type { ManagedUploadTarget } from '@/domain/uploads/application/dtos/managed-upload';
 import { PrismaService } from '../prisma.service';
@@ -28,6 +29,12 @@ function toRecord(record: PrivateMediaObject): PrivateMediaObjectRecord {
     cleanupClaimedAt: record.cleanupClaimedAt,
     cleanupCompletedAt: record.cleanupCompletedAt,
   };
+}
+
+class PrivateBlobBindingConflict extends Error {
+  constructor() {
+    super('private-blob-binding-concurrent-change');
+  }
 }
 
 /**
@@ -142,6 +149,103 @@ export class PrismaPrivateMediaObjectsRepository extends PrivateMediaObjectsRepo
       // Only an optimistic UNIQUE conflict is a lost race. Invalid FK and
       // other database failures MUST propagate (never masquerade as CAS).
       if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        error.code === 'P2002'
+      ) {
+        return false;
+      }
+      throw error;
+    }
+  }
+
+  async commitPrivateBlobBinding(
+    input: CommitPrivateBlobBindingInput,
+  ): Promise<boolean> {
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        // Lock and compare the current legacy field before touching the
+        // private reference. A stale edit must roll back both changes.
+        const where = {
+          id: input.resourceId,
+          // Compound predicates on updateMany implement a legacy URL CAS.
+        };
+        let updated: { count: number };
+        switch (input.target) {
+          case 'student-photo':
+            updated = await tx.student.updateMany({
+              where: { ...where, photo: input.expectedLegacyUrl },
+              data: { photo: null },
+            });
+            break;
+          case 'teacher-photo':
+            updated = await tx.teacher.updateMany({
+              where: { ...where, photo: input.expectedLegacyUrl },
+              data: { photo: null },
+            });
+            break;
+          case 'parent-photo':
+            updated = await tx.parent.updateMany({
+              where: { ...where, photo: input.expectedLegacyUrl },
+              data: { photo: null },
+            });
+            break;
+          case 'profile-avatar':
+            updated = await tx.profile.updateMany({
+              where: { ...where, avatarUrl: input.expectedLegacyUrl },
+              data: { avatarUrl: null },
+            });
+            break;
+        }
+        if (updated.count !== 1) {
+          throw new PrivateBlobBindingConflict();
+        }
+
+        const match = {
+          target: input.target,
+          resourceId: input.resourceId,
+        };
+        if (input.newMediaId === null) {
+          const removed = await tx.privateMediaActiveBinding.deleteMany({
+            where: { ...match, mediaId: input.expectedMediaId! },
+          });
+          if (removed.count !== 1) {
+            throw new PrivateBlobBindingConflict();
+          }
+          return;
+        }
+
+        if (input.expectedMediaId === null) {
+          // Existing composite FK enforces VERIFIED BLOB and exact owner.
+          await tx.privateMediaActiveBinding.create({
+            data: {
+              ...match,
+              mediaId: input.newMediaId,
+              storageProvider: 'BLOB',
+              status: 'VERIFIED',
+            },
+            select: { mediaId: true },
+          });
+          return;
+        }
+
+        const swapped = await tx.privateMediaActiveBinding.updateMany({
+          where: { ...match, mediaId: input.expectedMediaId },
+          data: { mediaId: input.newMediaId },
+        });
+        if (swapped.count !== 1) {
+          throw new PrivateBlobBindingConflict();
+        }
+      });
+      return true;
+    } catch (error: unknown) {
+      if (error instanceof PrivateBlobBindingConflict) return false;
+      // Only unique violations from a first-time binding race are CAS
+      // conflicts. FK violations and database outages must propagate.
+      if (
+        input.newMediaId !== null &&
+        input.expectedMediaId === null &&
         typeof error === 'object' &&
         error !== null &&
         'code' in error &&
