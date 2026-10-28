@@ -70,6 +70,15 @@ export abstract class PrivateMediaObjectsRepository {
   ): Promise<string | null>;
 
   /**
+   * One scoped lookup for the current page of resources, never one query per
+   * avatar. Only returns opaque IDs from active VERIFIED BLOB bindings.
+   */
+  abstract findActiveMediaIds(
+    target: ManagedUploadTarget,
+    resourceIds: readonly string[],
+  ): Promise<ReadonlyArray<{ resourceId: string; mediaId: string }>>;
+
+  /**
    * Optimistic reference swap. When expectedMediaId is null, attach only if no
    * current image exists; otherwise replace only that exact old media ID.
    * Database FK enforces same target/resource + BLOB/VERIFIED status.

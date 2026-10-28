@@ -29,6 +29,7 @@ describe('Prisma private media compare-and-swap transitions', () => {
       create: jest.fn(),
       updateMany: jest.fn(),
       findUnique: jest.fn(),
+      findMany: jest.fn(),
     },
     $transaction: jest.fn(),
     privateMediaObject: {
@@ -112,6 +113,28 @@ describe('Prisma private media compare-and-swap transitions', () => {
     expect(
       await repository.findActiveMediaId('student-photo', row.resourceId),
     ).toBeNull();
+  });
+
+  it('fetches all active VERIFIED Blob references for one page in one query', async () => {
+    const ids = [row.resourceId, '55555555-5555-4555-8555-555555555555'];
+    prisma.privateMediaActiveBinding.findMany.mockResolvedValue([
+      { resourceId: row.resourceId, mediaId: UUID },
+    ]);
+    expect(await repository.findActiveMediaIds('student-photo', ids)).toEqual([
+      { resourceId: row.resourceId, mediaId: UUID },
+    ]);
+    expect(prisma.privateMediaActiveBinding.findMany).toHaveBeenCalledWith({
+      where: {
+        target: 'student-photo',
+        resourceId: { in: ids },
+        storageProvider: 'BLOB',
+        status: 'VERIFIED',
+      },
+      select: { resourceId: true, mediaId: true },
+    });
+    expect(prisma.privateMediaActiveBinding.findMany).toHaveBeenCalledTimes(1);
+    expect(await repository.findActiveMediaIds('student-photo', [])).toEqual([]);
+    expect(prisma.privateMediaActiveBinding.findMany).toHaveBeenCalledTimes(1);
   });
 
   it('assigns first Blob image only if there is no current binding', async () => {

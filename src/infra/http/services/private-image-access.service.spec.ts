@@ -2,6 +2,7 @@ import { ServiceUnavailableException } from '@nestjs/common';
 import type { AssignPrivateBlobImageUseCase } from '@/domain/uploads/application/use-cases/assign-private-blob-image';
 import type { ReadPrivateBlobImageUseCase } from '@/domain/uploads/application/use-cases/read-private-blob-image';
 import { PrivateImageAccessService } from './private-image-access.service';
+import type { ListActivePrivateBlobReferencesUseCase } from '@/domain/uploads/application/use-cases/list-active-private-blob-references';
 
 const ACTOR = '11111111-1111-4111-8111-111111111111';
 const MEDIA = '33333333-3333-4333-8333-333333333333';
@@ -14,6 +15,30 @@ describe('PrivateImageAccessService', () => {
     );
     await expect(service.download(ACTOR, MEDIA)).rejects.toBeInstanceOf(
       ServiceUnavailableException,
+    );
+    await expect(
+      service.activeReferences(ACTOR, 'profile-avatar', [ACTOR]),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+  });
+
+  it('delegates a references query to the existing authorization boundary', async () => {
+    const execute = jest
+      .fn<ListActivePrivateBlobReferencesUseCase['execute']>()
+      .mockResolvedValue({
+        references: [{ resourceId: ACTOR, mediaId: MEDIA }],
+      });
+    const service = new PrivateImageAccessService(
+      null,
+      null,
+      { execute } as unknown as ListActivePrivateBlobReferencesUseCase,
+    );
+    expect(
+      await service.activeReferences(ACTOR, 'profile-avatar', [ACTOR]),
+    ).toEqual({ references: [{ resourceId: ACTOR, mediaId: MEDIA }] });
+    expect(execute).toHaveBeenCalledWith(
+      ACTOR,
+      'profile-avatar',
+      [ACTOR],
     );
   });
 

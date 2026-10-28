@@ -93,6 +93,22 @@ export class PrismaPrivateMediaObjectsRepository extends PrivateMediaObjectsRepo
     return binding?.mediaId ?? null;
   }
 
+  async findActiveMediaIds(
+    target: ManagedUploadTarget,
+    resourceIds: readonly string[],
+  ): Promise<ReadonlyArray<{ resourceId: string; mediaId: string }>> {
+    if (resourceIds.length === 0) return [];
+    return this.prisma.privateMediaActiveBinding.findMany({
+      where: {
+        target,
+        resourceId: { in: [...resourceIds] },
+        storageProvider: 'BLOB',
+        status: 'VERIFIED',
+      },
+      select: { resourceId: true, mediaId: true },
+    });
+  }
+
   async assignActiveVerifiedBlob(input: {
     target: ManagedUploadTarget;
     resourceId: string;

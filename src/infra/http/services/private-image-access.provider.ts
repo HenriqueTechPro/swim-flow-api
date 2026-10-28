@@ -3,6 +3,7 @@ import { AuthProfilesRepository } from '@/domain/auth/application/repositories/a
 import { ManagedUploadResourcesRepository } from '@/domain/uploads/application/repositories/managed-upload-resources-repository';
 import { AssignPrivateBlobImageUseCase } from '@/domain/uploads/application/use-cases/assign-private-blob-image';
 import { ReadPrivateBlobImageUseCase } from '@/domain/uploads/application/use-cases/read-private-blob-image';
+import { ListActivePrivateBlobReferencesUseCase } from '@/domain/uploads/application/use-cases/list-active-private-blob-references';
 import { PrismaPrivateMediaObjectsRepository } from '@/infra/database/prisma/repositories/prisma-private-media-objects-repository';
 import { PrismaService } from '@/infra/database/prisma/prisma.service';
 import { loadPrivateVercelBlobConfig } from '@/infra/storage/private-vercel-blob-config';
@@ -33,6 +34,7 @@ export const privateImageAccessProvider: Provider = {
         records,
         createVercelPrivateBlobStorageRepository(config),
       ),
+      new ListActivePrivateBlobReferencesUseCase(profiles, records),
     );
   },
 };

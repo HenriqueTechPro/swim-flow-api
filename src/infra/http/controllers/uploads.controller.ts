@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  Header,
   Param,
   ParseUUIDPipe,
   Post,
@@ -56,6 +57,19 @@ const privateImageUploadSchema = z
       });
     }
   });
+
+const activeReferencesSchema = z
+  .object({
+    target: z.enum(managedUploadTargetValues),
+    resourceIds: z.array(z.string().uuid()).min(1).max(25),
+  })
+  .strict()
+  .refine((input) => new Set(input.resourceIds).size === input.resourceIds.length, {
+    message: 'Duplicate resource UUIDs are not allowed',
+    path: ['resourceIds'],
+  });
+
+type ActiveReferencesBody = z.infer<typeof activeReferencesSchema>;
 
 const activatePrivateImageSchema = z
   .object({ expectedMediaId: z.string().uuid().nullable() })
@@ -141,6 +155,29 @@ export class UploadsController {
         contentType: file.mimetype,
         bytes: file.buffer,
       }),
+    };
+  }
+
+  /**
+   * One protected query per paginated page, with no object URLs or tokens.
+   * Reads remain denied on the image bytes endpoint unless separately
+   * authorized and currently ACTIVE.
+   */
+  @Post('private-images/active-references')
+  @Permissions('uploads:write')
+  @Header('Cache-Control', 'private, no-store')
+  @Header('X-Content-Type-Options', 'nosniff')
+  async listActiveReferences(
+    @CurrentUser() user: AuthUser,
+    @Body(new ZodValidationPipe(activeReferencesSchema))
+    body: ActiveReferencesBody,
+  ) {
+    return {
+      data: await this.privateImageAccess.activeReferences(
+        user.id,
+        body.target,
+        body.resourceIds,
+      ),
     };
   }
 
