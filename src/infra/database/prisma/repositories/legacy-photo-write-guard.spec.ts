@@ -24,27 +24,32 @@ describe('02F-06B3F — legacy photo writer database guard', () => {
     tx.privateMediaActiveBinding.findUnique.mockResolvedValue(null);
   });
 
-  it.each(targets)('rejects a non-null legacy URL on active %s', async (target) => {
-    tx.privateMediaActiveBinding.findUnique.mockResolvedValue({ mediaId: ID });
-    await expect(
-      assertLegacyPhotoWriteAllowed(
-        tx as unknown as Prisma.TransactionClient,
-        target,
-        ID,
-        LEGACY,
-      ),
-    ).rejects.toMatchObject({
-      statusCode: 409,
-    });
-    expect(tx.$queryRaw).toHaveBeenCalledTimes(1);
-    expect(tx.privateMediaActiveBinding.findUnique).toHaveBeenCalledWith({
-      where: { target_resourceId: { target, resourceId: ID } },
-      select: { mediaId: true },
-    });
-    expect(tx.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
-      tx.privateMediaActiveBinding.findUnique.mock.invocationCallOrder[0],
-    );
-  });
+  it.each(targets)(
+    'rejects a non-null legacy URL on active %s',
+    async (target) => {
+      tx.privateMediaActiveBinding.findUnique.mockResolvedValue({
+        mediaId: ID,
+      });
+      await expect(
+        assertLegacyPhotoWriteAllowed(
+          tx as unknown as Prisma.TransactionClient,
+          target,
+          ID,
+          LEGACY,
+        ),
+      ).rejects.toMatchObject({
+        statusCode: 409,
+      });
+      expect(tx.$queryRaw).toHaveBeenCalledTimes(1);
+      expect(tx.privateMediaActiveBinding.findUnique).toHaveBeenCalledWith({
+        where: { target_resourceId: { target, resourceId: ID } },
+        select: { mediaId: true },
+      });
+      expect(tx.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
+        tx.privateMediaActiveBinding.findUnique.mock.invocationCallOrder[0],
+      );
+    },
+  );
 
   it.each(targets)('allows %s before private adoption', async (target) => {
     await expect(

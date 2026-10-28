@@ -29,10 +29,13 @@ export async function assertLegacyPhotoWriteAllowed(
     'parent-photo': 'parents',
   }[target];
   // Hard-coded allowlist, never any user-controlled SQL identifier.
-  const sql = Prisma.sql([
-    'SELECT "id" FROM "' + table + '" WHERE "id" = ',
-    '::uuid FOR UPDATE',
-  ] as unknown as TemplateStringsArray, resourceId);
+  const sql = Prisma.sql(
+    [
+      'SELECT "id" FROM "' + table + '" WHERE "id" = ',
+      '::uuid FOR UPDATE',
+    ] as unknown as TemplateStringsArray,
+    resourceId,
+  );
   const locked = await tx.$queryRaw<Array<{ id: string }>>(sql);
   if (locked.length === 0) return;
 

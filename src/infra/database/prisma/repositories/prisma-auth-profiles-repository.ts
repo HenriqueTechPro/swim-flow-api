@@ -109,7 +109,10 @@ export class PrismaAuthProfilesRepository implements AuthProfilesRepository {
     });
   }
 
-  async update(userId: string, input: UpdateProfileRequest): Promise<AuthProfile> {
+  async update(
+    userId: string,
+    input: UpdateProfileRequest,
+  ): Promise<AuthProfile> {
     const updateRecord = async (
       db: Pick<PrismaService, 'profile'>,
     ): Promise<PrismaAuthProfileRecord> =>
