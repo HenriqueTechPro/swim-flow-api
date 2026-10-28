@@ -18,6 +18,7 @@ import {
 } from '@/domain/parents/application/repositories/parents-repository';
 import { AppError } from '@/shared/errors/app-error';
 import { PrismaService } from '../prisma.service';
+import { assertLegacyPhotoWriteAllowed } from './legacy-photo-write-guard';
 import {
   PrismaParentMapper,
   type PrismaParentRecord,
@@ -149,6 +150,7 @@ export class PrismaParentsRepository implements ParentsRepository {
     }
 
     const parent = await this.prisma.$transaction(async (tx) => {
+      await assertLegacyPhotoWriteAllowed(tx, 'parent-photo', id, input.photo);
       await tx.parent.update({
         where: { id },
         data: {

@@ -74,6 +74,10 @@ jobs:
         env:
           SWIMFLOW_DISPOSABLE_DB: 'yes'
         run: node -r ts-node/register/transpile-only -r tsconfig-paths/register scripts/verify-private-blob-commit.cjs
+      - name: Legacy photo write guard and private commit race (disposable PostgreSQL)
+        env:
+          SWIMFLOW_DISPOSABLE_DB: 'yes'
+        run: node -r ts-node/register/transpile-only -r tsconfig-paths/register scripts/verify-legacy-photo-guard.cjs
       - name: Atomic Blob cleanup claim and FK race (disposable PostgreSQL)
         env:
           SWIMFLOW_DISPOSABLE_DB: 'yes'

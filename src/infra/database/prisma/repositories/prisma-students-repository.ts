@@ -23,6 +23,7 @@ import { StudentClassAssignmentPolicy } from '@/domain/students/application/serv
 import { AppError } from '@/shared/errors/app-error';
 import { parseCategoryValue } from '@/shared/utils/domain-formatters';
 import { PrismaService } from '../prisma.service';
+import { assertLegacyPhotoWriteAllowed } from './legacy-photo-write-guard';
 import {
   PrismaStudentMapper,
   type PrismaStudentRecord,
@@ -335,6 +336,7 @@ export class PrismaStudentsRepository implements StudentsRepository {
     );
 
     const student = await this.prisma.$transaction(async (tx) => {
+      await assertLegacyPhotoWriteAllowed(tx, 'student-photo', id, input.photo);
       await tx.student.update({
         where: { id },
         data: {
