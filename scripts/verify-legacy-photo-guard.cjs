@@ -50,7 +50,12 @@ async function main() {
     await prisma.privateMediaObject.create({
       data: {
         id,
-        objectKey: 'private/legacy-guard-ci/' + target + '/' + resourceId + '/' + id + '.jpg',
+        objectKey: 'private/' + ({
+          'profile-avatar': 'profiles',
+          'student-photo': 'students',
+          'teacher-photo': 'teachers',
+          'parent-photo': 'parents',
+        })[target] + '/' + resourceId + '/' + id + '.jpg',
         target, resourceId,
         uploadedById: ids.profile,
         uploadedByProfileId: ids.profile,
@@ -185,9 +190,18 @@ async function main() {
         data: { avatarUrl: ATTACK },
       });
     }, { timeout: 10000 });
+    const staleResult = staleWriter.then(
+      () => ({ rejected: false }),
+      (error) => ({ rejected: true, error }),
+    );
+    // Ensure the legacy transaction has a chance to request the row lock
+    // while the commit still holds it.
+    await new Promise((resolve) => setTimeout(resolve, 25));
     releaseLock();
     await commit;
-    await assert.rejects(staleWriter, (error) => error.statusCode === 409);
+    const result = await staleResult;
+    assert.equal(result.rejected, true);
+    assert.equal(result.error.statusCode, 409);
     const profile = await prisma.profile.findUniqueOrThrow({
       where: { id: actor },
       select: { avatarUrl: true },
