@@ -23,6 +23,7 @@ import { TrainingsController } from './controllers/trainings.controller';
 import { UploadsController } from './controllers/uploads.controller';
 import { useCaseProviders } from './use-case.providers';
 import { privateImageUploadProvider } from './services/private-image-upload.provider';
+import { privateImageAccessProvider } from './services/private-image-access.provider';
 
 @Module({
   imports: [DatabaseModule, AuthModule, EnvModule],
@@ -53,6 +54,7 @@ import { privateImageUploadProvider } from './services/private-image-upload.prov
     },
     ...useCaseProviders,
     privateImageUploadProvider,
+    privateImageAccessProvider,
   ],
 })
 export class HttpModule {}
