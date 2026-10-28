@@ -120,7 +120,9 @@ describe('Private image activation and read HTTP (e2e)', () => {
   });
 
   it('does not stream unbound or inaccessible images', async () => {
-    download.mockRejectedValueOnce(new NotFoundException('Private media unavailable'));
+    download.mockRejectedValueOnce(
+      new NotFoundException('Private media unavailable'),
+    );
     await request(app.getHttpServer())
       .get('/api/uploads/private-image/' + MEDIA)
       .expect(404);

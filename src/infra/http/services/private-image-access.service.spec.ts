@@ -18,9 +18,11 @@ describe('PrivateImageAccessService', () => {
   });
 
   it('delegates binding and reading to audited domain use cases', async () => {
-    const assign = jest.fn<AssignPrivateBlobImageUseCase['execute']>()
+    const assign = jest
+      .fn<AssignPrivateBlobImageUseCase['execute']>()
       .mockResolvedValue({ mediaId: MEDIA, status: 'ACTIVE' });
-    const read = jest.fn<ReadPrivateBlobImageUseCase['execute']>()
+    const read = jest
+      .fn<ReadPrivateBlobImageUseCase['execute']>()
       .mockResolvedValue({
         stream: {
           async *[Symbol.asyncIterator]() {
