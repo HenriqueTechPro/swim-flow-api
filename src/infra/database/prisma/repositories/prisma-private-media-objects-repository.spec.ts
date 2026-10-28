@@ -120,9 +120,8 @@ describe('Prisma private media compare-and-swap transitions', () => {
     prisma.privateMediaActiveBinding.findMany.mockResolvedValue([
       { resourceId: row.resourceId, mediaId: UUID },
     ]);
-    expect(await repository.findActiveMediaIds('student-photo', ids)).toEqual([
-      { resourceId: row.resourceId, mediaId: UUID },
-    ]);
+    const bindings = await repository.findActiveMediaIds('student-photo', ids);
+    expect(bindings).toEqual([{ resourceId: row.resourceId, mediaId: UUID }]);
     expect(prisma.privateMediaActiveBinding.findMany).toHaveBeenCalledWith({
       where: {
         target: 'student-photo',
@@ -133,9 +132,8 @@ describe('Prisma private media compare-and-swap transitions', () => {
       select: { resourceId: true, mediaId: true },
     });
     expect(prisma.privateMediaActiveBinding.findMany).toHaveBeenCalledTimes(1);
-    expect(
-      await repository.findActiveMediaIds('student-photo', []),
-    ).toEqual([]);
+    const empty = await repository.findActiveMediaIds('student-photo', []);
+    expect(empty).toEqual([]);
     expect(prisma.privateMediaActiveBinding.findMany).toHaveBeenCalledTimes(1);
   });
 

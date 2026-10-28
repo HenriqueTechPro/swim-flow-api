@@ -32,9 +32,10 @@ describe('PrivateImageAccessService', () => {
       null,
       { execute } as unknown as ListActivePrivateBlobReferencesUseCase,
     );
-    expect(
-      await service.activeReferences(ACTOR, 'profile-avatar', [ACTOR]),
-    ).toEqual({
+    const references = await service.activeReferences(ACTOR, 'profile-avatar', [
+      ACTOR,
+    ]);
+    expect(references).toEqual({
       references: [{ resourceId: ACTOR, mediaId: MEDIA }],
     });
     expect(execute).toHaveBeenCalledWith(ACTOR, 'profile-avatar', [ACTOR]);

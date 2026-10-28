@@ -8,8 +8,9 @@ const OTHER = '33333333-3333-4333-8333-333333333333';
 const MEDIA = '44444444-4444-4444-8444-444444444444';
 
 function setup(role: string | null = 'admin') {
+  const profile = role ? { id: ADMIN, role } : null;
   const profiles = {
-    findByUserId: jest.fn().mockResolvedValue(role ? { id: ADMIN, role } : null),
+    findByUserId: jest.fn().mockResolvedValue(profile),
   };
   const records = {
     findActiveMediaIds: jest.fn().mockResolvedValue([
@@ -26,9 +27,11 @@ function setup(role: string | null = 'admin') {
 describe('Private active references - scoped batch query', () => {
   it('preserves page order with nulls and one batch', async () => {
     const { useCase, records } = setup();
-    expect(
-      await useCase.execute(ADMIN, 'student-photo', [OTHER, STUDENT]),
-    ).toEqual({
+    const result = await useCase.execute(ADMIN, 'student-photo', [
+      OTHER,
+      STUDENT,
+    ]);
+    expect(result).toEqual({
       references: [
         { resourceId: OTHER, mediaId: null },
         { resourceId: STUDENT, mediaId: MEDIA },
@@ -46,7 +49,8 @@ describe('Private active references - scoped batch query', () => {
     records.findActiveMediaIds.mockResolvedValueOnce([
       { resourceId: ADMIN, mediaId: MEDIA },
     ]);
-    expect(await useCase.execute(ADMIN, 'profile-avatar', [ADMIN])).toEqual({
+    const avatar = await useCase.execute(ADMIN, 'profile-avatar', [ADMIN]);
+    expect(avatar).toEqual({
       references: [{ resourceId: ADMIN, mediaId: MEDIA }],
     });
     await expect(
