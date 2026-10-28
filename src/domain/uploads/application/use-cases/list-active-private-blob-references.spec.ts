@@ -9,9 +9,7 @@ const MEDIA = '44444444-4444-4444-8444-444444444444';
 
 function setup(role: string | null = 'admin') {
   const profiles = {
-    findByUserId: jest.fn().mockResolvedValue(
-      role ? { id: ADMIN, role } : null,
-    ),
+    findByUserId: jest.fn().mockResolvedValue(role ? { id: ADMIN, role } : null),
   };
   const records = {
     findActiveMediaIds: jest.fn().mockResolvedValue([
@@ -26,21 +24,24 @@ function setup(role: string | null = 'admin') {
 }
 
 describe('Private active references - scoped batch query', () => {
-  it('queries only one DB batch and preserves page order with null for missing photos', async () => {
+  it('preserves page order with nulls and one batch', async () => {
     const { useCase, records } = setup();
-    expect(await useCase.execute(ADMIN, 'student-photo', [OTHER, STUDENT])).toEqual({
+    expect(
+      await useCase.execute(ADMIN, 'student-photo', [OTHER, STUDENT]),
+    ).toEqual({
       references: [
         { resourceId: OTHER, mediaId: null },
         { resourceId: STUDENT, mediaId: MEDIA },
       ],
     });
     expect(records.findActiveMediaIds).toHaveBeenCalledTimes(1);
-    expect(records.findActiveMediaIds).toHaveBeenCalledWith(
-      'student-photo', [OTHER, STUDENT],
-    );
+    expect(records.findActiveMediaIds).toHaveBeenCalledWith('student-photo', [
+      OTHER,
+      STUDENT,
+    ]);
   });
 
-  it('supports exactly the current user avatar, not another profile', async () => {
+  it('allows own avatar only', async () => {
     const { useCase, records } = setup('user');
     records.findActiveMediaIds.mockResolvedValueOnce([
       { resourceId: ADMIN, mediaId: MEDIA },
@@ -54,7 +55,7 @@ describe('Private active references - scoped batch query', () => {
     expect(records.findActiveMediaIds).toHaveBeenCalledTimes(1);
   });
 
-  it('denies current teacher, downgraded admin and missing profiles', async () => {
+  it('rejects current teacher and revoked roles', async () => {
     const { useCase, profiles, records } = setup('teacher');
     await expect(
       useCase.execute(ADMIN, 'student-photo', [STUDENT]),
@@ -70,9 +71,14 @@ describe('Private active references - scoped batch query', () => {
     expect(records.findActiveMediaIds).not.toHaveBeenCalled();
   });
 
-  it('rejects injected, duplicate and oversized batches without querying', async () => {
+  it('rejects malformed and duplicate batches', async () => {
     const { useCase, records } = setup();
-    for (const ids of [[], [STUDENT, STUDENT], ['../photo'], Array(26).fill(STUDENT)]) {
+    for (const ids of [
+      [],
+      [STUDENT, STUDENT],
+      ['../photo'],
+      Array(26).fill(STUDENT),
+    ]) {
       await expect(
         useCase.execute(ADMIN, 'student-photo', ids),
       ).rejects.toMatchObject({ statusCode: 400 });

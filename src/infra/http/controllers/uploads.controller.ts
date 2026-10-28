@@ -64,10 +64,13 @@ const activeReferencesSchema = z
     resourceIds: z.array(z.string().uuid()).min(1).max(25),
   })
   .strict()
-  .refine((input) => new Set(input.resourceIds).size === input.resourceIds.length, {
-    message: 'Duplicate resource UUIDs are not allowed',
-    path: ['resourceIds'],
-  });
+  .refine(
+    (input) => new Set(input.resourceIds).size === input.resourceIds.length,
+    {
+      message: 'Duplicate resource UUIDs are not allowed',
+      path: ['resourceIds'],
+    },
+  );
 
 type ActiveReferencesBody = z.infer<typeof activeReferencesSchema>;
 

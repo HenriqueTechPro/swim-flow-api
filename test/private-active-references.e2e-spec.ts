@@ -1,4 +1,11 @@
-import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  jest,
+} from '@jest/globals';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import type { App } from 'supertest/types';
@@ -16,7 +23,8 @@ const MEDIA = '44444444-4444-4444-8444-444444444444';
 
 describe('POST /api/uploads/private-images/active-references (e2e)', () => {
   let app: INestApplication<App>;
-  const activeReferences = jest.fn<PrivateImageAccessService['activeReferences']>();
+  const activeReferences =
+    jest.fn<PrivateImageAccessService['activeReferences']>();
 
   beforeEach(async () => {
     activeReferences.mockReset();
@@ -43,9 +51,11 @@ describe('POST /api/uploads/private-images/active-references (e2e)', () => {
     );
   });
 
-  afterEach(async () => { await app.close(); });
+  afterEach(async () => {
+    await app.close();
+  });
 
-  it('returns opaque active media ID and no-store, never storage URLs', async () => {
+  it('returns opaque media IDs without storage URLs', async () => {
     const response = await request(app.getHttpServer())
       .post('/api/uploads/private-images/active-references')
       .send({ target: 'student-photo', resourceIds: [STUDENT] })
@@ -55,13 +65,15 @@ describe('POST /api/uploads/private-images/active-references (e2e)', () => {
     expect(response.body).toEqual({
       data: { references: [{ resourceId: STUDENT, mediaId: MEDIA }] },
     });
-    expect(JSON.stringify(response.body)).not.toMatch(/token|objectKey|pathname|url/i);
-    expect(activeReferences).toHaveBeenCalledWith(
-      ACTOR, 'student-photo', [STUDENT],
+    expect(JSON.stringify(response.body)).not.toMatch(
+      /token|objectKey|pathname|url/i,
     );
+    expect(activeReferences).toHaveBeenCalledWith(ACTOR, 'student-photo', [
+      STUDENT,
+    ]);
   });
 
-  it('rejects invalid targets, duplicates, missing IDs and oversized pages', async () => {
+  it('rejects malformed and oversized pages', async () => {
     for (const body of [
       { target: 'invalid', resourceIds: [STUDENT] },
       { target: 'student-photo', resourceIds: [] },

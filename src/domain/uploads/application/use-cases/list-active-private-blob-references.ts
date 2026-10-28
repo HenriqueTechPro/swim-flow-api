@@ -21,10 +21,17 @@ export class ListActivePrivateBlobReferencesUseCase {
     actorId: string,
     target: ManagedUploadTarget,
     resourceIds: readonly string[],
-  ): Promise<{ references: Array<{ resourceId: string; mediaId: string | null }> }> {
+  ): Promise<{
+    references: Array<{ resourceId: string; mediaId: string | null }>;
+  }> {
     if (
       !UUID.test(actorId) ||
-      !['student-photo', 'teacher-photo', 'parent-photo', 'profile-avatar'].includes(target) ||
+      ![
+        'student-photo',
+        'teacher-photo',
+        'parent-photo',
+        'profile-avatar',
+      ].includes(target) ||
       resourceIds.length < 1 ||
       resourceIds.length > 25 ||
       resourceIds.some((id) => typeof id !== 'string' || !UUID.test(id)) ||
@@ -34,7 +41,8 @@ export class ListActivePrivateBlobReferencesUseCase {
     }
 
     const current = await this.profiles.findByUserId(actorId);
-    if (!current ||
+    if (
+      !current ||
       (target === 'profile-avatar'
         ? resourceIds.length !== 1 || resourceIds[0] !== actorId
         : current.role !== 'admin')

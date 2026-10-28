@@ -21,7 +21,7 @@ describe('PrivateImageAccessService', () => {
     ).rejects.toBeInstanceOf(ServiceUnavailableException);
   });
 
-  it('delegates a references query to the existing authorization boundary', async () => {
+  it('delegates references to the authorization use case', async () => {
     const execute = jest
       .fn<ListActivePrivateBlobReferencesUseCase['execute']>()
       .mockResolvedValue({
@@ -34,12 +34,10 @@ describe('PrivateImageAccessService', () => {
     );
     expect(
       await service.activeReferences(ACTOR, 'profile-avatar', [ACTOR]),
-    ).toEqual({ references: [{ resourceId: ACTOR, mediaId: MEDIA }] });
-    expect(execute).toHaveBeenCalledWith(
-      ACTOR,
-      'profile-avatar',
-      [ACTOR],
-    );
+    ).toEqual({
+      references: [{ resourceId: ACTOR, mediaId: MEDIA }],
+    });
+    expect(execute).toHaveBeenCalledWith(ACTOR, 'profile-avatar', [ACTOR]);
   });
 
   it('delegates binding and reading to audited domain use cases', async () => {

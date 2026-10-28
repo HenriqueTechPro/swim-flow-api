@@ -115,7 +115,7 @@ describe('Prisma private media compare-and-swap transitions', () => {
     ).toBeNull();
   });
 
-  it('fetches all active VERIFIED Blob references for one page in one query', async () => {
+  it('queries only VERIFIED Blob bindings in one batch', async () => {
     const ids = [row.resourceId, '55555555-5555-4555-8555-555555555555'];
     prisma.privateMediaActiveBinding.findMany.mockResolvedValue([
       { resourceId: row.resourceId, mediaId: UUID },
@@ -133,7 +133,9 @@ describe('Prisma private media compare-and-swap transitions', () => {
       select: { resourceId: true, mediaId: true },
     });
     expect(prisma.privateMediaActiveBinding.findMany).toHaveBeenCalledTimes(1);
-    expect(await repository.findActiveMediaIds('student-photo', [])).toEqual([]);
+    expect(
+      await repository.findActiveMediaIds('student-photo', []),
+    ).toEqual([]);
     expect(prisma.privateMediaActiveBinding.findMany).toHaveBeenCalledTimes(1);
   });
 
