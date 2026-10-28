@@ -19,6 +19,7 @@ import {
 import { AppError } from '@/shared/errors/app-error';
 import { parseCategoryValue } from '@/shared/utils/domain-formatters';
 import { PrismaService } from '../prisma.service';
+import { assertLegacyPhotoWriteAllowed } from './legacy-photo-write-guard';
 import {
   PrismaTeacherMapper,
   type PrismaTeacherRecord,
@@ -203,6 +204,7 @@ export class PrismaTeachersRepository implements TeachersRepository {
     if (!existing) throw new AppError(404, 'Teacher not found');
 
     const teacher = await this.prisma.$transaction(async (tx) => {
+      await assertLegacyPhotoWriteAllowed(tx, 'teacher-photo', id, input.photo);
       await tx.teacher.update({
         where: { id },
         data: {

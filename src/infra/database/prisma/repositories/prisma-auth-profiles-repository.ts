@@ -8,6 +8,7 @@ import type { AppRole } from '@/domain/auth/application/auth.types';
 import type { UpdateProfileRequest } from '@/domain/auth/application/dtos/profile-requests';
 import { getPermissionsForRole } from '@/infra/auth/role-permissions';
 import { PrismaService } from '../prisma.service';
+import { assertLegacyPhotoWriteAllowed } from './legacy-photo-write-guard';
 
 const authProfileSelect = {
   id: true,
@@ -108,23 +109,43 @@ export class PrismaAuthProfilesRepository implements AuthProfilesRepository {
     });
   }
 
-  async update(userId: string, input: UpdateProfileRequest): Promise<AuthProfile> {
-    const profile = (await this.prisma.profile.upsert({
-      where: { id: userId },
-      create: {
-        id: userId,
-        fullName: input.fullName?.trim() ?? '',
-        avatarUrl: input.avatarUrl ?? null,
-      },
-      update: {
-        ...(input.fullName !== undefined
-          ? { fullName: input.fullName.trim() }
-          : {}),
-        ...(input.avatarUrl !== undefined ? { avatarUrl: input.avatarUrl } : {}),
-        updatedAt: new Date(),
-      },
-      select: authProfileSelect,
-    })) as PrismaAuthProfileRecord;
+  async update(
+    userId: string,
+    input: UpdateProfileRequest,
+  ): Promise<AuthProfile> {
+    const updateRecord = async (
+      db: Pick<PrismaService, 'profile'>,
+    ): Promise<PrismaAuthProfileRecord> =>
+      (await db.profile.upsert({
+        where: { id: userId },
+        create: {
+          id: userId,
+          fullName: input.fullName?.trim() ?? '',
+          avatarUrl: input.avatarUrl ?? null,
+        },
+        update: {
+          ...(input.fullName !== undefined
+            ? { fullName: input.fullName.trim() }
+            : {}),
+          ...(input.avatarUrl !== undefined
+            ? { avatarUrl: input.avatarUrl }
+            : {}),
+          updatedAt: new Date(),
+        },
+        select: authProfileSelect,
+      })) as PrismaAuthProfileRecord;
+
+    const profile = input.avatarUrl
+      ? await this.prisma.$transaction(async (tx) => {
+          await assertLegacyPhotoWriteAllowed(
+            tx,
+            'profile-avatar',
+            userId,
+            input.avatarUrl,
+          );
+          return updateRecord(tx);
+        })
+      : await updateRecord(this.prisma);
 
     return toAuthProfile(profile);
   }
