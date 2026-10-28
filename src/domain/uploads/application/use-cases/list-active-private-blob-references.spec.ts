@@ -13,9 +13,9 @@ function setup(role: string | null = 'admin') {
     findByUserId: jest.fn().mockResolvedValue(profile),
   };
   const records = {
-    findActiveMediaIds: jest.fn().mockResolvedValue([
-      { resourceId: STUDENT, mediaId: MEDIA },
-    ]),
+    findActiveMediaIds: jest
+      .fn()
+      .mockResolvedValue([{ resourceId: STUDENT, mediaId: MEDIA }]),
   };
   const useCase = new ListActivePrivateBlobReferencesUseCase(
     profiles as unknown as AuthProfilesRepository,
@@ -93,8 +93,10 @@ describe('Private active references - scoped batch query', () => {
 
   it('does not make a DB query for each image on a full page', async () => {
     const { useCase, records } = setup();
-    const ids = Array.from({ length: 25 }, (_, index) =>
-      '55555555-5555-4555-8555-' + index.toString(16).padStart(12, '0'),
+    const ids = Array.from(
+      { length: 25 },
+      (_, index) =>
+        '55555555-5555-4555-8555-' + index.toString(16).padStart(12, '0'),
     );
     const result = await useCase.execute(ADMIN, 'student-photo', ids);
     expect(result.references).toHaveLength(25);

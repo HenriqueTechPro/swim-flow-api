@@ -27,12 +27,12 @@ describe('PrivateImageAccessService', () => {
       .mockResolvedValue({
         references: [{ resourceId: ACTOR, mediaId: MEDIA }],
       });
-    const service = new PrivateImageAccessService(
-      null,
-      null,
-      { execute } as unknown as ListActivePrivateBlobReferencesUseCase,
-    );
-    const refs = await service.activeReferences(ACTOR, 'profile-avatar', [ACTOR]);
+    const service = new PrivateImageAccessService(null, null, {
+      execute,
+    } as unknown as ListActivePrivateBlobReferencesUseCase);
+    const refs = await service.activeReferences(ACTOR, 'profile-avatar', [
+      ACTOR,
+    ]);
     expect(refs).toEqual({
       references: [{ resourceId: ACTOR, mediaId: MEDIA }],
     });
