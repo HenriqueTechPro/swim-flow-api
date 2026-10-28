@@ -2,6 +2,7 @@ import type { Provider } from '@nestjs/common';
 import { AuthProfilesRepository } from '@/domain/auth/application/repositories/auth-profiles-repository';
 import { ManagedUploadResourcesRepository } from '@/domain/uploads/application/repositories/managed-upload-resources-repository';
 import { AssignPrivateBlobImageUseCase } from '@/domain/uploads/application/use-cases/assign-private-blob-image';
+import { CommitPrivateBlobImageUseCase } from '@/domain/uploads/application/use-cases/commit-private-blob-image';
 import { ReadPrivateBlobImageUseCase } from '@/domain/uploads/application/use-cases/read-private-blob-image';
 import { ListActivePrivateBlobReferencesUseCase } from '@/domain/uploads/application/use-cases/list-active-private-blob-references';
 import { PrismaPrivateMediaObjectsRepository } from '@/infra/database/prisma/repositories/prisma-private-media-objects-repository';
@@ -35,6 +36,7 @@ export const privateImageAccessProvider: Provider = {
         createVercelPrivateBlobStorageRepository(config),
       ),
       new ListActivePrivateBlobReferencesUseCase(profiles, records),
+      new CommitPrivateBlobImageUseCase(profiles, resources, records),
     );
   },
 };

@@ -74,6 +74,24 @@ const activeReferencesSchema = z
 
 type ActiveReferencesBody = z.infer<typeof activeReferencesSchema>;
 
+const commitPrivateImageSchema = z
+  .object({
+    target: z.enum(managedUploadTargetValues),
+    resourceId: z.string().uuid(),
+    newMediaId: z.string().uuid().nullable(),
+    expectedMediaId: z.string().uuid().nullable(),
+    expectedLegacyUrl: z.string().max(2048).nullable(),
+  })
+  .strict()
+  .refine(
+    (input) =>
+      (input.newMediaId !== null || input.expectedMediaId !== null) &&
+      input.newMediaId !== input.expectedMediaId,
+    { path: ['newMediaId'], message: 'A photo change is required' },
+  );
+
+type CommitPrivateImageBody = z.infer<typeof commitPrivateImageSchema>;
+
 const activatePrivateImageSchema = z
   .object({ expectedMediaId: z.string().uuid().nullable() })
   .strict();
@@ -181,6 +199,31 @@ export class UploadsController {
         body.target,
         body.resourceIds,
       ),
+    };
+  }
+
+  /**
+   * Authoritative migration/clear operation: atomically CAS-clear legacy
+   * photo and CAS-commit private binding in PostgreSQL. Old Blob bytes remain
+   * untouched and must pass the separate audited retention process.
+   */
+  @Post('private-images/commit')
+  @Permissions('uploads:write')
+  @Header('Cache-Control', 'private, no-store')
+  @Header('X-Content-Type-Options', 'nosniff')
+  async commitPrivateImage(
+    @CurrentUser() user: AuthUser,
+    @Body(new ZodValidationPipe(commitPrivateImageSchema))
+    body: CommitPrivateImageBody,
+  ) {
+    return {
+      data: await this.privateImageAccess.commit(user.id, {
+        target: body.target,
+        resourceId: body.resourceId,
+        newMediaId: body.newMediaId,
+        expectedMediaId: body.expectedMediaId,
+        expectedLegacyUrl: body.expectedLegacyUrl,
+      }),
     };
   }
 
