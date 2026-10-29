@@ -23,6 +23,11 @@ No GitHub da API: Actions → **Apply ONLY private-media migrations to Neon stag
 
 **Não executar ainda** sem confirmação humana e sem revisão do estado do banco de staging. Este PR não roda workflow manual, não liga flags e não altera Render/Neon/Vercel.
 
+## Diagnóstico de confirmações incorretas (02F-06B3G8)
+O GitHub Actions devolvia `skipped` quando o campo `approval` não correspondia exatamente à frase exigida na condição de job. Esse resultado não prova falha do Prisma ou alteração do Neon. Após o ajuste, o job `validate-approval` mostra um erro legível antes de entrar no ambiente protegido e antes de ler segredos. Somente se a aprovação for exatamente igual à frase exigida, o job `private-media-staging` poderá iniciar. Os guardas de projeto, branch, URLs e checksums continuam valendo.
+
+Se a nova execução falhar por aprovação, abra os logs do job `validate-approval`, corrija somente o texto digitado e não tente executar SQL manualmente. Se falhar *depois* de começar `prisma migrate deploy`, verifique o histórico do banco antes de qualquer nova tentativa.
+
 ## Depois da aplicação manual
 - Repetir leitura das sete migrações e tabelas privadas; confirmar contagens sem acessar dados de usuários.
 - Configurar Render e Vercel para STAGING isolados (não reuse flags de produção).
