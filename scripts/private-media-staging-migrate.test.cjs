@@ -185,3 +185,17 @@ test('manual workflow never runs during PR, push, deploy or schedule', () => {
     source.indexOf('Install locked API dependencies'));
   assert.doesNotMatch(source, /\b(migrate reset|db push)\b/);
 });
+
+test('approval typo fails visibly before staging secrets, never a silent job skip', () => {
+  const source = readFileSync(resolve(__dirname, '..', '.github/workflows/private-media-staging-migrations.yml'), 'utf8');
+  assert.match(source, /  validate-approval:/);
+  assert.match(source, /    needs: validate-approval/);
+  assert.match(source, /APPROVAL_INPUT: \$\{\{ inputs\.approval \}\}/);
+  assert.match(source, /::error title=Incorrect migration approval/);
+  const [preflight, protectedJob] = source.split('  private-media-staging:');
+  assert.ok(protectedJob, 'Missing protected migration job');
+  assert.doesNotMatch(preflight, /secrets\.|environment:/);
+  assert.match(protectedJob, /environment:\s*\n\s*name: swimflow-neon-staging/);
+  assert.match(protectedJob, /SWIMFLOW_PRIVATE_STAGING_MIGRATION_APPROVAL: \$\{\{ inputs\.approval \}\}/);
+  assert.match(protectedJob, /npm run private-media:staging -- --apply/);
+});

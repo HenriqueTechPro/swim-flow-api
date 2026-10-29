@@ -17,12 +17,32 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  private-media-staging:
+  validate-approval:
     if: >-
       ${{ github.event_name == 'workflow_dispatch' &&
           github.repository == 'HenriqueTechPro/swim-flow-api' &&
-          github.ref == 'refs/heads/main' &&
-          inputs.approval == 'APPLY_ONLY_PRIVATE_MEDIA_MIGRATIONS_TO_NEON_STAGING' }}
+          github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Validate exact human approval (no secrets or database connection)
+        shell: bash
+        env:
+          APPROVAL_INPUT: ${{ inputs.approval }}
+        run: |
+          expected='APPLY_ONLY_PRIVATE_MEDIA_MIGRATIONS_TO_NEON_STAGING'
+          if [[ "$APPROVAL_INPUT" != "$expected" ]]; then
+            echo "::error title=Incorrect migration approval::Copy the exact phrase from the workflow description into the approval field. No database changes were attempted."
+            exit 1
+          fi
+          echo "Exact approval accepted. No database connection was attempted."
+
+  private-media-staging:
+    needs: validate-approval
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' &&
+          github.repository == 'HenriqueTechPro/swim-flow-api' &&
+          github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment:
