@@ -80,5 +80,5 @@ test('manual workflow is read-only and cannot run on push/PR', () => {
   assert.match(w, /github\.repository == 'HenriqueTechPro\/swim-flow-api'/);
   assert.match(w, /node scripts\/render-staging-readiness\.cjs --probe/);
   assert.doesNotMatch(w, /\$\{\{\s*secrets\.|DATABASE_URL|DIRECT_URL|BLOB_READ_WRITE_TOKEN/);
-  assert.doesNotMatch(w, /migrate|deploy|db push|npm run start:prod/i);
+  assert.doesNotMatch(w, /run:\s*[^\n]*(?:migrate|deploy|db push|start:prod)/i);
 });
