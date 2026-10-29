@@ -7,7 +7,11 @@ on:
       approval:
         description: 'Type APPLY_ONLY_PRIVATE_MEDIA_MIGRATIONS_TO_NEON_STAGING'
         required: true
-        type: string
+        type: choice
+        default: DO_NOT_APPLY
+        options:
+          - DO_NOT_APPLY
+          - APPLY_ONLY_PRIVATE_MEDIA_MIGRATIONS_TO_NEON_STAGING
 
 permissions:
   contents: read
