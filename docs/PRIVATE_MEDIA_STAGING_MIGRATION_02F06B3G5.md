@@ -28,6 +28,9 @@ O GitHub Actions devolvia `skipped` quando o campo `approval` não correspondia 
 
 Se a nova execução falhar por aprovação, abra os logs do job `validate-approval`, corrija somente o texto digitado e não tente executar SQL manualmente. Se falhar *depois* de começar `prisma migrate deploy`, verifique o histórico do banco antes de qualquer nova tentativa.
 
+## Execução mobile via escolha segura (02F-06B3G9)
+Depois de quatro tentativas de workflow, a quarta confirmou no job `validate-approval` que o texto digitado era diferente da aprovação exigida. Agora o input `approval` aparece como **choice**: o padrão `DO_NOT_APPLY` não autoriza nenhuma migração. Na branch `main`, selecione deliberadamente `APPLY_ONLY_PRIVATE_MEDIA_MIGRATIONS_TO_NEON_STAGING` na lista e então execute o workflow. Os controles de preflight, hashes, projeto/branch/host/schema e a proteção do environment continuam inalterados. Erro de validação não acessa o banco. Se `prisma migrate deploy` falhar após começar, inspecione o histórico antes de reexecutar.
+
 ## Depois da aplicação manual
 - Repetir leitura das sete migrações e tabelas privadas; confirmar contagens sem acessar dados de usuários.
 - Configurar Render e Vercel para STAGING isolados (não reuse flags de produção).
