@@ -27,6 +27,13 @@ services:
         value: /api/auth
       - key: JWT_ACCESS_TTL_SECONDS
         value: "900"
+      # Private media stays OFF until isolated Blob store and E2E review.
+      - key: SWIMFLOW_PRIVATE_BLOB_ENABLED
+        value: "false"
+      - key: SWIMFLOW_PRIVATE_MEDIA_S3_ENABLED
+        value: "false"
+      - key: SWIMFLOW_R2_STORAGE_ENABLED
+        value: "false"
       # Enabled manually only after reviewed first-admin bootstrap and auth tests.
       - key: SWIMFLOW_LOCAL_PASSWORD_LOGIN_ENABLED
         value: "false"
