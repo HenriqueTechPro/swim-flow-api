@@ -199,3 +199,19 @@ test('approval typo fails visibly before staging secrets, never a silent job ski
   assert.match(protectedJob, /SWIMFLOW_PRIVATE_STAGING_MIGRATION_APPROVAL: \$\{\{ inputs\.approval \}\}/);
   assert.match(protectedJob, /npm run private-media:staging -- --apply/);
 });
+
+test('manual approval is a deliberate choice with safe default for mobile', () => {
+  const source = readFileSync(resolve(__dirname, '..', '.github/workflows/private-media-staging-migrations.yml'), 'utf8');
+  const input = source.split('      approval:')[1]?.split('\npermissions:')[0];
+  assert.ok(input, 'Missing workflow approval input');
+  assert.match(input, /required: true/);
+  assert.match(input, /type: choice/);
+  assert.match(input, /default: DO_NOT_APPLY/);
+  assert.match(input, /options:\s*\n\s*- DO_NOT_APPLY\s*\n\s*- APPLY_ONLY_PRIVATE_MEDIA_MIGRATIONS_TO_NEON_STAGING/);
+  assert.match(source, /expected='APPLY_ONLY_PRIVATE_MEDIA_MIGRATIONS_TO_NEON_STAGING'/);
+  assert.match(source, /    needs: validate-approval/);
+  assert.match(source, /SWIMFLOW_PRIVATE_STAGING_MIGRATION_APPROVAL: \$\{\{ inputs\.approval \}\}/);
+  assert.throws(() => assertTarget({
+    ...env(), SWIMFLOW_PRIVATE_STAGING_MIGRATION_APPROVAL: 'DO_NOT_APPLY',
+  }, ['--apply']));
+});
