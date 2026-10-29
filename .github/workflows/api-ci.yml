@@ -57,6 +57,8 @@ jobs:
         run: |
           npm run private-media:staging -- --check
           npm run private-media:staging:test
+          npm run private-media:staging:audit -- --check
+          node --test scripts/private-media-staging-audit.test.cjs
       - name: Test incremental formatting file selection
         run: npm run format:changed:test
       - name: Enforce Prettier only on TypeScript changed by this PR

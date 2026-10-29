@@ -1,0 +1,52 @@
+name: Audit private media readiness in Neon staging — READ ONLY
+
+# Manual only. Unlike the migration workflow, this action NEVER runs Prisma migrate.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit-staging-private-media:
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' &&
+          github.repository == 'HenriqueTechPro/swim-flow-api' &&
+          github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: swimflow-neon-staging
+    env:
+      NODE_ENV: test
+      NEON_PROJECT_ID: raspy-breeze-33258358
+      NEON_BRANCH_ID: br-gentle-wildflower-b7qrnd74
+      SWIMFLOW_PRIVATE_BLOB_ENABLED: 'false'
+      SWIMFLOW_PRIVATE_MEDIA_S3_ENABLED: 'false'
+      SWIMFLOW_R2_STORAGE_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies without credentials
+        run: npm ci
+      - name: Verify pinned migration files completely offline
+        run: npm run private-media:staging:audit -- --check
+      - name: Generate Prisma client with dummy local URLs only
+        env:
+          DATABASE_URL: postgresql://offline:offline@localhost:5432/swimflow?schema=public
+          DIRECT_URL: postgresql://offline:offline@localhost:5432/swimflow?schema=public
+        run: npm run prisma:generate
+      - name: Read-only repeatable-read transaction on exact Neon staging branch
+        env:
+          DATABASE_URL: ${{ secrets.SWIMFLOW_STAGING_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.SWIMFLOW_STAGING_DIRECT_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$DATABASE_URL"
+          test -n "$DIRECT_URL"
+          npm run private-media:staging:audit -- --audit
