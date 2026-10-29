@@ -43,6 +43,8 @@ jobs:
           npm run lint:check -- --rule 'prettier/prettier: off'
       - name: Validate Render staging Blueprint without deployment
         run: npm run render:blueprint:test
+      - name: Guard anonymous read-only Render staging probe (mock HTTP only)
+        run: node --test scripts/render-staging-readiness.test.cjs
       - name: Test Neon preflight without live credentials
         run: npm run neon:preflight:test
       - name: Test read-only Neon inspection with synthetic database responses
