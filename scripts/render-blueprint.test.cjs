@@ -66,3 +66,16 @@ test('cross-site refresh cookie safety and disabled production Swagger', () => {
   assert.match(readEnvVarBlock('AUTH_COOKIE_PATH'), /^        value: \/api\/auth$/m);
   assert.match(readEnvVarBlock('SWAGGER_ENABLED'), /^        value: "false"$/m);
 });
+
+
+test('private media remains explicitly disabled in Render staging until isolated E2E', () => {
+  for (const key of [
+    'SWIMFLOW_PRIVATE_BLOB_ENABLED',
+    'SWIMFLOW_PRIVATE_MEDIA_S3_ENABLED',
+    'SWIMFLOW_R2_STORAGE_ENABLED',
+  ]) {
+    assert.match(readEnvVarBlock(key), /^        value: "false"$/m, key);
+  }
+  assert.equal(readEnvVarBlock('BLOB_READ_WRITE_TOKEN'), '',
+    'Dedicated Blob credentials must not be provisioned by this Blueprint');
+});
