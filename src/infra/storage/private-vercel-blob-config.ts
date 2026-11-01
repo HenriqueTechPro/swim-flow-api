@@ -18,7 +18,8 @@ const STAGING_STORE_ID = 'store_PJZzrdBiiVcRyLHj';
 const STAGING_STORE_NAME = 'swim-flow-private-media-staging';
 // A *legitimate* static RW token embeds the store ID. Never attempt to
 // synthesize or reconstruct a token from BLOB_STORE_ID alone.
-const STATIC_RW_TOKEN = /^vercel_blob_rw_([A-Za-z0-9]{8,60})_([A-Za-z0-9_-]{16,})$/;
+const STATIC_RW_TOKEN =
+  /^vercel_blob_rw_([A-Za-z0-9]{8,60})_([A-Za-z0-9_-]{16,})$/;
 
 export function loadPrivateVercelBlobConfig(
   env: NodeJS.ProcessEnv,
