@@ -52,7 +52,10 @@
     "blob:smoke:live": "node -r ts-node/register/transpile-only -r tsconfig-paths/register scripts/verify-private-blob-live.cjs --execute",
     "blob:smoke:oidc:test": "node --test scripts/private-blob-oidc-smoke.test.cjs",
     "blob:smoke:oidc:preflight": "node scripts/verify-private-blob-oidc-live.cjs --preflight",
-    "blob:smoke:oidc:live": "node scripts/verify-private-blob-oidc-live.cjs --execute"
+    "blob:smoke:oidc:live": "node scripts/verify-private-blob-oidc-live.cjs --execute",
+    "blob:render:staging:check": "node scripts/render-blob-staging-readonly.cjs --check",
+    "blob:render:staging:readonly": "node scripts/render-blob-staging-readonly.cjs --execute",
+    "blob:render:staging:test": "node --test scripts/render-blob-staging-readonly.test.cjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1156.0",
