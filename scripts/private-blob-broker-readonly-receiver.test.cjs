@@ -13,7 +13,7 @@ const {
 
 const KEY = randomBytes(32).toString('base64url');
 const NOW = 1793567000000;
-const PROJECT = 'prj_ABCDEFGHIJKLMNOP1234';
+const PROJECT = 'prj_n2mFk76ZGhn5A8wnhpb7Asj8WKjz';
 const env = Object.freeze({
   SWIMFLOW_BLOB_BROKER_READONLY_ENABLED: 'true',
   SWIMFLOW_BLOB_BROKER_PROJECT_ID: PROJECT,
@@ -83,6 +83,9 @@ test('block wrong Vercel project, production, smoke lab, mixed credentials and m
       SWIMFLOW_BLOB_BROKER_PROJECT_ID: 'prj_amGQuKcaOIuLUdlqMYK3ltZRYC43' },
     { VERCEL_PROJECT_ID: 'prj_GH6wd4vwTJb9sHkP8sGXSAUleE5P',
       SWIMFLOW_BLOB_BROKER_PROJECT_ID: 'prj_GH6wd4vwTJb9sHkP8sGXSAUleE5P' },
+    // Even a self-consistent, unrelated project must fail closed:
+    { VERCEL_PROJECT_ID: 'prj_ABCDEFGHIJKLMNOP1234',
+      SWIMFLOW_BLOB_BROKER_PROJECT_ID: 'prj_ABCDEFGHIJKLMNOP1234' },
     { SWIMFLOW_BLOB_BROKER_PROJECT_ID: 'prj_OTHEROTHEROTHEROTHER' },
     { BLOB_STORE_ID: 'store_pAtHIpXAePc3zgXg' },
     { BLOB_STORE_ID: 'store_wrong_storage' },
