@@ -1,33 +1,47 @@
 import { loadPrivateVercelBlobConfig } from './private-vercel-blob-config';
 
-const TOKEN = 'vercel_blob_rw_ci_dummy_token_only_12345';
+const TOKEN =
+  'vercel_blob_rw_PJZzrdBiiVcRyLHj_synthetic-placeholder-never-real';
+const STAGING: NodeJS.ProcessEnv = {
+  SWIMFLOW_ENVIRONMENT: 'staging',
+  SWIMFLOW_PRIVATE_BLOB_ENABLED: 'true',
+  BLOB_STORE_ID: 'store_PJZzrdBiiVcRyLHj',
+  BLOB_RENDER_STAGING_STORE_NAME: 'swim-flow-private-media-staging',
+  BLOB_READ_WRITE_TOKEN: TOKEN,
+  SWIMFLOW_PRIVATE_MEDIA_S3_ENABLED: 'false',
+  SWIMFLOW_R2_STORAGE_ENABLED: 'false',
+};
 
-describe('Private Vercel Blob configuration — server only and opt-in', () => {
-  it('remains disabled by default, even if Vercel injected its token', () => {
+describe('Private Vercel Blob Render staging activation boundary', () => {
+  it('remains disabled even if a Vercel lab identity or real token is present', () => {
     expect(loadPrivateVercelBlobConfig({})).toBeNull();
     expect(
-      loadPrivateVercelBlobConfig({ BLOB_READ_WRITE_TOKEN: TOKEN }),
+      loadPrivateVercelBlobConfig({
+        ...STAGING,
+        SWIMFLOW_PRIVATE_BLOB_ENABLED: 'false',
+      }),
     ).toBeNull();
     expect(
       loadPrivateVercelBlobConfig({
-        SWIMFLOW_PRIVATE_BLOB_ENABLED: 'false',
+        BLOB_READ_WRITE_TOKEN: TOKEN,
+        VERCEL_OIDC_TOKEN: 'local-lab-short-lived-token',
       }),
     ).toBeNull();
   });
 
-  it('accepts only an explicit enabled flag and valid server token', () => {
-    for (const value of ['1', 'TRUE', 'yes', '', 'enabled']) {
-      expect(() =>
-        loadPrivateVercelBlobConfig({
-          SWIMFLOW_PRIVATE_BLOB_ENABLED: value,
-          BLOB_READ_WRITE_TOKEN: TOKEN,
-        }),
-      ).toThrow('Invalid private Blob feature flag');
-    }
+  it('accepts explicitly enabled staging identity with matching static token', () => {
+    expect(loadPrivateVercelBlobConfig(STAGING)).toEqual({
+      provider: 'vercel-blob',
+      access: 'private',
+      token: TOKEN,
+    });
+    // Render staging uses NODE_ENV=production for optimized Nest builds.
     expect(
       loadPrivateVercelBlobConfig({
-        SWIMFLOW_PRIVATE_BLOB_ENABLED: 'true',
-        BLOB_READ_WRITE_TOKEN: TOKEN,
+        ...STAGING,
+        NODE_ENV: 'production',
+        RENDER: 'true',
+        RENDER_EXTERNAL_HOSTNAME: 'swim-flow-api-staging.onrender.com',
       }),
     ).toEqual({
       provider: 'vercel-blob',
@@ -36,7 +50,39 @@ describe('Private Vercel Blob configuration — server only and opt-in', () => {
     });
   });
 
-  it('refuses empty, weak, or whitespace-polluted credentials', () => {
+  it('rejects malformed rollout flags without activating any adapter', () => {
+    for (const value of ['1', 'TRUE', 'yes', '', 'enabled']) {
+      expect(() =>
+        loadPrivateVercelBlobConfig({
+          ...STAGING,
+          SWIMFLOW_PRIVATE_BLOB_ENABLED: value,
+        }),
+      ).toThrow('Invalid private Blob feature flag');
+    }
+  });
+
+  it('rejects production, lab and any unmatched store identity', () => {
+    for (const patch of [
+      { SWIMFLOW_ENVIRONMENT: undefined },
+      { SWIMFLOW_ENVIRONMENT: 'production' },
+      {
+        RENDER: 'true',
+        RENDER_EXTERNAL_HOSTNAME: 'swim-flow-api.onrender.com',
+      },
+      { RENDER: 'true', RENDER_EXTERNAL_HOSTNAME: undefined },
+      { BLOB_STORE_ID: undefined },
+      { BLOB_STORE_ID: 'store_SdzpYKLzZL6WPLHh' },
+      { BLOB_STORE_ID: 'store_pAtHIpXAePc3zgXg' },
+      { BLOB_RENDER_STAGING_STORE_NAME: undefined },
+      { BLOB_RENDER_STAGING_STORE_NAME: 'swim-flow-private-media' },
+    ]) {
+      expect(() =>
+        loadPrivateVercelBlobConfig({ ...STAGING, ...patch }),
+      ).toThrow('Private Blob staging identity is missing or invalid');
+    }
+  });
+
+  it('rejects missing, malformed, whitespace and wrong-store credentials', () => {
     for (const value of [
       undefined,
       '',
@@ -44,39 +90,52 @@ describe('Private Vercel Blob configuration — server only and opt-in', () => {
       ' '.repeat(35),
       TOKEN + '\n',
       ' ' + TOKEN,
+      'vercel_blob_rw_SdzpYKLzZL6WPLHh_production-secret-test-value',
+      'vercel_blob_rw_pAtHIpXAePc3zgXg_disposable-secret-test-value',
+      'eyJhbGciOiJIUzI1NiJ9.header.signature',
     ]) {
       expect(() =>
         loadPrivateVercelBlobConfig({
-          SWIMFLOW_PRIVATE_BLOB_ENABLED: 'true',
+          ...STAGING,
           BLOB_READ_WRITE_TOKEN: value,
         }),
-      ).toThrow('Private Blob token is missing or invalid');
+      ).toThrow('Private Blob staging credential is missing or invalid');
     }
   });
 
-  it('fails closed if S3 or R2 backend is also enabled', () => {
+  it('refuses accidental OIDC, lab, and remote Blob endpoint overrides', () => {
+    for (const patch of [
+      { VERCEL_OIDC_TOKEN: 'temporary-oidc' },
+      { BLOB_SMOKE_READ_WRITE_TOKEN: 'disposable-token' },
+      { BLOB_SMOKE_STORE_ID: 'store_pAtHIpXAePc3zgXg' },
+      { VERCEL_BLOB_API_URL: 'https://wrong.invalid' },
+      { NEXT_PUBLIC_VERCEL_BLOB_API_URL: 'https://wrong.invalid' },
+    ]) {
+      expect(() =>
+        loadPrivateVercelBlobConfig({ ...STAGING, ...patch }),
+      ).toThrow('Private Blob mixed or disposable credentials forbidden');
+    }
+  });
+
+  it('rejects enabling multiple private storage backends', () => {
     for (const key of [
       'SWIMFLOW_R2_STORAGE_ENABLED',
       'SWIMFLOW_PRIVATE_MEDIA_S3_ENABLED',
     ]) {
       expect(() =>
-        loadPrivateVercelBlobConfig({
-          SWIMFLOW_PRIVATE_BLOB_ENABLED: 'true',
-          BLOB_READ_WRITE_TOKEN: TOKEN,
-          [key]: 'true',
-        }),
-      ).toThrow('Multiple private media backends');
+        loadPrivateVercelBlobConfig({ ...STAGING, [key]: 'true' }),
+      ).toThrow('Multiple private media backends cannot be enabled');
     }
   });
 
-  it('never interpolates any token in errors', () => {
+  it('never includes even a part of a credential in its error messages', () => {
     const secret = 'very-private-should-not-appear-in-error';
     try {
       loadPrivateVercelBlobConfig({
-        SWIMFLOW_PRIVATE_BLOB_ENABLED: 'true',
+        ...STAGING,
         BLOB_READ_WRITE_TOKEN: secret + '\n',
       });
-      throw new Error('Expected config to reject token');
+      throw new Error('Expected configuration to reject token');
     } catch (error) {
       expect(String(error)).not.toContain(secret);
     }
