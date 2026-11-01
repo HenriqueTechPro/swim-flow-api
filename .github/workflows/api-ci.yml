@@ -78,6 +78,8 @@ jobs:
         run: npm run blob:render:staging:test
       - name: Offline signed Blob broker staging protocol (no secrets or network)
         run: npm run blob:broker:auth:test
+      - name: Offline staging Blob broker receiver and durable-nonce contract
+        run: npm run blob:broker:receiver:test
       - name: Guarded first admin bootstrap tests
         run: npm run bootstrap:first-admin:test
       - name: Resend isolated delivery tests (network mocked, no account access)
