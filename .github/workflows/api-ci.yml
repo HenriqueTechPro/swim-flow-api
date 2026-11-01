@@ -74,6 +74,8 @@ jobs:
         run: npm run blob:smoke:guard:test
       - name: Guard OIDC disposable lab smoke (offline only, no credentials)
         run: npm run blob:smoke:oidc:test
+      - name: Render Blob staging access boundary (mock only; no credentials)
+        run: npm run blob:render:staging:test
       - name: Guarded first admin bootstrap tests
         run: npm run bootstrap:first-admin:test
       - name: Resend isolated delivery tests (network mocked, no account access)
