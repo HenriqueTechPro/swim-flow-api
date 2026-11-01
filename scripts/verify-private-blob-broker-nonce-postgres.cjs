@@ -15,6 +15,8 @@ const { createAtomicPostgresNonceClaim } = require('./private-blob-broker-postgr
 
 const TABLE = 'public.private_blob_broker_nonce_claims';
 const PREFIX = 'swim-flow-blob-staging-broker-v1:';
+// Fixed, non-sensitive stage names for CI diagnostics (never reveal SQL/errors).
+let phase = 'guard';
 
 function assertCiDisposable(env) {
   if (
@@ -57,7 +59,9 @@ function makeQuery(prisma) {
 
 async function run(env = process.env) {
   // Validate BEFORE loading Prisma or establishing any DB connection.
+  phase = 'guard';
   assertCiDisposable(env);
+  phase = 'prisma';
   const { PrismaClient } = require('@prisma/client');
   const first = new PrismaClient({ log: [] });
   const second = new PrismaClient({ log: [] });
@@ -65,11 +69,13 @@ async function run(env = process.env) {
 
   try {
     // Refuse to modify an existing table, even in a disposable CI database.
+    phase = 'preexisting-table-check';
     const existing = await first.$queryRawUnsafe(
       "SELECT to_regclass('public.private_blob_broker_nonce_claims') AS existing",
     );
     assert.equal(existing[0]?.existing, null, 'CI nonce table unexpectedly exists');
 
+    phase = 'create-table';
     await first.$executeRawUnsafe([
       'CREATE TABLE ' + TABLE + ' (',
       ' nonce_key TEXT PRIMARY KEY,',
@@ -88,6 +94,7 @@ async function run(env = process.env) {
 
     // Competing requests through separate Prisma clients/connection pools:
     // exactly one INSERT succeeds for a nonce even with concurrent requests.
+    phase = 'concurrency';
     const attempts = await Promise.all(
       Array.from({ length: 24 }, (_, i) =>
         (i % 2 ? claimA : claimB)(key, expiresAtMs),
@@ -100,6 +107,7 @@ async function run(env = process.env) {
     assert.equal(await claimB(key, expiresAtMs + 1000), false);
 
     // Different nonces remain independent and valid.
+    phase = 'independent-nonce';
     const anotherKey = PREFIX + randomUUID();
     assert.equal(await claimB(anotherKey, expiresAtMs), true);
     assert.equal(await claimA(anotherKey, expiresAtMs), false);
@@ -109,6 +117,7 @@ async function run(env = process.env) {
     assert.equal(await claimA(PREFIX + randomUUID(), Number.NaN), false);
 
     // SQL-level uniqueness and retention timestamp; no process-local Set.
+    phase = 'inspect-retention';
     const rows = await second.$queryRawUnsafe(
       'SELECT nonce_key, expires_at FROM ' + TABLE + ' ORDER BY nonce_key',
     );
@@ -136,7 +145,7 @@ async function run(env = process.env) {
 if (require.main === module) {
   void run().catch(() => {
     // Never expose DB URL, credentials, SQL exception or nonce values.
-    process.stderr.write('FAIL: disposable broker nonce PostgreSQL verification\n');
+    process.stderr.write('FAIL: disposable broker nonce PostgreSQL verification [' + phase + ']\n');
     process.exitCode = 1;
   });
 }
