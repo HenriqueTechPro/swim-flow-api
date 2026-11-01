@@ -10,10 +10,10 @@
 const { verifyStagingReadOnlyProbe } = require('./private-blob-broker-auth-v1.cjs');
 
 const STORE_ID = 'store_PJZzrdBiiVcRyLHj';
-const FORBIDDEN_PROJECT_IDS = new Set([
-  'prj_amGQuKcaOIuLUdlqMYK3ltZRYC43', // disposable OIDC smoke lab
-  'prj_GH6wd4vwTJb9sHkP8sGXSAUleE5P', // shared dashboard staging
-]);
+// This is the newly provisioned isolated staging-only project. No fallback
+// to the dashboard or smoke lab is accepted, even if environment variables
+// are accidentally copied and self-consistent.
+const DEDICATED_BROKER_PROJECT_ID = 'prj_n2mFk76ZGhn5A8wnhpb7Asj8WKjz';
 const MAX_BODY_BYTES = 1024;
 const BASE_HEADERS = {
   'Cache-Control': 'private, no-store',
@@ -34,10 +34,8 @@ function isStagingBrokerEnv(env) {
   return env.SWIMFLOW_BLOB_BROKER_READONLY_ENABLED === 'true' &&
     env.VERCEL_ENV === 'preview' &&
     env.BLOB_STORE_ID === STORE_ID &&
-    typeof projectId === 'string' &&
-    /^prj_[A-Za-z0-9]{12,60}$/.test(projectId) &&
-    !FORBIDDEN_PROJECT_IDS.has(projectId) &&
-    env.SWIMFLOW_BLOB_BROKER_PROJECT_ID === projectId &&
+    projectId === DEDICATED_BROKER_PROJECT_ID &&
+    env.SWIMFLOW_BLOB_BROKER_PROJECT_ID === DEDICATED_BROKER_PROJECT_ID &&
     env.SWIMFLOW_PRIVATE_BLOB_ENABLED !== 'true' &&
     env.SWIMFLOW_PRIVATE_MEDIA_S3_ENABLED !== 'true' &&
     env.SWIMFLOW_R2_STORAGE_ENABLED !== 'true' &&
