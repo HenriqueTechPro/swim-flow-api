@@ -40,11 +40,18 @@ function assertPrivateBlobSmokeEnvironment(env, args) {
     !STORE_NAME.test(name) ||
     /prod|live|real|main|swim-flow-private-media/.test(name) ||
     !id ||
-    !tokenId ||
-    id !== tokenId ||
-    PROTECTED_STORE_IDS.has(id) ||
-    token.trim() !== token
+    PROTECTED_STORE_IDS.has(id)
   ) throw new Error('blob-smoke-disposable-store-and-matching-token-required');
+
+  // New Blob project connections use OIDC and expose BLOB_STORE_ID, not a
+  // long-lived RW token. GitHub-hosted runners do NOT inherit Vercel OIDC.
+  // Never mistake an OIDC JWT, store id, or webhook public key for an RW token.
+  // These error codes expose only the class of failure, never the credential.
+  if (!token) throw new Error('blob-smoke-read-write-token-missing-oidc-unsupported');
+  if (!tokenId || token.trim() !== token) {
+    throw new Error('blob-smoke-read-write-token-invalid');
+  }
+  if (id !== tokenId) throw new Error('blob-smoke-read-write-token-store-mismatch');
 
   return { storeId, token };
 }
