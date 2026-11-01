@@ -1,5 +1,23 @@
 # Swim Flow — 02E-17H | Smoke manual Vercel Blob PRIVATE
 
+## Correção de diagnóstico 02F-06B6 (01/11/2026): Vercel OIDC versus token permanente
+
+**Fato confirmado no store descartável `swim-flow-blob-smoke-ci-only`**: vinculação exclusiva ao `swim-flow-blob-smoke-lab`, modo privado, com variáveis de projeto `BLOB_STORE_ID` e `BLOB_WEBHOOK_PUBLIC_KEY`, mas sem `BLOB_READ_WRITE_TOKEN`. Este é o comportamento das conexões novas por **OIDC** da Vercel desde junho de 2026.
+
+O workflow `private-blob-smoke.yml` foi projetado para **credencial RW estática** de uma instalação legada; a execução de 01/11/2026 falhou em `blob-smoke-disposable-store-and-matching-token-required` **antes de qualquer rede ou upload**. O store continuou vazio. Os testes do passo anterior (`blob:smoke:guard:test`) verificam apenas fixtures sintéticas e **não** validam o secret configurado no GitHub.
+
+**Atenção: não copie `BLOB_STORE_ID`, `BLOB_WEBHOOK_PUBLIC_KEY`, OIDC JWT nem uma chave Vercel pessoal para `BLOB_SMOKE_READ_WRITE_TOKEN`.** Não gere token falso e não use credenciais de outros stores, do dashboard ou do Render. O workflow continuará falhando de modo seguro sem um RW token *legítimo e vinculado ao store descartável*.
+
+A partir deste PR, os erros são separados sem imprimir credenciais:
+- `blob-smoke-read-write-token-missing-oidc-unsupported`: o secret GitHub está vazio/inexistente; workflow exige RW, não OIDC.
+- `blob-smoke-read-write-token-invalid`: o valor não tem formato RW, incluindo uso indevido de store ID/OIDC/webhook key.
+- `blob-smoke-read-write-token-store-mismatch`: a credencial está vinculada a outro store. Não prosseguir.
+- `blob-smoke-disposable-store-and-matching-token-required`: nome/ID de store inválido ou bloqueado.
+
+**Próximo passo arquitetural recomendado:** novo teste manual usando Vercel OIDC *somente em ambiente de laboratório*, por exemplo via CLI autenticado no projeto `swim-flow-blob-smoke-lab` com ambiente explicitamente conectado, sem copiar OIDC de curta duração para GitHub. Manter autenticação do Nest no Render como autoridade e **não** habilitar storage na API nem no dashboard até validar como a API hospedada fora da Vercel obterá credenciais apropriadas. Essa futura adaptação será um PR separado com testes e guardas; não adaptar o workflow GitHub usando secrets de projetos reais.
+
+Referência: https://vercel.com/changelog/vercel-blob-now-supports-oidc-authentication
+
 ## Estado e autorização
 
 Etapa implementa um teste live **manual** com uma imagem PNG sintética de
@@ -47,10 +65,10 @@ Utilize o **Blob store PRIVADO descartável já criado** (não crie outro) chama
 - O store deve conter **somente dados descartáveis**.
 - Não cadastrar cartão nem contratar plano pago. Se houver qualquer
   pedido de pagamento, **parar** e informar.
-- Ao conectar Blob ao projeto de laboratório, o Vercel cria a variável
-  `BLOB_READ_WRITE_TOKEN` nesse projeto. Transfira o **valor** para o
-  secret do GitHub *diretamente nas interfaces*, nunca no chat, commit
-  ou prints. Não conecte o storage descartável a um projeto de produção.
+- Em conexões **legadas**, o Vercel pode disponibilizar `BLOB_READ_WRITE_TOKEN`.
+  Em conexões atuais por **OIDC**, apenas `BLOB_STORE_ID` e outras variáveis públicas
+  aparecem. **Não reutilize essas variáveis como se fossem um token RW**;
+  esse workflow requer adaptação antes de executar com OIDC. Não conecte o storage descartável a um projeto de produção.
 
 ## 2. GitHub Environment separado
 
