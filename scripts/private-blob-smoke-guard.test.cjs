@@ -63,3 +63,26 @@ test('accepts only isolated test environment with matching token store ID', () =
   assert.equal(result.storeId, valid.BLOB_SMOKE_STORE_ID);
   assert.equal(result.token, valid.BLOB_SMOKE_READ_WRITE_TOKEN);
 });
+
+
+test('explains OIDC-only/new Vercel Blob connection without printing secrets', () => {
+  for (const token of ['', undefined]) {
+    assert.throws(() => assertPrivateBlobSmokeEnvironment({
+      ...valid, BLOB_SMOKE_READ_WRITE_TOKEN: token,
+    }, ['--execute']), /blob-smoke-read-write-token-missing-oidc-unsupported/);
+  }
+  for (const token of ['store_abcdefgh12345678', 'eyJhbGciOiJIUzI1NiJ9.test.oidc', 'webhook-public-key']) {
+    assert.throws(() => assertPrivateBlobSmokeEnvironment({
+      ...valid, BLOB_SMOKE_READ_WRITE_TOKEN: token,
+    }, ['--execute']), /blob-smoke-read-write-token-invalid/);
+  }
+  assert.throws(() => assertPrivateBlobSmokeEnvironment({
+    ...valid,
+    BLOB_SMOKE_READ_WRITE_TOKEN: 'vercel_blob_rw_wrongeeeee111111_secret-more-than-16-chars',
+  }, ['--execute']), /blob-smoke-read-write-token-store-mismatch/);
+  // Valid test fixtures still pass; checks remain offline.
+  assert.equal(
+    assertPrivateBlobSmokeEnvironment(valid, ['--execute']).storeId,
+    valid.BLOB_SMOKE_STORE_ID,
+  );
+});
