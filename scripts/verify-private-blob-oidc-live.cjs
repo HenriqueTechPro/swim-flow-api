@@ -19,6 +19,28 @@ const PNG = Buffer.from(
 );
 const WRONG_ETAG = '"00000000000000000000000000000000"';
 
+const KNOWN_PHASES = new Set([
+  'initialize', 'sdk-import', 'preflight-head', 'put-private',
+  'head-after-put', 'anonymous-get', 'private-get', 'reject-overwrite',
+  'reject-wrong-etag', 'inspect-unchanged', 'delete-matching-etag',
+  'confirm-deletion', 'cleanup',
+]);
+
+// Never output SDK error messages, HTTP bodies, object URLs or credentials.
+function safeDiagnostic(error, phase) {
+  if (typeof error?.message === 'string' &&
+      /^blob-oidc-[a-z-]+$/.test(error.message)) {
+    return error.message;
+  }
+  const safePhase = KNOWN_PHASES.has(phase) ? phase : 'unknown';
+  const status = error?.statusCode ?? error?.status ?? error?.response?.status;
+  if (Number.isInteger(status) && [400, 401, 403, 404, 409, 429, 500, 502, 503, 504].includes(status)) {
+    return 'blob-oidc-' + safePhase + '-http-' + status;
+  }
+  return 'blob-oidc-' + safePhase + '-sdk-or-network-error';
+}
+
+
 function check(ok, reason) {
   if (!ok) throw new Error('blob-oidc-' + reason);
 }
@@ -50,8 +72,15 @@ async function boundedBytes(stream) {
   return Buffer.concat(chunks);
 }
 
-async function run() {
-  assertDisposableOidcSmoke(process.env, process.argv.slice(2), linkedProject());
+async function run(context) {
+  const args = process.argv.slice(2);
+  const preflightOnly = args.length === 1 && args[0] === '--preflight';
+  if (!preflightOnly && !(args.length === 1 && args[0] === '--execute')) {
+    throw new Error('blob-oidc-manual-approval-required');
+  }
+  // Both commands require the same exact project/store/approval guard.
+  assertDisposableOidcSmoke(process.env, ['--execute'], linkedProject());
+  context.phase = 'sdk-import';
   // Only import network-capable SDK AFTER the guard has verified project,
   // throwaway store and short-lived OIDC. No static RW token is passed.
   const { put, head, get, del, BlobNotFoundError } = require('@vercel/blob');
@@ -68,7 +97,15 @@ async function run() {
   let etag = null;
   let completed = false;
   try {
+    context.phase = 'preflight-head';
     check(await stat() === null, 'synthetic-path-not-empty');
+    if (preflightOnly) {
+      process.stdout.write(
+        'PASS: disposable Blob OIDC read-only HEAD preflight; no upload attempted.\n',
+      );
+      return;
+    }
+    context.phase = 'put-private';
     attemptedPut = true;
     const result = await put(key, PNG, {
       access: 'private', contentType: 'image/png',
@@ -79,18 +116,21 @@ async function run() {
     requirePrivateUrl(result.url, key);
     check(result.pathname === key && result.contentType === 'image/png' &&
       typeof etag === 'string' && etag.length > 2, 'upload-receipt-invalid');
+    context.phase = 'head-after-put';
     const remote = await stat();
     check(remote && remote.etag === etag &&
       remote.size === PNG.length && remote.contentType === 'image/png',
     'head-metadata-mismatch');
     requirePrivateUrl(remote.url, key);
 
+    context.phase = 'anonymous-get';
     const anon = await fetch(remote.url, {
       method: 'GET', redirect: 'error', signal: AbortSignal.timeout(12000),
     });
     await anon.arrayBuffer();
     check([401, 403, 404].includes(anon.status), 'anonymous-read-allowed');
 
+    context.phase = 'private-get';
     const obtained = await get(key, {
       access: 'private', useCache: false, headers: { 'If-Match': etag },
     });
@@ -101,6 +141,7 @@ async function run() {
     check((await boundedBytes(obtained.stream)).equals(PNG),
       'private-bytes-differ');
 
+    context.phase = 'reject-overwrite';
     let rejectedOverwrite = false;
     try {
       await put(key, PNG, { access: 'private', contentType: 'image/png',
@@ -108,13 +149,17 @@ async function run() {
     } catch { rejectedOverwrite = true; }
     check(rejectedOverwrite, 'overwrite-allowed');
 
+    context.phase = 'reject-wrong-etag';
     let rejectedWrongEtag = false;
     try { await del(key, { ifMatch: WRONG_ETAG }); }
     catch { rejectedWrongEtag = true; }
     check(rejectedWrongEtag, 'wrong-etag-delete-allowed');
+    context.phase = 'inspect-unchanged';
     check((await stat())?.etag === etag, 'wrong-etag-changed-object');
 
+    context.phase = 'delete-matching-etag';
     await del(key, { ifMatch: etag });
+    context.phase = 'confirm-deletion';
     check(await stat() === null, 'deleted-object-still-present');
     completed = true;
     process.stdout.write(
@@ -122,6 +167,7 @@ async function run() {
       'no overwrite, ETag-conditional DELETE, no residue.\n');
   } finally {
     if (attemptedPut && !completed) {
+      context.phase = 'cleanup';
       if (!etag) {
         process.stderr.write(
           'SMOKE_ORPHAN_REVIEW_REQUIRED: inspect the lab store privately.\n');
@@ -144,11 +190,10 @@ async function run() {
 }
 
 if (require.main === module) {
-  run().catch(error => {
-    const safe = /^blob-oidc-[a-z-]+$/.test(error?.message || '')
-      ? error.message : 'blob-oidc-failed-review-privately';
-    process.stderr.write('FAIL: ' + safe + '\n');
+  const context = { phase: 'initialize' };
+  run(context).catch(error => {
+    process.stderr.write('FAIL: ' + safeDiagnostic(error, context.phase) + '\n');
     process.exitCode = 1;
   });
 }
-module.exports = { requirePrivateUrl, linkedProject };
+module.exports = { requirePrivateUrl, linkedProject, safeDiagnostic };
