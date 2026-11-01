@@ -35,7 +35,9 @@ export function loadPrivateVercelBlobConfig(
   if (
     env.SWIMFLOW_ENVIRONMENT !== 'staging' ||
     env.BLOB_STORE_ID !== STAGING_STORE_ID ||
-    env.BLOB_RENDER_STAGING_STORE_NAME !== STAGING_STORE_NAME
+    env.BLOB_RENDER_STAGING_STORE_NAME !== STAGING_STORE_NAME ||
+    (env.RENDER === 'true' &&
+      env.RENDER_EXTERNAL_HOSTNAME !== 'swim-flow-api-staging.onrender.com')
   ) {
     throw new Error('Private Blob staging identity is missing or invalid');
   }
