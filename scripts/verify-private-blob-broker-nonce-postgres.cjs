@@ -71,7 +71,7 @@ async function run(env = process.env) {
     // Refuse to modify an existing table, even in a disposable CI database.
     phase = 'preexisting-table-check';
     const existing = await first.$queryRawUnsafe(
-      "SELECT to_regclass('public.private_blob_broker_nonce_claims') AS existing",
+      "SELECT to_regclass('public.private_blob_broker_nonce_claims')::text AS existing",
     );
     assert.equal(existing[0]?.existing, null, 'CI nonce table unexpectedly exists');
 
