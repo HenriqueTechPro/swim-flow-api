@@ -13,6 +13,32 @@ O workflow GitHub `private-blob-smoke.yml` exige um token RW legado que não é 
 
 O script verifica **antes de importar o SDK** o arquivo local `.vercel/project.json`, as IDs do time/projeto e o `BLOB_STORE_ID`. Recusa credenciais RW estáticas, ambientes de produção, flags privadas ativas e falta de aprovação manual. O GitHub CI executa apenas o guard offline; nunca executa o teste de upload.
 
+## Diagnóstico 02F-06B8 — falha genérica do SDK no Windows
+
+A execução local com Node 24 e `.env.local` parou em `FAIL: blob-oidc-failed-review-privately`. O código anterior ocultava qual operação SDK falhou; portanto **não** é possível concluir se ocorreu problema de autenticação, rede, SDK ou HEAD. O store descartável foi verificado vazio (0 objetos). Um erro separado de sintaxe do PowerShell aconteceu por colar `try` sem quebra de linha e não é problema do Blob.
+
+**Primeiro, atualize a `main` após o merge deste PR e execute o teste OFFLINE.** O comando `blob:smoke:oidc:preflight` exige o mesmo guard de projeto/store/OIDC/aprovação, mas faz somente um `HEAD` de chave sintética aleatória inexistente. **Não realiza PUT nem DELETE.** Mensagens de erro incluem apenas etapa + classificação ou código HTTP permitido: nunca o texto da resposta SDK, token, URL ou caminho do objeto.
+
+Na raiz da API, em PowerShell com Node.js 24:
+
+```powershell
+git switch main
+git pull --ff-only
+npm run blob:smoke:oidc:test
+vercel env pull --environment=preview
+$env:BLOB_OIDC_SMOKE_APPROVAL = "I_APPROVE_DISPOSABLE_PRIVATE_BLOB_OIDC_SMOKE_ONLY"
+try {
+    node --env-file=.env.local scripts/verify-private-blob-oidc-live.cjs --preflight
+}
+finally {
+    Remove-Item Env:BLOB_OIDC_SMOKE_APPROVAL -ErrorAction SilentlyContinue
+}
+```
+
+O esperado é `PASS: disposable Blob OIDC read-only HEAD preflight; no upload attempted.` Caso falhe, **não execute** `--execute`: compartilhe somente o código estático `blob-oidc-...`, sem copiar tokens, arquivos `.env` ou logs verbosos do SDK.
+
+`blob-oidc-preflight-head-http-403` significa que a autorização foi rejeitada; `blob-oidc-preflight-head-sdk-or-network-error` indica que HEAD falhou, sem provar a causa. O teste com escrita só deverá ser retomado depois de resolver o preflight e confirmar o isolamento do laboratório.
+
 ## Executar SOMENTE no VS Code (Windows PowerShell), após merge e CI verde
 
 1. Abra o terminal na **raiz de `swim-flow-api`**; confira que está com a `main` atualizada e sem alterações locais relevantes. Execute `npm ci` e `npm run blob:smoke:oidc:test`.
