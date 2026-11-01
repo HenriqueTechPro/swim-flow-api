@@ -9,10 +9,29 @@ e nenhum segredo foi lido ou enviado ao GitHub. O storage de produção
 Supabase Storage, dashboard ou dados de alunos.
 
 O workflow `.github/workflows/private-blob-smoke.yml` só aceita
-`workflow_dispatch` na branch `main`, com aprovação digitada
+`workflow_dispatch` na branch `main`, com aprovação escolhida explicitamente no menu
 `I_APPROVE_DISPOSABLE_PRIVATE_BLOB_SMOKE_ONLY` e ambiente protegido
 `blob-smoke`. Ele **nunca roda** em push, pull request, merge, CI,
 cron ou deploy. Somente o guard OFFLINE é testado no CI normal.
+
+## Atualização 02F-06B6 — laboratório preparado em 01/11/2026
+
+Recursos criados e verificados no time Vercel do Swim Flow:
+- Projeto isolado sem Git/deploy: `swim-flow-blob-smoke-lab` (`prj_amGQuKcaOIuLUdlqMYK3ltZRYC43`), com proteção de acesso.
+- Blob **privado e descartável**, vazio e ainda sem conexão de projeto: `swim-flow-blob-smoke-ci-only` (`store_pAtHIpXAePc3zgXg`, região `iad1`).
+- Store de staging para integração futura, **não usar neste workflow**: `swim-flow-private-media-staging` (`store_PJZzrdBiiVcRyLHj`).
+- Projeto frontend staging: `swim-flow-dash-staging`; **jamais conectar o token de smoke a ele**.
+- Nenhum token foi extraído, compartilhado com ChatGPT/GitHub ou usado em requests.
+
+**Ações manuais necessárias antes do workflow (não executadas por este PR):**
+1. No dashboard Vercel, abra **Storage** e o store `swim-flow-blob-smoke-ci-only`. Vincule exclusivamente ao projeto `swim-flow-blob-smoke-lab` e confira que o token fornecido é **desse** store. Caso a UI ofereça projetos de produção, não selecione nenhum.
+2. Em GitHub `HenriqueTechPro/swim-flow-api` → Settings → Environments, crie `blob-smoke` (se ainda não existir), restrinja à branch `main` e habilite revisores quando o plano permitir.
+3. Dentro de `blob-smoke`, configure **variables** `BLOB_SMOKE_STORE_NAME=swim-flow-blob-smoke-ci-only` e `BLOB_SMOKE_STORE_ID=store_pAtHIpXAePc3zgXg`.
+4. Configure somente nesse ambiente o **secret** `BLOB_SMOKE_READ_WRITE_TOKEN` usando o token do store descartável da Vercel. Não copie o token ao chat, PR, código, variáveis `VITE_*` nem outros projetos.
+5. Após merge deste PR e auditoria dos três campos, use Actions → `Private Vercel Blob disposable smoke — MANUAL ONLY`, branch `main`, dropdown `I_APPROVE_DISPOSABLE_PRIVATE_BLOB_SMOKE_ONLY`. Default `DO_NOT_RUN` protege contra acionamentos acidentais.
+6. Só declarar PASS se o script confirmar PUT/GET/HEAD, sobrescrita negada e remoção isolada do PNG sintético; se falhar, manter todas as flags privadas OFF e investigar sem expor os segredos.
+
+Não usar `vercel blob create-store` de novo neste passo: **o store descartável já existe**. Não acrescentar método de pagamento nem contratar recursos Pro.
 
 ## 1. Crie um armazenamento descartável separado
 
@@ -20,7 +39,7 @@ No painel da Vercel, use uma aplicação/projeto de laboratório
 **diferente** de `swim-flow-dash` para não sobrescrever a variável
 `BLOB_READ_WRITE_TOKEN` que já existe no dashboard.
 
-Crie um **novo Blob store PRIVADO** chamado exatamente:
+Utilize o **Blob store PRIVADO descartável já criado** (não crie outro) chamado exatamente:
 `swim-flow-blob-smoke-ci-only`.
 
 - Não utilizar `swim-flow-private-media`, nem qualquer store com fotos
@@ -63,7 +82,7 @@ criptograficamente vinculada ao ID como descrito.
 GitHub → Actions → **Private Vercel Blob disposable smoke — MANUAL ONLY** →
 Run workflow:
 - Branch: `main`.
-- Approval: `I_APPROVE_DISPOSABLE_PRIVATE_BLOB_SMOKE_ONLY`.
+- Approval: selecione no dropdown `I_APPROVE_DISPOSABLE_PRIVATE_BLOB_SMOKE_ONLY` (o padrão `DO_NOT_RUN` não executa o job).
 
 Somente o job manual instala `npm ci` e chama
 `npm run blob:smoke:live`.
