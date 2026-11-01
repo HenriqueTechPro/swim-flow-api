@@ -5,7 +5,7 @@ const {
   assertDisposableOidcSmoke, LAB_PROJECT_ID, LAB_TEAM_ID,
   LAB_STORE_ID, APPROVAL,
 } = require('./private-blob-oidc-smoke-guard.cjs');
-const { requirePrivateUrl } = require('./verify-private-blob-oidc-live.cjs');
+const { requirePrivateUrl, safeDiagnostic } = require('./verify-private-blob-oidc-live.cjs');
 
 const link = { projectId: LAB_PROJECT_ID, orgId: LAB_TEAM_ID };
 const env = {
@@ -99,4 +99,47 @@ test('private URL must be HTTPS, exact lab host and no query or redirect', () =>
     url + '/other',
   ]) assert.throws(() => requirePrivateUrl(invalid, key),
     /blob-oidc-private-host-or-path-mismatch/);
+});
+
+
+test('safe failure diagnostics name the phase without revealing SDK messages', () => {
+  const sensitive = 'vercel_oidc_secret.example.invalid/private/athlete.png';
+  const sdkError = new Error('Private SDK error ' + sensitive);
+  assert.equal(
+    safeDiagnostic(sdkError, 'preflight-head'),
+    'blob-oidc-preflight-head-sdk-or-network-error',
+  );
+  assert.equal(
+    safeDiagnostic({ message: sensitive, statusCode: 403 }, 'private-get'),
+    'blob-oidc-private-get-http-403',
+  );
+  assert.equal(
+    safeDiagnostic({ message: sensitive, response: { status: 401 } }, 'put-private'),
+    'blob-oidc-put-private-http-401',
+  );
+  assert.equal(
+    safeDiagnostic({ message: sensitive, status: 502 }, 'head-after-put'),
+    'blob-oidc-head-after-put-http-502',
+  );
+  assert.equal(
+    safeDiagnostic({ message: sensitive }, sensitive),
+    'blob-oidc-unknown-sdk-or-network-error',
+  );
+  assert.equal(
+    safeDiagnostic(new Error('blob-oidc-lab-project-link-required'), 'initialize'),
+    'blob-oidc-lab-project-link-required',
+  );
+});
+
+test('preflight contains no write and is protected by the same approval guard', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const source = fs.readFileSync(path.join(__dirname, 'verify-private-blob-oidc-live.cjs'), 'utf8');
+  const guardAt = source.indexOf("assertDisposableOidcSmoke(process.env, ['--execute']");
+  const headAt = source.indexOf("context.phase = 'preflight-head'");
+  const returnAt = source.indexOf("if (preflightOnly) {", headAt);
+  const putAt = source.indexOf("context.phase = 'put-private'");
+  assert.ok(guardAt >= 0 && guardAt < headAt);
+  assert.ok(headAt < returnAt && returnAt < putAt);
+  assert.match(source, /no upload attempted/);
 });
