@@ -72,6 +72,8 @@ jobs:
           npm run format:changed -- "$FORMAT_BASE_SHA" "$FORMAT_HEAD_SHA" --check
       - name: Guard private Blob manual smoke environment (offline only)
         run: npm run blob:smoke:guard:test
+      - name: Guard OIDC disposable lab smoke (offline only, no credentials)
+        run: npm run blob:smoke:oidc:test
       - name: Guarded first admin bootstrap tests
         run: npm run bootstrap:first-admin:test
       - name: Resend isolated delivery tests (network mocked, no account access)
