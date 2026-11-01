@@ -123,3 +123,7 @@ jobs:
         run: node node_modules/prisma/build/index.js migrate diff --from-url "$DATABASE_URL" --to-schema-datamodel prisma/schema.prisma --exit-code
       - name: Verify deploy is idempotent
         run: npm run prisma:migrate:deploy
+      - name: Verify private Blob broker nonce replay protection (disposable PostgreSQL only)
+        env:
+          SWIMFLOW_DISPOSABLE_DB: 'yes'
+        run: npm run blob:broker:postgres:ci
