@@ -14,6 +14,7 @@ const STORE_ID = 'store_PJZzrdBiiVcRyLHj';
 // to the dashboard or smoke lab is accepted, even if environment variables
 // are accidentally copied and self-consistent.
 const DEDICATED_BROKER_PROJECT_ID = 'prj_n2mFk76ZGhn5A8wnhpb7Asj8WKjz';
+const DEDICATED_BROKER_ORG_ID = 'team_ONfSvrgCkVLlDaKIeFuPlrEL';
 const MAX_BODY_BYTES = 1024;
 const BASE_HEADERS = {
   'Cache-Control': 'private, no-store',
@@ -35,6 +36,7 @@ function isStagingBrokerEnv(env) {
     env.VERCEL_ENV === 'preview' &&
     env.BLOB_STORE_ID === STORE_ID &&
     projectId === DEDICATED_BROKER_PROJECT_ID &&
+    env.VERCEL_ORG_ID === DEDICATED_BROKER_ORG_ID &&
     env.SWIMFLOW_BLOB_BROKER_PROJECT_ID === DEDICATED_BROKER_PROJECT_ID &&
     env.SWIMFLOW_PRIVATE_BLOB_ENABLED !== 'true' &&
     env.SWIMFLOW_PRIVATE_MEDIA_S3_ENABLED !== 'true' &&
