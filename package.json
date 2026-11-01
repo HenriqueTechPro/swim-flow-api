@@ -57,7 +57,9 @@
     "blob:render:staging:readonly": "node scripts/render-blob-staging-readonly.cjs --execute",
     "blob:render:staging:test": "node --test scripts/render-blob-staging-readonly.test.cjs",
     "blob:broker:auth:test": "node --test scripts/private-blob-broker-auth-v1.test.cjs",
-    "blob:broker:receiver:test": "node --test scripts/private-blob-broker-readonly-receiver.test.cjs"
+    "blob:broker:receiver:test": "node --test scripts/private-blob-broker-readonly-receiver.test.cjs",
+    "blob:broker:postgres:guard:test": "node --test scripts/verify-private-blob-broker-nonce-postgres.test.cjs",
+    "blob:broker:postgres:ci": "node scripts/verify-private-blob-broker-nonce-postgres.cjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1156.0",
