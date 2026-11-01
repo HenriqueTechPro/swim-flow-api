@@ -37,7 +37,12 @@ describe('Private Vercel Blob Render staging activation boundary', () => {
     });
     // Render staging uses NODE_ENV=production for optimized Nest builds.
     expect(
-      loadPrivateVercelBlobConfig({ ...STAGING, NODE_ENV: 'production' }),
+      loadPrivateVercelBlobConfig({
+        ...STAGING,
+        NODE_ENV: 'production',
+        RENDER: 'true',
+        RENDER_EXTERNAL_HOSTNAME: 'swim-flow-api-staging.onrender.com',
+      }),
     ).toEqual({
       provider: 'vercel-blob',
       access: 'private',
@@ -60,6 +65,11 @@ describe('Private Vercel Blob Render staging activation boundary', () => {
     for (const patch of [
       { SWIMFLOW_ENVIRONMENT: undefined },
       { SWIMFLOW_ENVIRONMENT: 'production' },
+      {
+        RENDER: 'true',
+        RENDER_EXTERNAL_HOSTNAME: 'swim-flow-api.onrender.com',
+      },
+      { RENDER: 'true', RENDER_EXTERNAL_HOSTNAME: undefined },
       { BLOB_STORE_ID: undefined },
       { BLOB_STORE_ID: 'store_SdzpYKLzZL6WPLHh' },
       { BLOB_STORE_ID: 'store_pAtHIpXAePc3zgXg' },
