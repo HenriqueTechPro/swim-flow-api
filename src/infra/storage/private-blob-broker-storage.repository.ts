@@ -1,3 +1,4 @@
+import { Readable } from 'node:stream';
 import { createHash, createHmac, randomUUID } from 'node:crypto';
 import {
   PrivateBlobStorageRepository,
@@ -163,7 +164,7 @@ export class PrivateBlobBrokerStorageRepository extends PrivateBlobStorageReposi
       etag: read.etag,
       contentType: 'image/jpeg',
       sizeBytes: bytes.length,
-      stream: (async function* () { yield bytes; })(),
+      stream: Readable.from([bytes]),
     };
   }
 
