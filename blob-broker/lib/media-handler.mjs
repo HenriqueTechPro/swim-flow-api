@@ -20,6 +20,8 @@ function enableChecks(env) {
     mediaFlag: env.SWIMFLOW_BLOB_BROKER_MEDIA_ENABLED === 'true',
     previewEnvironment: env.VERCEL_ENV === 'preview',
     projectIdentity: env.VERCEL_PROJECT_ID === PROJECT && env.VERCEL_ORG_ID === TEAM,
+    projectIdMatches: env.VERCEL_PROJECT_ID === PROJECT,
+    teamIdMatches: env.VERCEL_ORG_ID === TEAM,
     storeIdentity: env.BLOB_STORE_ID === STORE_ID,
     forbiddenVariablesAbsent: !env.BLOB_READ_WRITE_TOKEN && !env.BLOB_SMOKE_STORE_ID &&
       !env.DATABASE_URL && !env.DIRECT_URL && !env.VERCEL_BLOB_API_URL,
