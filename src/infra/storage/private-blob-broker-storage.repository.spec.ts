@@ -123,4 +123,21 @@ describe('private Blob broker Render staging', () => {
     await expect(client.delete(PATH, 'bad-etag')).rejects.toThrow();
     expect(fake).not.toHaveBeenCalled();
   });
+  it('reports only safe HTTP status for broker errors', async () => {
+    const fake = jest.fn(
+      async () => new Response('sensitive-body', { status: 502 }),
+    );
+    const client = new PrivateBlobBrokerStorageRepository(
+      loadPrivateBlobBrokerConfig(ENV)!,
+      fake as typeof fetch,
+    );
+    await expect(
+      client.put({
+        pathname: PATH,
+        bytes: JPEG,
+        contentType: 'image/jpeg',
+      }),
+    ).rejects.toThrow('private-blob-broker-remote-http-502');
+    expect(fake).toHaveBeenCalledTimes(1);
+  });
 });

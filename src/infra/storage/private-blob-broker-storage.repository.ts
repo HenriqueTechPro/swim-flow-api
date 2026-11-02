@@ -133,7 +133,12 @@ export class PrivateBlobBrokerStorageRepository extends PrivateBlobStorageReposi
 
     if (response.status === 404) return { status: 404, value: null };
     if (!response.ok) {
-      throw new Error('private-blob-broker-remote-error');
+      // Log only the HTTP status; never log bodies, headers, or image data.
+      const safeStatus =
+        response.status >= 400 && response.status <= 599
+          ? response.status
+          : 'unknown';
+      throw new Error(`private-blob-broker-remote-http-${safeStatus}`);
     }
     let value: unknown;
     try {
