@@ -8,6 +8,8 @@ import { ListActivePrivateBlobReferencesUseCase } from '@/domain/uploads/applica
 import { PrismaPrivateMediaObjectsRepository } from '@/infra/database/prisma/repositories/prisma-private-media-objects-repository';
 import { PrismaService } from '@/infra/database/prisma/prisma.service';
 import { loadPrivateVercelBlobConfig } from '@/infra/storage/private-vercel-blob-config';
+import { loadPrivateBlobBrokerConfig } from '@/infra/storage/private-blob-broker-config';
+import { PrivateBlobBrokerStorageRepository } from '@/infra/storage/private-blob-broker-storage.repository';
 import { createVercelPrivateBlobStorageRepository } from '@/infra/storage/private-vercel-blob-storage.repository';
 import { PrivateImageAccessService } from './private-image-access.service';
 
@@ -23,18 +25,17 @@ export const privateImageAccessProvider: Provider = {
     resources: ManagedUploadResourcesRepository,
     prisma: PrismaService,
   ): PrivateImageAccessService => {
-    const config = loadPrivateVercelBlobConfig(process.env);
-    if (!config) return new PrivateImageAccessService(null, null);
+    const broker = loadPrivateBlobBrokerConfig(process.env);
+    const config = broker ? null : loadPrivateVercelBlobConfig(process.env);
+    if (!broker && !config) return new PrivateImageAccessService(null, null);
+    const transport = broker
+      ? new PrivateBlobBrokerStorageRepository(broker)
+      : createVercelPrivateBlobStorageRepository(config!);
 
     const records = new PrismaPrivateMediaObjectsRepository(prisma);
     return new PrivateImageAccessService(
       new AssignPrivateBlobImageUseCase(profiles, resources, records),
-      new ReadPrivateBlobImageUseCase(
-        profiles,
-        resources,
-        records,
-        createVercelPrivateBlobStorageRepository(config),
-      ),
+      new ReadPrivateBlobImageUseCase(profiles, resources, records, transport),
       new ListActivePrivateBlobReferencesUseCase(profiles, records),
       new CommitPrivateBlobImageUseCase(profiles, resources, records),
     );

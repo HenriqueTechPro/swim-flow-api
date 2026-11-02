@@ -3,6 +3,9 @@
   "functions": {
     "api/probe.js": {
       "maxDuration": 10
+    },
+    "api/media.js": {
+      "maxDuration": 10
     }
   }
 }
