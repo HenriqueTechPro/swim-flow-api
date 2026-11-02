@@ -1,0 +1,16 @@
+{
+  "name": "swim-flow-private-blob-broker-staging",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  },
+  "dependencies": {
+    "@vercel/blob": "2.8.2",
+    "pg": "^8.16.0"
+  }
+}

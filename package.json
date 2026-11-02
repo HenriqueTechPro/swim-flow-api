@@ -59,7 +59,8 @@
     "blob:broker:auth:test": "node --test scripts/private-blob-broker-auth-v1.test.cjs",
     "blob:broker:receiver:test": "node --test scripts/private-blob-broker-readonly-receiver.test.cjs",
     "blob:broker:postgres:guard:test": "node --test scripts/verify-private-blob-broker-nonce-postgres.test.cjs",
-    "blob:broker:postgres:ci": "node scripts/verify-private-blob-broker-nonce-postgres.cjs"
+    "blob:broker:postgres:ci": "node scripts/verify-private-blob-broker-nonce-postgres.cjs",
+    "blob:broker:standalone:test": "node scripts/check-private-blob-broker-standalone.cjs && node --test blob-broker/tests/*.test.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1156.0",
