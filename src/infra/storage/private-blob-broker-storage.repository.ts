@@ -10,9 +10,14 @@ import type { PrivateBlobBrokerConfig } from './private-blob-broker-config';
 
 const MAX_BYTES = 2_800_000;
 const AUD = 'swim-flow-private-media-staging-v2';
-const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}';
+const UUID =
+  '[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}';
 const PATH = new RegExp(
-  '^private/(?:profiles|students|teachers|parents)/' + UUID + '/' + UUID + '\\.jpg$',
+  '^private/(?:profiles|students|teachers|parents)/' +
+    UUID +
+    '/' +
+    UUID +
+    '\\.jpg$',
 );
 const ETAG = /^"[A-Za-z0-9-]{1,120}"$/;
 
@@ -37,12 +42,16 @@ function validateReceipt(value: unknown, pathname: string): Receipt {
   }
   const v = value as Partial<Receipt>;
   if (
-    v.pathname !== pathname || v.contentType !== 'image/jpeg' ||
+    v.pathname !== pathname ||
+    v.contentType !== 'image/jpeg' ||
     !Number.isSafeInteger(v.sizeBytes) ||
     typeof v.sizeBytes !== 'number' ||
-    v.sizeBytes < 8 || v.sizeBytes > MAX_BYTES ||
-    typeof v.etag !== 'string' || !ETAG.test(v.etag)
-  ) throw new Error('invalid-private-blob-receipt');
+    v.sizeBytes < 8 ||
+    v.sizeBytes > MAX_BYTES ||
+    typeof v.etag !== 'string' ||
+    !ETAG.test(v.etag)
+  )
+    throw new Error('invalid-private-blob-receipt');
   return v as Receipt;
 }
 
@@ -89,14 +98,22 @@ export class PrivateBlobBrokerStorageRepository extends PrivateBlobStorageReposi
       .digest('hex');
     const canonical = [
       'swimflow-private-media/v2',
-      body.version, body.audience, body.operation,
-      body.pathname, body.etag, body.contentType,
-      body.issuedAtMs, body.nonce, checksum,
+      body.version,
+      body.audience,
+      body.operation,
+      body.pathname,
+      body.etag,
+      body.contentType,
+      body.issuedAtMs,
+      body.nonce,
+      checksum,
     ].join('\n');
     const signature = createHmac(
       'sha256',
       Buffer.from(this.config.sharedKey, 'base64url'),
-    ).update(canonical).digest('base64url');
+    )
+      .update(canonical)
+      .digest('base64url');
     let response: Response;
     try {
       response = await this.sendRequest(this.config.endpoint, {
@@ -119,8 +136,11 @@ export class PrivateBlobBrokerStorageRepository extends PrivateBlobStorageReposi
       throw new Error('private-blob-broker-remote-error');
     }
     let value: unknown;
-    try { value = await response.json(); }
-    catch { throw new Error('private-blob-broker-invalid-response'); }
+    try {
+      value = await response.json();
+    } catch {
+      throw new Error('private-blob-broker-invalid-response');
+    }
     return { status: response.status, value };
   }
 
@@ -134,7 +154,8 @@ export class PrivateBlobBrokerStorageRepository extends PrivateBlobStorageReposi
       input.bytes[0] !== 0xff ||
       input.bytes[1] !== 0xd8 ||
       input.bytes[2] !== 0xff
-    ) throw new Error('invalid-private-broker-image');
+    )
+      throw new Error('invalid-private-broker-image');
     const result = await this.request('put', input.pathname, '', input.bytes);
     const stored = validateReceipt(result.value, input.pathname);
     if (stored.sizeBytes !== input.bytes.length) {
@@ -148,7 +169,10 @@ export class PrivateBlobBrokerStorageRepository extends PrivateBlobStorageReposi
     };
   }
 
-  async get(pathname: string, expectedEtag: string): Promise<ReadPrivateBlob | null> {
+  async get(
+    pathname: string,
+    expectedEtag: string,
+  ): Promise<ReadPrivateBlob | null> {
     const result = await this.request('get', pathname, expectedEtag);
     if (result.status === 404) return null;
     const read = validateReceipt(result.value, pathname);
@@ -158,9 +182,12 @@ export class PrivateBlobBrokerStorageRepository extends PrivateBlobStorageReposi
     const bytes = Buffer.from(read.bytes, 'base64');
     if (
       bytes.length !== read.sizeBytes ||
-      bytes[0] !== 0xff || bytes[1] !== 0xd8 || bytes[2] !== 0xff ||
+      bytes[0] !== 0xff ||
+      bytes[1] !== 0xd8 ||
+      bytes[2] !== 0xff ||
       bytes.toString('base64') !== read.bytes
-    ) throw new Error('invalid-private-blob-read');
+    )
+      throw new Error('invalid-private-blob-read');
 
     return {
       pathname,
@@ -189,6 +216,7 @@ export class PrivateBlobBrokerStorageRepository extends PrivateBlobStorageReposi
       !result.value ||
       typeof result.value !== 'object' ||
       (result.value as { deleted?: unknown }).deleted !== true
-    ) throw new Error('invalid-private-blob-delete');
+    )
+      throw new Error('invalid-private-blob-delete');
   }
 }
