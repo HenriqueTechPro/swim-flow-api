@@ -82,6 +82,8 @@ jobs:
         run: npm run blob:broker:receiver:test
       - name: Broker PostgreSQL disposable-only execution guard (offline)
         run: npm run blob:broker:postgres:guard:test
+      - name: Standalone Vercel broker closed-by-default function and source sync
+        run: npm run blob:broker:standalone:test
       - name: Guarded first admin bootstrap tests
         run: npm run bootstrap:first-admin:test
       - name: Resend isolated delivery tests (network mocked, no account access)
