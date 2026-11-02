@@ -5,6 +5,8 @@ import { StorePrivateBlobImageUseCase } from '@/domain/uploads/application/use-c
 import { PrismaPrivateMediaObjectsRepository } from '@/infra/database/prisma/repositories/prisma-private-media-objects-repository';
 import { PrismaService } from '@/infra/database/prisma/prisma.service';
 import { loadPrivateVercelBlobConfig } from '@/infra/storage/private-vercel-blob-config';
+import { loadPrivateBlobBrokerConfig } from '@/infra/storage/private-blob-broker-config';
+import { PrivateBlobBrokerStorageRepository } from '@/infra/storage/private-blob-broker-storage.repository';
 import { createVercelPrivateBlobStorageRepository } from '@/infra/storage/private-vercel-blob-storage.repository';
 import { SharpPrivateBlobImageProcessor } from '@/infra/storage/sharp-private-blob-image-processor';
 import { PrivateImageUploadService } from './private-image-upload.service';
@@ -21,15 +23,19 @@ export const privateImageUploadProvider: Provider = {
     resources: ManagedUploadResourcesRepository,
     prisma: PrismaService,
   ): PrivateImageUploadService => {
-    const config = loadPrivateVercelBlobConfig(process.env);
-    if (!config) return new PrivateImageUploadService(null);
+    const broker = loadPrivateBlobBrokerConfig(process.env);
+    const config = broker ? null : loadPrivateVercelBlobConfig(process.env);
+    if (!broker && !config) return new PrivateImageUploadService(null);
+    const transport = broker
+      ? new PrivateBlobBrokerStorageRepository(broker)
+      : createVercelPrivateBlobStorageRepository(config!);
 
     return new PrivateImageUploadService(
       new StorePrivateBlobImageUseCase(
         profiles,
         resources,
         new SharpPrivateBlobImageProcessor(),
-        createVercelPrivateBlobStorageRepository(config),
+        transport,
         new PrismaPrivateMediaObjectsRepository(prisma),
       ),
     );
