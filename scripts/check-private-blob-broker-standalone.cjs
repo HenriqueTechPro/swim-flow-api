@@ -27,6 +27,20 @@ const config = JSON.parse(
 assert.equal(config.private, true);
 assert.equal(config.dependencies['@vercel/blob'], '2.8.2');
 assert.ok(!('dotenv' in (config.dependencies || {})));
+const locked = JSON.parse(
+  fs.readFileSync(path.join(root, 'blob-broker', 'package-lock.json'), 'utf8'),
+);
+assert.equal(locked.lockfileVersion, 3);
+assert.equal(locked.name, config.name);
+assert.deepEqual(locked.packages[''].dependencies, config.dependencies);
+assert.equal(locked.packages['node_modules/@vercel/blob'].version, '2.8.2');
+assert.ok(/^8\.[0-9]+\.[0-9]+$/.test(locked.packages['node_modules/pg'].version));
+for (const [key, value] of Object.entries(locked.packages)) {
+  if (!key) continue;
+  assert.equal(typeof value.integrity, 'string',
+    'locked package missing integrity metadata: ' + key);
+}
+
 
 const vercel = JSON.parse(
   fs.readFileSync(path.join(root, 'blob-broker', 'vercel.json'), 'utf8'),
