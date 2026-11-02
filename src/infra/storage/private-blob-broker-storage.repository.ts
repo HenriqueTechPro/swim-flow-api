@@ -101,7 +101,10 @@ export class PrivateBlobBrokerStorageRepository extends PrivateBlobStorageReposi
     try {
       response = await this.sendRequest(this.config.endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-vercel-protection-bypass': this.config.protectionBypass,
+        },
         body: JSON.stringify({ ...body, signature }),
         cache: 'no-store',
         redirect: 'error',
