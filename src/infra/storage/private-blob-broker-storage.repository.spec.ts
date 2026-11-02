@@ -12,6 +12,7 @@ const ENV: NodeJS.ProcessEnv = {
   SWIMFLOW_BLOB_BROKER_URL:
     'https://swim-flow-private-blob-broker-staging-4adioi4xb.vercel.app/api/media',
   SWIMFLOW_BLOB_BROKER_SHARED_KEY: KEY,
+  SWIMFLOW_BLOB_BROKER_BYPASS_TOKEN: 'B'.repeat(32),
 };
 const PATH =
   'private/students/11111111-1111-4111-8111-111111111111/22222222-2222-4222-8222-222222222222.jpg';
@@ -30,6 +31,7 @@ describe('private Blob broker Render staging', () => {
       { RENDER: 'true', RENDER_EXTERNAL_HOSTNAME: 'swim-flow-api.onrender.com' },
       { SWIMFLOW_BLOB_BROKER_URL: 'https://evil.invalid/api/media' },
       { SWIMFLOW_BLOB_BROKER_SHARED_KEY: undefined },
+      { SWIMFLOW_BLOB_BROKER_BYPASS_TOKEN: undefined },
     ]) expect(() => loadPrivateBlobBrokerConfig({...ENV,...patch})).toThrow();
   });
   it('signs normalized JPEG PUT, does not expose key and checks response metadata', async () => {
