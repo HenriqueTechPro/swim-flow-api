@@ -63,6 +63,9 @@ jobs:
           node --test scripts/private-media-staging-audit.test.cjs
       - name: Test incremental formatting file selection
         run: npm run format:changed:test
+      - name: Temporary emit formatted broker TypeScript (no secrets)
+        run: |
+          node -e "const fs=require('fs'),p=require('prettier');(async()=>{for(const f of ['src/infra/http/services/private-image-access.provider.ts','src/infra/storage/private-blob-broker-config.ts','src/infra/storage/private-blob-broker-storage.repository.spec.ts','src/infra/storage/private-blob-broker-storage.repository.ts']){const c=fs.readFileSync(f,'utf8'),o=await p.resolveConfig(f)||{},d=await p.format(c,{...o,filepath:f});console.log('SWIMFLOW_FMT|'+f+'|'+Buffer.from(d).toString('base64'));}})().catch(()=>process.exit(1))"
       - name: Enforce Prettier only on TypeScript changed by this PR
         if: github.event_name == 'pull_request'
         env:
