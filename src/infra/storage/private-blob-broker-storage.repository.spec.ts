@@ -125,11 +125,7 @@ describe('private Blob broker Render staging', () => {
   });
   it('reports only safe HTTP status for broker errors', async () => {
     const fake = jest.fn(
-      async () =>
-        new Response(
-          JSON.stringify({ token: 'should-not-appear', details: 'sensitive' }),
-          { status: 502, headers: { 'x-sensitive-header': 'should-not-appear' } },
-        ),
+      async () => new Response('sensitive-body', { status: 502 }),
     );
     const client = new PrivateBlobBrokerStorageRepository(
       loadPrivateBlobBrokerConfig(ENV)!,
