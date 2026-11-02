@@ -45,7 +45,13 @@ for (const [key, value] of Object.entries(locked.packages)) {
 const vercel = JSON.parse(
   fs.readFileSync(path.join(root, 'blob-broker', 'vercel.json'), 'utf8'),
 );
-assert.deepEqual(Object.keys(vercel.functions), ['api/probe.js']);
+assert.deepEqual(
+  Object.keys(vercel.functions).sort(),
+  ['api/media.js', 'api/probe.js'],
+);
+for (const options of Object.values(vercel.functions)) {
+  assert.ok(options.maxDuration <= 10);
+}
 assert.ok(vercel.functions['api/probe.js'].maxDuration <= 10);
 
 process.stdout.write(
