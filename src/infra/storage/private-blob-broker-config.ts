@@ -6,6 +6,7 @@
 export interface PrivateBlobBrokerConfig {
   readonly endpoint: string;
   readonly sharedKey: string;
+  readonly protectionBypass: string;
 }
 
 const STORE_ID = 'store_PJZzrdBiiVcRyLHj';
@@ -34,8 +35,10 @@ export function loadPrivateBlobBrokerConfig(
   ) throw new Error('Private Blob broker staging identity rejected');
 
   const key = env.SWIMFLOW_BLOB_BROKER_SHARED_KEY;
+  const protectionBypass = env.SWIMFLOW_BLOB_BROKER_BYPASS_TOKEN;
   const url = env.SWIMFLOW_BLOB_BROKER_URL;
-  if (!key || !/^[A-Za-z0-9_-]{43}$/.test(key) || !url) {
+  if (!key || !/^[A-Za-z0-9_-]{43}$/.test(key) ||
+      !protectionBypass || !/^[A-Za-z0-9]{32}$/.test(protectionBypass) || !url) {
     throw new Error('Private Blob broker configuration missing');
   }
   let endpoint: URL;
@@ -49,5 +52,5 @@ export function loadPrivateBlobBrokerConfig(
     endpoint.username || endpoint.password ||
     endpoint.port
   ) throw new Error('Private Blob broker URL invalid');
-  return { endpoint: endpoint.toString(), sharedKey: key };
+  return { endpoint: endpoint.toString(), sharedKey: key, protectionBypass };
 }
