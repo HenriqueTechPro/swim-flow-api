@@ -17,7 +17,7 @@
 - `package.json`: pacote independente, não inclui NestJS, Prisma ou front. Dependências especificadas `@vercel/blob@2.8.2` e `pg@^8.16.0`.
 - `vercel.json`: apenas uma função e timeout curto de 10 segundos.
 
-**Limitação atual:** `blob-broker/package-lock.json` ainda não foi gerado ou versionado. Não habilitar deployment até executar `npm install --package-lock-only` nesse diretório e revisar o lockfile/CI de dependências.
+**Dependências concluídas na 02F-06C4E:** `blob-broker/package-lock.json` foi gerado pelo `npm` no CI e versionado. O API Quality Gate agora faz `npm ci --prefix blob-broker --ignore-scripts` e executa `npm test --prefix blob-broker`, além de validar integridade e sincronização dos módulos de segurança. Isso **não** autoriza um deploy antes do isolamento do banco e dos segredos.
 
 ### Contrato da futura conexão de nonces
 
@@ -42,7 +42,7 @@ O broker **não** aceita o `DATABASE_URL` ou `DIRECT_URL` da aplicação Nest. S
 
 ## Próximos gates antes de HTTP público
 
-1. Gerar e conferir o `blob-broker/package-lock.json`, instalar com `npm ci`, validar import do `@vercel/blob`/pg no diretório isolado.
+1. **Concluído no PR #98 atualizado:** lockfile versionado e instalação `npm ci` + testes de pacote no CI.
 2. Provisionar banco e role exclusivos de nonces no **Neon staging** com privilégios mínimos e schema versionado separadamente.
 3. Verificar bloqueios de acesso, rate limiting/abuso, proteção da função e timeout do Postgres; obter sinais de clock skew e negação de replay.
 4. Ligar o projeto Vercel ao repositório *somente* com `rootDirectory=blob-broker`, mantendo o ambiente desativado por padrão. Como a ligação Git pode causar deploy automático, revisar antes.
