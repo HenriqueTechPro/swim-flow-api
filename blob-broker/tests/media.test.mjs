@@ -47,7 +47,8 @@ function setup(overrides={}) {
       return {pathname:path,contentType:'image/jpeg',size:blob.get(path).length,etag:ETAG,url:URL};
     },
     get:async(path,opts)=>{
-      calls++;assert.equal(opts.access,'private');assert.equal(opts.headers['If-Match'],ETAG);
+      calls++;assert.equal(opts.access,'private');assert.equal(opts.useCache,false);
+      assert.equal(opts.headers?.['If-Match'],undefined);
       if(!blob.has(path))return null;
       return {statusCode:200,blob:{pathname:path,contentType:'image/jpeg',size:blob.get(path).length,etag:ETAG,url:URL},
         stream:new ReadableStream({start(c){c.enqueue(blob.get(path));c.close();}})};

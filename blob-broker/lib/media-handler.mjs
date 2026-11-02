@@ -85,15 +85,23 @@ async function dispatch(req,sdk) {
     return reply(200,'ok',{deleted:true});
   }
   if(req.operation==='get') {
+    // HEAD is authoritative for full metadata; GET provides the private bytes.
+    // Both ETags must match the database's expected version.
+    let metadata;
+    try{metadata=await sdk.head(req.pathname,opts);}
+    catch(e){if(e instanceof sdk.BlobNotFoundError)return reply(404,'not-found');throw e;}
+    if(!safeMetadata(metadata,req) || metadata.etag!==req.etag)
+      return reply(409,'blob-version-mismatch');
     const received=await sdk.get(req.pathname,{
-      access:'private',useCache:false,headers:{'If-Match':req.etag},...opts,
+      access:'private',useCache:false,...opts,
     });
     if(!received)return reply(404,'not-found');
     if(received.statusCode!==200 || !received.stream ||
-       !safeMetadata(received.blob,req) ||
-       received.blob.etag!==req.etag)return reply(409,'blob-version-mismatch');
+       !received.blob || received.blob.pathname!==req.pathname ||
+       received.blob.etag!==req.etag)
+      return reply(409,'blob-version-mismatch');
     const buffer=Buffer.from(await new Response(received.stream).arrayBuffer());
-    if(buffer.length!==received.blob.size || buffer.length>MAX_BYTES ||
+    if(buffer.length!==metadata.size || buffer.length>MAX_BYTES ||
        buffer[0]!==0xff || buffer[1]!==0xd8 || buffer[2]!==0xff)
       return reply(502,'invalid-blob-data');
     return reply(200,'ok',{pathname:req.pathname,etag:req.etag,
