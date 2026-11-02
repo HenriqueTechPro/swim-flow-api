@@ -34,7 +34,10 @@ describe('private Blob broker Render staging', () => {
   });
   it('signs normalized JPEG PUT, does not expose key and checks response metadata', async () => {
     const mock = jest.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
-      const payload = JSON.parse(String(init?.body)) as Record<string, unknown>;
+      if (typeof init?.body !== 'string') {
+        throw new Error('expected JSON broker body');
+      }
+      const payload = JSON.parse(init.body) as Record<string, unknown>;
       expect(payload.operation).toBe('put');
       expect(payload.pathname).toBe(PATH);
       expect(payload.signature).toEqual(expect.any(String));
