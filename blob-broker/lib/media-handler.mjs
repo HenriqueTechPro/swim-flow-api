@@ -5,7 +5,6 @@ const { verifyMediaRequest, MAX_BYTES, STORE_ID } = require('./private-blob-brok
 const { createAtomicPostgresNonceClaim } = require('./private-blob-broker-postgres-nonce.cjs');
 
 const PROJECT = 'prj_n2mFk76ZGhn5A8wnhpb7Asj8WKjz';
-const TEAM = 'team_ONfSvrgCkVLlDaKIeFuPlrEL';
 const MAX_REQUEST = 3_900_000;
 const REPLY_HEADERS = {
   'Cache-Control':'private, no-store',
@@ -19,9 +18,7 @@ function enableChecks(env) {
   return {
     mediaFlag: env.SWIMFLOW_BLOB_BROKER_MEDIA_ENABLED === 'true',
     previewEnvironment: env.VERCEL_ENV === 'preview',
-    projectIdentity: env.VERCEL_PROJECT_ID === PROJECT && env.VERCEL_ORG_ID === TEAM,
-    projectIdMatches: env.VERCEL_PROJECT_ID === PROJECT,
-    teamIdMatches: env.VERCEL_ORG_ID === TEAM,
+    projectIdentity: env.VERCEL_PROJECT_ID === PROJECT,
     storeIdentity: env.BLOB_STORE_ID === STORE_ID,
     forbiddenVariablesAbsent: !env.BLOB_READ_WRITE_TOKEN && !env.BLOB_SMOKE_STORE_ID &&
       !env.DATABASE_URL && !env.DIRECT_URL && !env.VERCEL_BLOB_API_URL,
@@ -118,23 +115,8 @@ export function createMediaHandler({
 }={}) {
   let queryPromise;
   return { async fetch(request) {
-    if(!enabled(env)) {
-      // Diagnostic is restricted to preview and explicit short-lived opt-in.
-      // Never return identifiers, credentials, hosts or raw environment values.
-      const diagnosticRequested = env.VERCEL_ENV === 'preview' &&
-        env.SWIMFLOW_BLOB_BROKER_DIAGNOSTICS_ENABLED === 'true' &&
-        request instanceof Request && request.method === 'POST' &&
-        new URL(request.url).pathname === '/api/media' &&
-        request.headers.get('content-type') === 'application/json' &&
-        !request.headers.has('origin');
-      if (diagnosticRequested) {
-        return reply(503, 'broker-disabled', {
-          code: 'broker-disabled', checks: enableChecks(env),
-        });
-      }
-      return reply(503,'broker-disabled');
-    }
-    if(!(request instanceof Request) ||
+    if(!enabled(env))return reply(503,'broker-disabled');
+        if(!(request instanceof Request) ||
        request.method!=='POST' ||
        new URL(request.url).pathname!=='/api/media' ||
        new URL(request.url).search ||
