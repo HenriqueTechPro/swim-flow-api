@@ -5,7 +5,6 @@ const { verifyMediaRequest, MAX_BYTES, STORE_ID } = require('./private-blob-brok
 const { createAtomicPostgresNonceClaim } = require('./private-blob-broker-postgres-nonce.cjs');
 
 const PROJECT = 'prj_n2mFk76ZGhn5A8wnhpb7Asj8WKjz';
-const TEAM = 'team_ONfSvrgCkVLlDaKIeFuPlrEL';
 const MAX_REQUEST = 3_900_000;
 const REPLY_HEADERS = {
   'Cache-Control':'private, no-store',
@@ -15,18 +14,21 @@ const REPLY_HEADERS = {
 function reply(status,code,data) {
   return new Response(JSON.stringify(data||{code}),{status,headers:REPLY_HEADERS});
 }
+function enableChecks(env) {
+  return {
+    mediaFlag: env.SWIMFLOW_BLOB_BROKER_MEDIA_ENABLED === 'true',
+    previewEnvironment: env.VERCEL_ENV === 'preview',
+    projectIdentity: env.VERCEL_PROJECT_ID === PROJECT,
+    storeIdentity: env.BLOB_STORE_ID === STORE_ID,
+    forbiddenVariablesAbsent: !env.BLOB_READ_WRITE_TOKEN && !env.BLOB_SMOKE_STORE_ID &&
+      !env.DATABASE_URL && !env.DIRECT_URL && !env.VERCEL_BLOB_API_URL,
+    nonceDatabaseConfiguration: isIsolatedNonceDatabase(env),
+    sharedKeyFormat: typeof env.SWIMFLOW_BLOB_BROKER_SHARED_KEY === 'string' &&
+      /^[a-zA-Z0-9_-]{43}$/.test(env.SWIMFLOW_BLOB_BROKER_SHARED_KEY),
+  };
+}
 function enabled(env) {
-  return env.SWIMFLOW_BLOB_BROKER_MEDIA_ENABLED==='true' &&
-    env.VERCEL_ENV==='preview' &&
-    env.VERCEL_PROJECT_ID===PROJECT &&
-    env.VERCEL_ORG_ID===TEAM &&
-    env.BLOB_STORE_ID===STORE_ID &&
-    !env.BLOB_READ_WRITE_TOKEN && !env.BLOB_SMOKE_STORE_ID &&
-    !env.DATABASE_URL && !env.DIRECT_URL &&
-    !env.VERCEL_BLOB_API_URL &&
-    isIsolatedNonceDatabase(env) &&
-    typeof env.SWIMFLOW_BLOB_BROKER_SHARED_KEY==='string' &&
-    /^[a-zA-Z0-9_-]{43}$/.test(env.SWIMFLOW_BLOB_BROKER_SHARED_KEY);
+  return Object.values(enableChecks(env)).every(Boolean);
 }
 async function readLimited(request) {
   const len=request.headers.get('content-length');
@@ -114,7 +116,7 @@ export function createMediaHandler({
   let queryPromise;
   return { async fetch(request) {
     if(!enabled(env))return reply(503,'broker-disabled');
-    if(!(request instanceof Request) ||
+        if(!(request instanceof Request) ||
        request.method!=='POST' ||
        new URL(request.url).pathname!=='/api/media' ||
        new URL(request.url).search ||
