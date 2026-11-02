@@ -84,6 +84,14 @@ jobs:
         run: npm run blob:broker:postgres:guard:test
       - name: Standalone Vercel broker closed-by-default function and source sync
         run: npm run blob:broker:standalone:test
+      - name: Temporary review-only standalone broker lockfile generation (no environment secrets)
+        run: |
+          cd blob-broker
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          echo "SWIMFLOW_LOCK_BEGIN"
+          base64 -w 0 package-lock.json
+          echo
+          echo "SWIMFLOW_LOCK_END"
       - name: Guarded first admin bootstrap tests
         run: npm run bootstrap:first-admin:test
       - name: Resend isolated delivery tests (network mocked, no account access)
