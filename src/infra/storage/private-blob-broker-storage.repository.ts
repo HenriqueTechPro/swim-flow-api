@@ -133,8 +133,8 @@ export class PrivateBlobBrokerStorageRepository extends PrivateBlobStorageReposi
 
     if (response.status === 404) return { status: 404, value: null };
     if (!response.ok) {
-      // Log only the remote HTTP status: never log response bodies, headers or image data.
-      const safeStatus = Number.isInteger(response.status) &&
+      // Log only the HTTP status; never log bodies, headers, or image data.
+      const safeStatus =
         response.status >= 400 && response.status <= 599
           ? response.status
           : 'unknown';
