@@ -35,12 +35,7 @@ export const privateImageAccessProvider: Provider = {
     const records = new PrismaPrivateMediaObjectsRepository(prisma);
     return new PrivateImageAccessService(
       new AssignPrivateBlobImageUseCase(profiles, resources, records),
-      new ReadPrivateBlobImageUseCase(
-        profiles,
-        resources,
-        records,
-        transport,
-      ),
+      new ReadPrivateBlobImageUseCase(profiles, resources, records, transport),
       new ListActivePrivateBlobReferencesUseCase(profiles, records),
       new CommitPrivateBlobImageUseCase(profiles, resources, records),
     );
