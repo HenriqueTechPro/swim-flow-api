@@ -124,20 +124,24 @@ describe('private Blob broker Render staging', () => {
     expect(fake).not.toHaveBeenCalled();
   });
   it('reports only remote HTTP status without logging response payload or headers', async () => {
-    const fake = jest.fn(async () => new Response(
-      JSON.stringify({ token: 'should-not-appear', details: 'sensitive' }),
-      { status: 502, headers: { 'x-sensitive-header': 'should-not-appear' } },
-    ));
+    const fake = jest.fn(
+      async () =>
+        new Response(
+          JSON.stringify({ token: 'should-not-appear', details: 'sensitive' }),
+          { status: 502, headers: { 'x-sensitive-header': 'should-not-appear' } },
+        ),
+    );
     const client = new PrivateBlobBrokerStorageRepository(
       loadPrivateBlobBrokerConfig(ENV)!,
       fake as typeof fetch,
     );
-    await expect(client.put({
-      pathname: PATH,
-      bytes: JPEG,
-      contentType: 'image/jpeg',
-    })).rejects.toThrow('private-blob-broker-remote-http-502');
+    await expect(
+      client.put({
+        pathname: PATH,
+        bytes: JPEG,
+        contentType: 'image/jpeg',
+      }),
+    ).rejects.toThrow('private-blob-broker-remote-http-502');
     expect(fake).toHaveBeenCalledTimes(1);
   });
-
 });
