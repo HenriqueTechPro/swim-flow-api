@@ -123,7 +123,7 @@ describe('private Blob broker Render staging', () => {
     await expect(client.delete(PATH, 'bad-etag')).rejects.toThrow();
     expect(fake).not.toHaveBeenCalled();
   });
-  it('reports only remote HTTP status without logging response payload or headers', async () => {
+  it('reports only safe HTTP status for broker errors', async () => {
     const fake = jest.fn(
       async () =>
         new Response(
