@@ -303,6 +303,55 @@ describe('ResultsController (e2e)', () => {
     });
   });
 
+  it('filters ranking by student gender, rejects invalid values and preserves legacy requests', async () => {
+    resultsRepository.studentGenders.set('student-a', 'Feminino');
+    resultsRepository.studentGenders.set('student-b', 'Masculino');
+    resultsRepository.items.push(
+      makeResult({
+        studentId: 'student-a',
+        studentName: 'Ana',
+        time: '00:34.20',
+        timeInSeconds: 34.2,
+      }),
+      makeResult({
+        studentId: 'student-b',
+        studentName: 'Bruno',
+        time: '00:32.50',
+        timeInSeconds: 32.5,
+      }),
+    );
+
+    const path =
+      '/api/results/ranking?page=1&perPage=25&discipline=Piscina&competitionType=Piscina&courseType=Piscina%20Curta&style=Livre&distance=50m&eventFormat=Prova%20Individual&category=Petiz%202';
+
+    const female = await request(app.getHttpServer())
+      .get(`${path}&gender=Feminino`)
+      .expect(200);
+    expect(female.body.meta.total).toBe(1);
+    expect(female.body.data[0]).toMatchObject({
+      studentId: 'student-a',
+      rank: 1,
+    });
+
+    const male = await request(app.getHttpServer())
+      .get(`${path}&gender=Masculino`)
+      .expect(200);
+    expect(male.body.meta.total).toBe(1);
+    expect(male.body.data[0]).toMatchObject({
+      studentId: 'student-b',
+      rank: 1,
+    });
+
+    const legacy = await request(app.getHttpServer())
+      .get(path)
+      .expect(200);
+    expect(legacy.body.meta.total).toBe(2);
+
+    await request(app.getHttpServer())
+      .get(`${path}&gender=Outro`)
+      .expect(400);
+  });
+
   it('returns official contexts, style distribution and evolution analytics', async () => {
     resultsRepository.items.push(
       makeResult({
