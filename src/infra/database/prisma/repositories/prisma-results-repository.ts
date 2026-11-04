@@ -467,6 +467,8 @@ export class PrismaResultsRepository implements ResultsRepository {
     if (input.discipline !== 'Piscina' || input.eventFormat !== 'Prova Individual') return [];
     const { pool } = buildWhere({ ...input, resultStatus: 'Classificado' });
     if (!pool || (!input.courseType && !input.poolLengthMeters)) return [];
+    // Filter at the database before ranking, deduplication, and pagination.
+    if (input.gender) pool.student = { gender: input.gender };
     const rows = await this.prisma.poolResult.findMany({
       where: { AND: [pool, { status: 'CLASSIFIED', format: 'INDIVIDUAL', durationMs: { gt: 0 } }] },
       include: resultStudentInclude,
