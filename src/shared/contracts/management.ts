@@ -310,6 +310,7 @@ export const resultsRankingQuerySchema = z
     poolLengthMeters: z.coerce.number().positive().optional(),
     eventFormat: z.enum(resultEventFormatValues),
     category: z.string().trim().min(1),
+    gender: z.enum(studentGenderValues).optional(),
   })
   .superRefine((data, ctx) =>
     applyResultConsistencyRules(
