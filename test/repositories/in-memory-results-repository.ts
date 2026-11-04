@@ -63,6 +63,8 @@ const formatMonthLabel = (monthKey: string) => {
 
 export class InMemoryResultsRepository implements ResultsRepository {
   public items: Result[] = [];
+  // Represents Student.gender for ranking tests without altering result snapshots.
+  public studentGenders = new Map<string, 'Masculino' | 'Feminino'>();
 
   private filterItems(params?: ListResultsRepositoryParams) {
     const search = params?.search?.trim().toLocaleLowerCase('pt-BR');
