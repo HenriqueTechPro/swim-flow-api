@@ -140,4 +140,61 @@ describe('GenerateRankingUseCase', () => {
       timeInSeconds: 33.9,
     });
   });
+  it('separates gender rankings before calculating positions while preserving the legacy view', async () => {
+    resultsRepository.studentGenders.set('student-a', 'Feminino');
+    resultsRepository.studentGenders.set('student-b', 'Feminino');
+    resultsRepository.studentGenders.set('student-c', 'Masculino');
+    resultsRepository.items.push(
+      makeResult({
+        studentId: 'student-a',
+        studentName: 'Ana',
+        time: '00:34.20',
+        timeInSeconds: 34.2,
+      }),
+      makeResult({
+        studentId: 'student-b',
+        studentName: 'Bia',
+        time: '00:34.20',
+        timeInSeconds: 34.2,
+      }),
+      makeResult({
+        studentId: 'student-c',
+        studentName: 'Caio',
+        time: '00:30.00',
+        timeInSeconds: 30,
+      }),
+    );
+
+    const request = {
+      page: 1,
+      perPage: 10,
+      discipline: 'Piscina' as const,
+      competitionType: 'Piscina' as const,
+      courseType: 'Piscina Curta' as const,
+      style: 'Livre' as const,
+      distance: '50m',
+      eventFormat: 'Prova Individual' as const,
+      category: 'Petiz 2',
+    };
+
+    const female = await sut.execute({ ...request, gender: 'Feminino' });
+    expect(female.meta.total).toBe(2);
+    expect(female.ranking.map((entry) => entry.studentName)).toEqual([
+      'Ana',
+      'Bia',
+    ]);
+    expect(female.ranking.map((entry) => entry.rank)).toEqual([1, 1]);
+
+    const male = await sut.execute({ ...request, gender: 'Masculino' });
+    expect(male.meta.total).toBe(1);
+    expect(male.ranking[0]).toMatchObject({
+      studentId: 'student-c',
+      rank: 1,
+    });
+
+    const legacy = await sut.execute(request);
+    expect(legacy.meta.total).toBe(3);
+    expect(legacy.ranking.map((entry) => entry.rank)).toEqual([1, 2, 2]);
+  });
+
 });
