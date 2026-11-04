@@ -59,21 +59,25 @@ describe('ResultRequestMapper.toUpdate', () => {
   });
 
   it('mantem a validacao contra contextos de prova inconsistentes', () => {
-    expect(() => updateResultSchema.parse({
-      ...baseResult,
-      discipline: 'Piscina',
-      competitionType: 'Piscina',
-      courseType: 'Piscina Curta',
-      eventFormat: 'Prova Individual',
-      poolLengthMeters: 50,
-    })).toThrow();
-    expect(() => updateResultSchema.parse({
-      ...baseResult,
-      discipline: 'Aguas Abertas',
-      competitionType: 'Aguas Abertas',
-      courseType: 'Mar',
-      eventFormat: 'Travessia',
-      poolLengthMeters: 25,
-    })).toThrow();
+    expect(() =>
+      updateResultSchema.parse({
+        ...baseResult,
+        discipline: 'Piscina',
+        competitionType: 'Piscina',
+        courseType: 'Piscina Curta',
+        eventFormat: 'Prova Individual',
+        poolLengthMeters: 50,
+      }),
+    ).toThrow();
+    expect(() =>
+      updateResultSchema.parse({
+        ...baseResult,
+        discipline: 'Aguas Abertas',
+        competitionType: 'Aguas Abertas',
+        courseType: 'Mar',
+        eventFormat: 'Travessia',
+        poolLengthMeters: 25,
+      }),
+    ).toThrow();
   });
 });
