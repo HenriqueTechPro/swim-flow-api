@@ -317,7 +317,11 @@ export class InMemoryResultsRepository implements ResultsRepository {
       .filter((item) => item.distance === input.distance)
       .filter((item) => (item.customDistance?.trim() || undefined) === customDistance)
       .filter((item) => item.eventFormat === input.eventFormat)
-      .filter((item) => item.category === input.category);
+      .filter((item) => item.category === input.category)
+      .filter(
+        (item) =>
+          !input.gender || this.studentGenders.get(item.studentId) === input.gender,
+      );
   }
 
   async listRecordCandidates(
