@@ -14,9 +14,24 @@ export interface ResultSeasonOption {
   status: ResultSeasonStatus;
 }
 
-/** A read-only contract for seasons that can be linked to results. */
+export interface WriteResultSeasonInput {
+  year: number;
+  label: string;
+  startsOn: string;
+  endsOn: string;
+  status: ResultSeasonStatus;
+}
+
+/** Manages real season reference data without modifying any results. */
 export abstract class ResultSeasonsRepository {
   abstract list(
     params?: PaginationParams,
   ): Promise<PaginatedResult<ResultSeasonOption>>;
+
+  abstract create(input: WriteResultSeasonInput): Promise<ResultSeasonOption>;
+
+  abstract update(
+    id: string,
+    input: WriteResultSeasonInput,
+  ): Promise<ResultSeasonOption>;
 }

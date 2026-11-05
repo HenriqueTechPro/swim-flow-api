@@ -76,6 +76,8 @@ import { ListRecordsUseCase } from '@/domain/results/application/use-cases/list-
 import { ListResultFilterOptionsUseCase } from '@/domain/results/application/use-cases/list-result-filter-options';
 import { ListResultsUseCase } from '@/domain/results/application/use-cases/list-results';
 import { ListResultSeasonsUseCase } from '@/domain/results/application/use-cases/list-result-seasons';
+import { CreateResultSeasonUseCase } from '@/domain/results/application/use-cases/create-result-season';
+import { UpdateResultSeasonUseCase } from '@/domain/results/application/use-cases/update-result-season';
 import { UpdateResultUseCase } from '@/domain/results/application/use-cases/update-result';
 import { CreateStudentUseCase } from '@/domain/students/application/use-cases/create-student';
 import { DeleteStudentUseCase } from '@/domain/students/application/use-cases/delete-student';
@@ -196,6 +198,8 @@ export const useCaseProviders: Provider[] = [
   provideUseCase(ListResultFilterOptionsUseCase, ResultsRepository),
   provideUseCase(ListResultsUseCase, ResultsRepository),
   provideUseCase(ListResultSeasonsUseCase, ResultSeasonsRepository),
+  provideUseCase(CreateResultSeasonUseCase, ResultSeasonsRepository),
+  provideUseCase(UpdateResultSeasonUseCase, ResultSeasonsRepository),
   provideUseCase(UpdateResultUseCase, ResultsRepository),
   provideUseCase(CreateStudentUseCase, StudentsRepository),
   provideUseCase(DeleteStudentUseCase, StudentsRepository),

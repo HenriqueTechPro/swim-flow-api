@@ -373,6 +373,46 @@ export const updateResultSchema = resultBaseSchema
   })
   .superRefine(applyResultConsistencyRules);
 
+const isValidSeasonDate = (date: string) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  const utc = new Date(`${date}T00:00:00.000Z`);
+  return (
+    !Number.isNaN(utc.getTime()) && utc.toISOString().slice(0, 10) === date
+  );
+};
+
+const seasonDateField = z.string().refine(isValidSeasonDate, {
+  message: 'Invalid calendar date',
+});
+
+const seasonWriteBaseSchema = z.object({
+  year: z.number().int().min(1900).max(2100),
+  label: z.string().trim().min(3).max(120),
+  startsOn: seasonDateField,
+  endsOn: seasonDateField,
+  status: z.enum(['PLANNED', 'ACTIVE', 'CLOSED']),
+});
+
+const validateSeasonPeriod = (
+  data: { startsOn: string; endsOn: string },
+  ctx: z.RefinementCtx,
+) => {
+  if (data.startsOn > data.endsOn) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['endsOn'],
+      message: 'Season end date must not precede its start date',
+    });
+  }
+};
+
+export const createResultSeasonSchema = seasonWriteBaseSchema
+  .extend({ status: seasonWriteBaseSchema.shape.status.default('PLANNED') })
+  .superRefine(validateSeasonPeriod);
+
+export const updateResultSeasonSchema =
+  seasonWriteBaseSchema.superRefine(validateSeasonPeriod);
+
 export const resultSeasonsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).optional().default(1),
   perPage: z.coerce.number().int().min(1).max(100).optional().default(25),
@@ -543,6 +583,8 @@ export type CreateResultDto = z.infer<typeof createResultSchema>;
 export type UpdateResultDto = z.infer<typeof updateResultSchema>;
 export type ResultsRankingQueryDto = z.infer<typeof resultsRankingQuerySchema>;
 export type ResultSeasonsQueryDto = z.infer<typeof resultSeasonsQuerySchema>;
+export type CreateResultSeasonDto = z.infer<typeof createResultSeasonSchema>;
+export type UpdateResultSeasonDto = z.infer<typeof updateResultSeasonSchema>;
 export type CreateEventDto = z.infer<typeof createEventSchema>;
 export type UpdateEventDto = z.infer<typeof updateEventSchema>;
 export type CreatePoolDto = z.infer<typeof createPoolSchema>;

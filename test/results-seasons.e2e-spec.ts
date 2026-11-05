@@ -3,6 +3,7 @@ import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { ResultSeasonsRepository } from '@/domain/results/application/repositories/result-seasons-repository';
+import { AppError } from '@/shared/errors/app-error';
 import { ResultSeasonsController } from '@/infra/http/controllers/result-seasons.controller';
 import { ROLES_KEY } from '@/infra/auth/roles.decorator';
 import { PERMISSIONS_KEY } from '@/infra/auth/permissions.decorator';
@@ -15,10 +16,30 @@ import {
 describe('Result season options (e2e)', () => {
   let app: INestApplication<App>;
   const list = jest.fn();
+  const create = jest.fn();
+  const update = jest.fn();
+  const seasonId = '88888888-8888-4888-8888-888888888888';
+  const payload = {
+    year: 2026,
+    label: 'Temporada 2025/2026',
+    startsOn: '2025-09-01',
+    endsOn: '2026-08-31',
+    status: 'ACTIVE',
+  };
   const get = (url: string) => request(app.getHttpServer()).get(url);
 
   beforeEach(async () => {
     list.mockReset();
+    create.mockReset();
+    update.mockReset();
+    create.mockImplementation(async (input: object) => ({
+      id: seasonId,
+      ...input,
+    }));
+    update.mockImplementation(async (_id: string, input: object) => ({
+      id: seasonId,
+      ...input,
+    }));
     list.mockResolvedValue({
       items: [],
       page: 1,
@@ -26,7 +47,9 @@ describe('Result season options (e2e)', () => {
       total: 0,
     });
     app = await createAuthenticatedE2EApp((builder) =>
-      builder.overrideProvider(ResultSeasonsRepository).useValue({ list }),
+      builder
+        .overrideProvider(ResultSeasonsRepository)
+        .useValue({ list, create, update }),
     );
   });
 
@@ -44,6 +67,18 @@ describe('Result season options (e2e)', () => {
         ResultSeasonsController.prototype.index,
       ),
     ).toEqual(['results:read']);
+    expect(
+      Reflect.getMetadata(
+        PERMISSIONS_KEY,
+        ResultSeasonsController.prototype.create,
+      ),
+    ).toEqual(['results:write']);
+    expect(
+      Reflect.getMetadata(
+        PERMISSIONS_KEY,
+        ResultSeasonsController.prototype.update,
+      ),
+    ).toEqual(['results:write']);
   });
 
   it('returns a paginated empty list', async () => {
@@ -91,12 +126,68 @@ describe('Result season options (e2e)', () => {
     expect(list).not.toHaveBeenCalled();
   });
 
+  it('defaults new season status to PLANNED', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/results/seasons')
+      .send({
+        year: 2026,
+        label: payload.label,
+        startsOn: payload.startsOn,
+        endsOn: payload.endsOn,
+      })
+      .expect(201);
+    expect(create).toHaveBeenCalledWith({ ...payload, status: 'PLANNED' });
+    expect(response.body.data).toMatchObject({
+      id: seasonId,
+      label: payload.label,
+      status: 'PLANNED',
+    });
+  });
+
+  it('updates a season with a validated payload', async () => {
+    const response = await request(app.getHttpServer())
+      .put(`/api/results/seasons/${seasonId}`)
+      .send(payload)
+      .expect(200);
+    expect(update).toHaveBeenCalledWith(seasonId, payload);
+    expect(response.body.data).toMatchObject({
+      id: seasonId,
+      status: 'ACTIVE',
+    });
+  });
+
+  it('rejects invalid dates, year, label and lifecycle status', async () => {
+    const post = (data: object) =>
+      request(app.getHttpServer()).post('/api/results/seasons').send(data);
+
+    await post({ ...payload, startsOn: '2026-02-30' }).expect(400);
+    await post({ ...payload, endsOn: '2024-12-31' }).expect(400);
+    await post({ ...payload, status: 'UNKNOWN' }).expect(400);
+    await post({ ...payload, year: 1800 }).expect(400);
+    await post({ ...payload, label: '' }).expect(400);
+    await request(app.getHttpServer())
+      .put(`/api/results/seasons/${seasonId}`)
+      .send({ ...payload, status: undefined })
+      .expect(400);
+
+    expect(create).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it('returns 409 for conflicting season periods', async () => {
+    create.mockRejectedValueOnce(new AppError(409, 'Season dates overlap'));
+    await request(app.getHttpServer())
+      .post('/api/results/seasons')
+      .send(payload)
+      .expect(409);
+  });
+
   it('denies anonymous access', async () => {
     await app.close();
     app = await createE2EApp((builder) =>
       withDefaultTestOverrides(builder)
         .overrideProvider(ResultSeasonsRepository)
-        .useValue({ list }),
+        .useValue({ list, create, update }),
     );
 
     await get('/api/results/seasons').expect(401);
