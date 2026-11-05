@@ -56,9 +56,15 @@ describe('Event identity protection with linked results (Prisma)', () => {
   });
 
   it('protects date, event type and cancellation while results exist', async () => {
-    await expect(repo.update(id, { ...input, date: '2026-04-01' })).rejects.toThrow('Event has linked results');
-    await expect(repo.update(id, { ...input, type: 'Reunião' })).rejects.toThrow('Event has linked results');
-    await expect(repo.update(id, { ...input, status: 'Cancelado' })).rejects.toThrow('Event has linked results');
+    await expect(
+      repo.update(id, { ...input, date: '2026-04-01' }),
+    ).rejects.toThrow('Event has linked results');
+    await expect(
+      repo.update(id, { ...input, type: 'Reunião' }),
+    ).rejects.toThrow('Event has linked results');
+    await expect(
+      repo.update(id, { ...input, status: 'Cancelado' }),
+    ).rejects.toThrow('Event has linked results');
     expect(prisma.event.update).not.toHaveBeenCalled();
   });
 

@@ -448,20 +448,35 @@ export class PrismaResultsRepository implements ResultsRepository {
     if (!eventId) return;
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
-      select: { id: true, date: true, type: true, status: true, seasonId: true },
+      select: {
+        id: true,
+        date: true,
+        type: true,
+        status: true,
+        seasonId: true,
+      },
     });
     if (!event) throw new AppError(422, 'Selected event does not exist');
     if (event.type !== 'Competicao' && event.type !== 'Festival') {
-      throw new AppError(422, 'Selected event is not a competition or festival');
+      throw new AppError(
+        422,
+        'Selected event is not a competition or festival',
+      );
     }
     if (event.status === 'Cancelado') {
       throw new AppError(422, 'Cancelled events cannot receive results');
     }
-    if (event.date?.toISOString().slice(0, 10) !== heldOn.toISOString().slice(0, 10)) {
+    if (
+      event.date?.toISOString().slice(0, 10) !==
+      heldOn.toISOString().slice(0, 10)
+    ) {
       throw new AppError(422, 'Result date must match selected event date');
     }
     if (event.seasonId && event.seasonId !== seasonId) {
-      throw new AppError(422, 'Result season must match the selected event season');
+      throw new AppError(
+        422,
+        'Result season must match the selected event season',
+      );
     }
   }
 
@@ -977,7 +992,11 @@ export class PrismaResultsRepository implements ResultsRepository {
     const effectiveEventId =
       input.eventId === undefined ? existingEventId : input.eventId;
     await this.assertSeasonLink(effectiveSeasonId, row.data.heldOn);
-    await this.assertEventLink(effectiveEventId, row.data.heldOn, effectiveSeasonId);
+    await this.assertEventLink(
+      effectiveEventId,
+      row.data.heldOn,
+      effectiveSeasonId,
+    );
     const result =
       poolOld && row.discipline === 'Piscina'
         ? PrismaCompetitiveResultMapper.pool(

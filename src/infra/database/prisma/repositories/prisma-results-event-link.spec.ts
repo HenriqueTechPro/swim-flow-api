@@ -77,16 +77,20 @@ describe('Result event ID integrity (Prisma)', () => {
     prisma.season.findUnique.mockResolvedValue(null);
     prisma.poolResult.findUnique.mockResolvedValue(null);
     prisma.openWaterResult.findUnique.mockResolvedValue(null);
-    prisma.poolResult.create.mockImplementation(async (args: { data: { eventId?: string | null } }) => ({
-      ...poolRow,
-      ...args.data,
-      eventId: args.data.eventId ?? null,
-    }));
-    prisma.poolResult.update.mockImplementation(async (args: { data: { eventId?: string | null } }) => ({
-      ...poolRow,
-      ...args.data,
-      eventId: args.data.eventId === undefined ? eventId : args.data.eventId,
-    }));
+    prisma.poolResult.create.mockImplementation(
+      async (args: { data: { eventId?: string | null } }) => ({
+        ...poolRow,
+        ...args.data,
+        eventId: args.data.eventId ?? null,
+      }),
+    );
+    prisma.poolResult.update.mockImplementation(
+      async (args: { data: { eventId?: string | null } }) => ({
+        ...poolRow,
+        ...args.data,
+        eventId: args.data.eventId === undefined ? eventId : args.data.eventId,
+      }),
+    );
     cache.deleteMatching.mockResolvedValue(undefined);
   });
 
@@ -95,7 +99,13 @@ describe('Result event ID integrity (Prisma)', () => {
     expect(result.eventId).toBe(eventId);
     expect(prisma.event.findUnique).toHaveBeenCalledWith({
       where: { id: eventId },
-      select: { id: true, date: true, type: true, status: true, seasonId: true },
+      select: {
+        id: true,
+        date: true,
+        type: true,
+        status: true,
+        seasonId: true,
+      },
     });
     expect(prisma.poolResult.create.mock.calls[0][0].data).toMatchObject({
       eventId,
@@ -106,16 +116,25 @@ describe('Result event ID integrity (Prisma)', () => {
   it('does not infer an event identity from a competition name', async () => {
     const result = await repo.create({ ...input, eventId: undefined });
     expect(prisma.event.findUnique).not.toHaveBeenCalled();
-    expect(prisma.poolResult.create.mock.calls[0][0].data).not.toHaveProperty('eventId');
+    expect(prisma.poolResult.create.mock.calls[0][0].data).not.toHaveProperty(
+      'eventId',
+    );
     expect(result.eventId).toBeNull();
   });
 
   it('rejects missing events, meetings and cancelled events before writing', async () => {
     prisma.event.findUnique.mockResolvedValue(null);
-    await expect(repo.create(input)).rejects.toThrow('Selected event does not exist');
+    await expect(repo.create(input)).rejects.toThrow(
+      'Selected event does not exist',
+    );
     prisma.event.findUnique.mockResolvedValue({ ...event, type: 'Reuniao' });
-    await expect(repo.create(input)).rejects.toThrow('not a competition or festival');
-    prisma.event.findUnique.mockResolvedValue({ ...event, status: 'Cancelado' });
+    await expect(repo.create(input)).rejects.toThrow(
+      'not a competition or festival',
+    );
+    prisma.event.findUnique.mockResolvedValue({
+      ...event,
+      status: 'Cancelado',
+    });
     await expect(repo.create(input)).rejects.toThrow('Cancelled events');
     expect(prisma.poolResult.create).not.toHaveBeenCalled();
   });
@@ -133,7 +152,9 @@ describe('Result event ID integrity (Prisma)', () => {
 
   it('requires explicitly consistent seasons when the event has a season', async () => {
     prisma.event.findUnique.mockResolvedValue({ ...event, seasonId });
-    await expect(repo.create(input)).rejects.toThrow('Result season must match');
+    await expect(repo.create(input)).rejects.toThrow(
+      'Result season must match',
+    );
     prisma.season.findUnique.mockResolvedValue({
       startsOn: new Date('2026-01-01T00:00:00.000Z'),
       endsOn: new Date('2026-12-31T00:00:00.000Z'),
@@ -152,10 +173,17 @@ describe('Result event ID integrity (Prisma)', () => {
       eventId,
       seasonId: null,
     });
-    const update = { ...input, eventId: undefined, personalBest: false, improvement: 0 };
+    const update = {
+      ...input,
+      eventId: undefined,
+      personalBest: false,
+      improvement: 0,
+    };
     const result = await repo.update(poolRow.id, update);
     expect(result.eventId).toBe(eventId);
-    expect(prisma.poolResult.update.mock.calls[0][0].data).not.toHaveProperty('eventId');
+    expect(prisma.poolResult.update.mock.calls[0][0].data).not.toHaveProperty(
+      'eventId',
+    );
     prisma.poolResult.update.mockClear();
     await expect(
       repo.update(poolRow.id, { ...update, date: '2026-04-01' }),
@@ -177,17 +205,21 @@ describe('Result event ID integrity (Prisma)', () => {
     });
     expect(result.eventId).toBeNull();
     expect(prisma.event.findUnique).not.toHaveBeenCalled();
-    expect(prisma.poolResult.update.mock.calls[0][0].data).toMatchObject({ eventId: null });
+    expect(prisma.poolResult.update.mock.calls[0][0].data).toMatchObject({
+      eventId: null,
+    });
   });
 
   it('validates event ID for open-water results as well', async () => {
-    prisma.openWaterResult.create.mockImplementation(async (args: { data: object }) => ({
-      ...poolRow,
-      ...args.data,
-      bodyType: 'SEA',
-      routeKey: 'Rota A',
-      format: 'TRAVESSIA',
-    }));
+    prisma.openWaterResult.create.mockImplementation(
+      async (args: { data: object }) => ({
+        ...poolRow,
+        ...args.data,
+        bodyType: 'SEA',
+        routeKey: 'Rota A',
+        format: 'TRAVESSIA',
+      }),
+    );
     const result = await repo.create({
       ...input,
       discipline: 'Aguas Abertas',
