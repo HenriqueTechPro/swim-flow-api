@@ -3,12 +3,15 @@ import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { ResultSeasonsRepository } from '@/domain/results/application/repositories/result-seasons-repository';
-import { ResultsController } from '@/infra/http/controllers/results.controller';
+import { ResultSeasonsController } from '@/infra/http/controllers/result-seasons.controller';
 import { ROLES_KEY } from '@/infra/auth/roles.decorator';
 import { PERMISSIONS_KEY } from '@/infra/auth/permissions.decorator';
-import { createAuthenticatedE2EApp, createE2EApp } from './utils/create-e2e-app';
+import {
+  createAuthenticatedE2EApp,
+  createE2EApp,
+} from './utils/create-e2e-app';
 
-describe('Results season options (e2e)', () => {
+describe('Result season options (e2e)', () => {
   let app: INestApplication<App>;
   const list = jest.fn();
 
@@ -20,7 +23,6 @@ describe('Results season options (e2e)', () => {
       perPage: 25,
       total: 0,
     });
-
     app = await createAuthenticatedE2EApp((builder) =>
       builder.overrideProvider(ResultSeasonsRepository).useValue({ list }),
     );
@@ -30,19 +32,19 @@ describe('Results season options (e2e)', () => {
     await app.close();
   });
 
-  it('requires admin and results read permission', () => {
-    expect(Reflect.getMetadata(ROLES_KEY, ResultsController)).toEqual([
+  it('requires admin role and results read permission', () => {
+    expect(Reflect.getMetadata(ROLES_KEY, ResultSeasonsController)).toEqual([
       'admin',
     ]);
     expect(
       Reflect.getMetadata(
         PERMISSIONS_KEY,
-        ResultsController.prototype.seasons,
+        ResultSeasonsController.prototype.index,
       ),
     ).toEqual(['results:read']);
   });
 
-  it('returns an empty list with pagination and no invented seasons', async () => {
+  it('returns a paginated empty list', async () => {
     const response = await request(app.getHttpServer())
       .get('/api/results/seasons')
       .expect(200);
@@ -54,7 +56,7 @@ describe('Results season options (e2e)', () => {
     expect(list).toHaveBeenCalledWith({ page: 1, perPage: 25 });
   });
 
-  it('validates and passes pagination to the read use case', async () => {
+  it('validates and passes pagination to the use case', async () => {
     list.mockResolvedValueOnce({
       items: [
         {
@@ -83,7 +85,7 @@ describe('Results season options (e2e)', () => {
     expect(list).toHaveBeenCalledWith({ page: 2, perPage: 10 });
   });
 
-  it('rejects invalid or unbounded pagination', async () => {
+  it('rejects invalid pagination before querying the repository', async () => {
     await request(app.getHttpServer())
       .get('/api/results/seasons?page=0')
       .expect(400);
@@ -96,7 +98,7 @@ describe('Results season options (e2e)', () => {
     expect(list).not.toHaveBeenCalled();
   });
 
-  it('rejects anonymous access before querying seasons', async () => {
+  it('denies anonymous access', async () => {
     await app.close();
     app = await createE2EApp((builder) =>
       builder.overrideProvider(ResultSeasonsRepository).useValue({ list }),
