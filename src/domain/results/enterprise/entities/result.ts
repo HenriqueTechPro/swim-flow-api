@@ -41,6 +41,7 @@ export interface Result {
   poolLengthMeters?: number | null;
   routeKey?: string | null;
   seasonId?: string | null;
+  eventId?: string | null;
   durationMs?: number | null;
   eventFormat: ResultEventFormat;
   time: string;

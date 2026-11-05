@@ -143,14 +143,35 @@ export class PrismaEventsRepository implements EventsRepository {
     return PrismaEventMapper.toDomain(event as unknown as PrismaEventRecord);
   }
 
+  private async assertNoLinkedResults(id: string): Promise<void> {
+    const [poolResults, openWaterResults] = await Promise.all([
+      this.prisma.poolResult.count({ where: { eventId: id } }),
+      this.prisma.openWaterResult.count({ where: { eventId: id } }),
+    ]);
+    if (poolResults + openWaterResults > 0) {
+      throw new AppError(
+        409,
+        'Event has linked results; identity and date must be preserved',
+      );
+    }
+  }
+
   async update(id: string, input: UpdateEventRepositoryInput) {
     const existing = await this.prisma.event.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, date: true },
     });
 
     if (!existing) {
       throw new AppError(404, 'Event not found');
+    }
+
+    if (
+      existing.date?.toISOString().slice(0, 10) !== input.date ||
+      (input.type !== 'Competição' && input.type !== 'Festival') ||
+      input.status === 'Cancelado'
+    ) {
+      await this.assertNoLinkedResults(id);
     }
 
     const event = await this.prisma.event.update({
@@ -180,6 +201,7 @@ export class PrismaEventsRepository implements EventsRepository {
       throw new AppError(404, 'Event not found');
     }
 
+    await this.assertNoLinkedResults(id);
     await this.prisma.event.delete({
       where: { id },
     });

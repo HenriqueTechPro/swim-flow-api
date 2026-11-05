@@ -20,6 +20,8 @@ export interface CreateResultRequest {
   routeKey?: string;
   /** Undefined preserves an existing link on update; null explicitly unlinks. */
   seasonId?: string | null;
+  /** Undefined preserves the current association on update; null unlinks. */
+  eventId?: string | null;
   eventFormat: ResultEventFormat;
   time?: string | null;
   date: string;
