@@ -1,4 +1,10 @@
-export type ResultStyle = 'Livre' | 'Costas' | 'Peito' | 'Borboleta' | 'Medley' | 'Nao informado';
+export type ResultStyle =
+  | 'Livre'
+  | 'Costas'
+  | 'Peito'
+  | 'Borboleta'
+  | 'Medley'
+  | 'Nao informado';
 export type ResultDistance = string;
 export type ResultDiscipline = 'Piscina' | 'Aguas Abertas';
 export type ResultCompetitionType = ResultDiscipline;
@@ -15,7 +21,12 @@ export type ResultEventFormat =
   | 'Travessia'
   | 'Knockout Sprint'
   | 'Ultramaratona';
-export type ResultStatus = 'Classificado' | 'Desclassificado' | 'Pendente' | 'Não largou' | 'Não completou';
+export type ResultStatus =
+  | 'Classificado'
+  | 'Desclassificado'
+  | 'Pendente'
+  | 'Não largou'
+  | 'Não completou';
 
 export interface Result {
   id: string;
@@ -29,6 +40,7 @@ export interface Result {
   courseType?: ResultCourseType;
   poolLengthMeters?: number | null;
   routeKey?: string | null;
+  seasonId?: string | null;
   durationMs?: number | null;
   eventFormat: ResultEventFormat;
   time: string;
