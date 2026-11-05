@@ -32,8 +32,11 @@ describe('Result season options (e2e)', () => {
     list.mockReset();
     create.mockReset();
     update.mockReset();
-    create.mockImplementation(async (input: unknown) => ({ id: seasonId, ...input as object }));
-    update.mockImplementation(async (_id: string, input: unknown) => ({ id: seasonId, ...input as object }));
+    create.mockImplementation(async (input: object) => ({ id: seasonId, ...input }));
+    update.mockImplementation(async (_id: string, input: object) => ({
+      id: seasonId,
+      ...input,
+    }));
     list.mockResolvedValue({
       items: [],
       page: 1,
@@ -41,7 +44,9 @@ describe('Result season options (e2e)', () => {
       total: 0,
     });
     app = await createAuthenticatedE2EApp((builder) =>
-      builder.overrideProvider(ResultSeasonsRepository).useValue({ list, create, update }),
+      builder
+        .overrideProvider(ResultSeasonsRepository)
+        .useValue({ list, create, update }),
     );
   });
 
@@ -148,7 +153,7 @@ describe('Result season options (e2e)', () => {
     });
   });
 
-  it('rejects invalid calendar dates and inverted or duplicate reference years', async () => {
+  it('rejects invalid dates, year, label and lifecycle status', async () => {
     const post = (data: object) =>
       request(app.getHttpServer()).post('/api/results/seasons').send(data);
 
@@ -166,7 +171,7 @@ describe('Result season options (e2e)', () => {
     expect(update).not.toHaveBeenCalled();
   });
 
-  it('returns a controlled 409 on a conflicting season period', async () => {
+  it('returns 409 for conflicting season periods', async () => {
     create.mockRejectedValueOnce(new AppError(409, 'Season dates overlap'));
     await request(app.getHttpServer())
       .post('/api/results/seasons')
