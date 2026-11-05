@@ -62,12 +62,12 @@ describe('PrismaResultsRepository season links', () => {
         update: jest.fn(),
       },
     };
-    prisma.poolResult.create.mockImplementation(async ({ data }) => ({
+    prisma.poolResult.create.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({
       id: 'pool-result',
       ...data,
       student: { name: 'Atleta' },
     }));
-    prisma.openWaterResult.create.mockImplementation(async ({ data }) => ({
+    prisma.openWaterResult.create.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({
       id: 'open-water-result',
       ...data,
       student: { name: 'Atleta' },
@@ -145,7 +145,7 @@ describe('PrismaResultsRepository season links', () => {
       id: 'pool-result',
       seasonId,
     });
-    prisma.poolResult.update.mockImplementation(async ({ data }) => ({
+    prisma.poolResult.update.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({
       id: 'pool-result',
       ...data,
       seasonId,
@@ -177,7 +177,7 @@ describe('PrismaResultsRepository season links', () => {
       id: 'pool-result',
       seasonId,
     });
-    prisma.poolResult.update.mockImplementation(async ({ data }) => ({
+    prisma.poolResult.update.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({
       id: 'pool-result',
       ...data,
       student: { name: 'Atleta' },
