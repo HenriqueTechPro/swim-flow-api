@@ -373,6 +373,11 @@ export const updateResultSchema = resultBaseSchema
   })
   .superRefine(applyResultConsistencyRules);
 
+export const resultSeasonsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).optional().default(1),
+  perPage: z.coerce.number().int().min(1).max(100).optional().default(25),
+});
+
 export const resultsRankingQuerySchema = z
   .object({
     page: z.coerce.number().int().min(1).optional().default(1),
@@ -537,6 +542,7 @@ export type SaveAttendanceBatchDto = z.infer<typeof saveAttendanceBatchSchema>;
 export type CreateResultDto = z.infer<typeof createResultSchema>;
 export type UpdateResultDto = z.infer<typeof updateResultSchema>;
 export type ResultsRankingQueryDto = z.infer<typeof resultsRankingQuerySchema>;
+export type ResultSeasonsQueryDto = z.infer<typeof resultSeasonsQuerySchema>;
 export type CreateEventDto = z.infer<typeof createEventSchema>;
 export type UpdateEventDto = z.infer<typeof updateEventSchema>;
 export type CreatePoolDto = z.infer<typeof createPoolSchema>;
