@@ -18,21 +18,23 @@ describe('PrismaStudentsRepository season-category history', () => {
   });
 
   it('returns only selected season/category fields ordered by year', async () => {
-    findMany.mockResolvedValue([{
-      assignedAt: new Date('2026-01-10T12:00:00Z'),
-      season: {
-        id: '22222222-2222-4222-8222-222222222222',
-        year: 2026,
-        label: 'Temporada 2026',
-        status: 'ACTIVE',
-        startsOn: new Date('2026-01-01T00:00:00Z'),
-        endsOn: new Date('2026-12-31T00:00:00Z'),
+    findMany.mockResolvedValue([
+      {
+        assignedAt: new Date('2026-01-10T12:00:00Z'),
+        season: {
+          id: '22222222-2222-4222-8222-222222222222',
+          year: 2026,
+          label: 'Temporada 2026',
+          status: 'ACTIVE',
+          startsOn: new Date('2026-01-01T00:00:00Z'),
+          endsOn: new Date('2026-12-31T00:00:00Z'),
+        },
+        category: {
+          id: '33333333-3333-4333-8333-333333333333',
+          name: 'Mirim_1',
+        },
       },
-      category: {
-        id: '33333333-3333-4333-8333-333333333333',
-        name: 'Mirim_1',
-      },
-    }]);
+    ]);
 
     const result = await repository.listSeasonCategories(studentId);
     expect(findMany).toHaveBeenCalledWith({
@@ -53,17 +55,19 @@ describe('PrismaStudentsRepository season-category history', () => {
       },
       orderBy: [{ season: { year: 'desc' } }, { assignedAt: 'desc' }],
     });
-    expect(result).toEqual([{
-      seasonId: '22222222-2222-4222-8222-222222222222',
-      year: 2026,
-      seasonLabel: 'Temporada 2026',
-      seasonStatus: 'ACTIVE',
-      startsOn: '2026-01-01',
-      endsOn: '2026-12-31',
-      categoryId: '33333333-3333-4333-8333-333333333333',
-      category: 'Mirim 1',
-      assignedAt: '2026-01-10T12:00:00.000Z',
-    }]);
+    expect(result).toEqual([
+      {
+        seasonId: '22222222-2222-4222-8222-222222222222',
+        year: 2026,
+        seasonLabel: 'Temporada 2026',
+        seasonStatus: 'ACTIVE',
+        startsOn: '2026-01-01',
+        endsOn: '2026-12-31',
+        categoryId: '33333333-3333-4333-8333-333333333333',
+        category: 'Mirim 1',
+        assignedAt: '2026-01-10T12:00:00.000Z',
+      },
+    ]);
     expect(result[0]).not.toHaveProperty('studentId');
     expect(result[0]).not.toHaveProperty('birthDate');
   });
