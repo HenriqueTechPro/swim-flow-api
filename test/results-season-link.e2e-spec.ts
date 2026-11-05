@@ -1,10 +1,4 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-} from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
@@ -45,7 +39,7 @@ describe('Results season link contract (e2e)', () => {
     await app.close();
   });
 
-  it('preserves, changes and explicitly clears the season through HTTP', async () => {
+  it('supports season create, preservation and explicit unlink', async () => {
     const created = await request(app.getHttpServer())
       .post('/api/results')
       .send({ ...payload, seasonId })
