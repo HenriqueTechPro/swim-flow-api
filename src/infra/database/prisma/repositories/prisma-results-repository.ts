@@ -385,9 +385,20 @@ export class PrismaResultsRepository implements ResultsRepository {
     input: ListCompetitionPlacementsRequest,
   ): Promise<PaginatedResult<CompetitionPlacement>> {
     const { page, perPage } = normalizePaginationParams(input);
+    if (!input.eventId && (!input.competition || !input.date)) {
+      throw new AppError(422, 'Legacy placements require competition and date');
+    }
+    if (input.eventId && (input.competition || input.date)) {
+      throw new AppError(422, 'Event identity cannot be mixed with legacy filters');
+    }
     const where: Prisma.PoolResultWhereInput = {
-      competitionSnapshot: input.competition,
-      heldOn: parseDate(input.date, 'date'),
+      ...(input.eventId
+        ? { eventId: input.eventId }
+        : {
+            eventId: null,
+            competitionSnapshot: input.competition,
+            heldOn: parseDate(input.date!, 'date'),
+          }),
       categorySnapshot: input.category,
       student: { gender: input.gender },
       style: input.style,
@@ -403,6 +414,9 @@ export class PrismaResultsRepository implements ResultsRepository {
         where,
         select: {
           id: true,
+          eventId: true,
+          heldOn: true,
+          competitionSnapshot: true,
           studentId: true,
           student: { select: { name: true } },
           position: true,
@@ -421,13 +435,14 @@ export class PrismaResultsRepository implements ResultsRepository {
       }
       return {
         resultId: row.id,
+        eventId: row.eventId,
         studentId: row.studentId,
         studentName: row.student.name,
         position: row.position,
         durationMs: row.durationMs,
         time: formatDurationFromMilliseconds(row.durationMs, 2),
-        competition: input.competition,
-        date: input.date,
+        competition: row.competitionSnapshot ?? '',
+        date: row.heldOn.toISOString().slice(0, 10),
         category: input.category,
         discipline: 'Piscina' as const,
         eventFormat: 'Prova Individual' as const,
