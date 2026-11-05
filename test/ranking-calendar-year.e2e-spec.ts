@@ -22,7 +22,7 @@ describe('Ranking calendar-year filter (e2e)', () => {
     await app.close();
   });
 
-  it('filters the result year before ranking and preserves unfiltered requests', async () => {
+  it('filters by year and preserves unfiltered rankings', async () => {
     resultsRepository.studentGenders.set('student-ana', 'Feminino');
     resultsRepository.studentGenders.set('student-bia', 'Feminino');
     resultsRepository.studentGenders.set('student-caio', 'Masculino');
