@@ -10,6 +10,7 @@ import { ExStudentsRepository } from '@/domain/ex-students/application/repositor
 import { ParentsRepository } from '@/domain/parents/application/repositories/parents-repository';
 import { PoolsRepository } from '@/domain/pools/application/repositories/pools-repository';
 import { ResultsRepository } from '@/domain/results/application/repositories/results-repository';
+import { ResultSeasonsRepository } from '@/domain/results/application/repositories/result-seasons-repository';
 import { StudentsRepository } from '@/domain/students/application/repositories/students-repository';
 import { TeachersRepository } from '@/domain/teachers/application/repositories/teachers-repository';
 import { TeacherAccountLinksRepository } from '@/domain/teachers/application/repositories/teacher-account-links-repository';
@@ -74,6 +75,7 @@ import { ListResultCompetitionContextsUseCase } from '@/domain/results/applicati
 import { ListRecordsUseCase } from '@/domain/results/application/use-cases/list-records';
 import { ListResultFilterOptionsUseCase } from '@/domain/results/application/use-cases/list-result-filter-options';
 import { ListResultsUseCase } from '@/domain/results/application/use-cases/list-results';
+import { ListResultSeasonsUseCase } from '@/domain/results/application/use-cases/list-result-seasons';
 import { UpdateResultUseCase } from '@/domain/results/application/use-cases/update-result';
 import { CreateStudentUseCase } from '@/domain/students/application/use-cases/create-student';
 import { DeleteStudentUseCase } from '@/domain/students/application/use-cases/delete-student';
@@ -193,6 +195,7 @@ export const useCaseProviders: Provider[] = [
   provideUseCase(ListRecordsUseCase, ResultsRepository),
   provideUseCase(ListResultFilterOptionsUseCase, ResultsRepository),
   provideUseCase(ListResultsUseCase, ResultsRepository),
+  provideUseCase(ListResultSeasonsUseCase, ResultSeasonsRepository),
   provideUseCase(UpdateResultUseCase, ResultsRepository),
   provideUseCase(CreateStudentUseCase, StudentsRepository),
   provideUseCase(DeleteStudentUseCase, StudentsRepository),
