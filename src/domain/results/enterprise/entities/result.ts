@@ -29,6 +29,7 @@ export interface Result {
   courseType?: ResultCourseType;
   poolLengthMeters?: number | null;
   routeKey?: string | null;
+  seasonId?: string | null;
   durationMs?: number | null;
   eventFormat: ResultEventFormat;
   time: string;
