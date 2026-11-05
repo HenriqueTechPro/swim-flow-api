@@ -4,6 +4,8 @@ import { ListResultSeasonsUseCase } from './list-result-seasons';
 describe('ListResultSeasonsUseCase', () => {
   it('returns seasons and metadata without changing any records', async () => {
     const repository: ResultSeasonsRepository = {
+      create: jest.fn(),
+      update: jest.fn(),
       list: jest.fn().mockResolvedValue({
         items: [
           {
