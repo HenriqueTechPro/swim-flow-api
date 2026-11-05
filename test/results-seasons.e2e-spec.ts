@@ -6,14 +6,12 @@ import { ResultSeasonsRepository } from '@/domain/results/application/repositori
 import { ResultSeasonsController } from '@/infra/http/controllers/result-seasons.controller';
 import { ROLES_KEY } from '@/infra/auth/roles.decorator';
 import { PERMISSIONS_KEY } from '@/infra/auth/permissions.decorator';
-import {
-  createAuthenticatedE2EApp,
-  createE2EApp,
-} from './utils/create-e2e-app';
+import { createAuthenticatedE2EApp, createE2EApp } from './utils/create-e2e-app';
 
 describe('Result season options (e2e)', () => {
   let app: INestApplication<App>;
   const list = jest.fn();
+  const get = (url: string) => request(app.getHttpServer()).get(url);
 
   beforeEach(async () => {
     list.mockReset();
@@ -45,9 +43,7 @@ describe('Result season options (e2e)', () => {
   });
 
   it('returns a paginated empty list', async () => {
-    const response = await request(app.getHttpServer())
-      .get('/api/results/seasons')
-      .expect(200);
+    const response = await get('/api/results/seasons').expect(200);
 
     expect(response.body).toEqual({
       data: [],
@@ -72,9 +68,7 @@ describe('Result season options (e2e)', () => {
       perPage: 10,
       total: 12,
     });
-    const response = await request(app.getHttpServer())
-      .get('/api/results/seasons?page=2&perPage=10')
-      .expect(200);
+    const response = await get('/api/results/seasons?page=2&perPage=10').expect(200);
 
     expect(response.body.data[0]).toMatchObject({
       year: 2026,
@@ -86,15 +80,9 @@ describe('Result season options (e2e)', () => {
   });
 
   it('rejects invalid pagination before querying the repository', async () => {
-    await request(app.getHttpServer())
-      .get('/api/results/seasons?page=0')
-      .expect(400);
-    await request(app.getHttpServer())
-      .get('/api/results/seasons?perPage=101')
-      .expect(400);
-    await request(app.getHttpServer())
-      .get('/api/results/seasons?page=hello')
-      .expect(400);
+    await get('/api/results/seasons?page=0').expect(400);
+    await get('/api/results/seasons?perPage=101').expect(400);
+    await get('/api/results/seasons?page=hello').expect(400);
     expect(list).not.toHaveBeenCalled();
   });
 
@@ -104,9 +92,7 @@ describe('Result season options (e2e)', () => {
       builder.overrideProvider(ResultSeasonsRepository).useValue({ list }),
     );
 
-    await request(app.getHttpServer())
-      .get('/api/results/seasons')
-      .expect(401);
+    await get('/api/results/seasons').expect(401);
     expect(list).not.toHaveBeenCalled();
   });
 });
