@@ -20,6 +20,7 @@ import {
 import { CreateStudentUseCase } from '@/domain/students/application/use-cases/create-student';
 import { DeleteStudentUseCase } from '@/domain/students/application/use-cases/delete-student';
 import { ListStudentReferenceDataUseCase } from '@/domain/students/application/use-cases/list-student-reference-data';
+import { ListStudentSeasonCategoriesUseCase } from '@/domain/students/application/use-cases/list-student-season-categories';
 import { GetStudentUseCase } from '@/domain/students/application/use-cases/get-student';
 import { ListStudentsUseCase } from '@/domain/students/application/use-cases/list-students';
 import { ListUpcomingBirthdaysUseCase } from '@/domain/students/application/use-cases/list-upcoming-birthdays';
@@ -47,6 +48,7 @@ export class StudentsController {
     private readonly getStudent: GetStudentUseCase,
     private readonly listUpcomingBirthdays: ListUpcomingBirthdaysUseCase,
     private readonly listStudentReferenceData: ListStudentReferenceDataUseCase,
+    private readonly listStudentSeasonCategories: ListStudentSeasonCategoriesUseCase,
     private readonly createStudent: CreateStudentUseCase,
     private readonly updateStudent: UpdateStudentUseCase,
     private readonly deleteStudent: DeleteStudentUseCase,
@@ -58,6 +60,14 @@ export class StudentsController {
     return {
       data: await this.listStudentReferenceData.execute(),
     };
+  }
+
+  @Get(':id/season-categories')
+  @Roles('admin')
+  @Permissions('students:read')
+  async seasonCategories(@Param('id', new ParseUUIDPipe()) id: string) {
+    const { categories } = await this.listStudentSeasonCategories.execute(id);
+    return { data: categories };
   }
 
   @Get('upcoming-birthdays')

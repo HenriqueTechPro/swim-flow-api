@@ -112,6 +112,40 @@ describe('StudentsController (e2e)', () => {
     expect(response.body.data[0]).not.toHaveProperty('parentId');
   });
 
+  it('reads only recorded season categories without inventing history', async () => {
+    const studentId = '11111111-1111-4111-8111-111111111111';
+    studentsRepository.items.push(makeStudent({ id: studentId }));
+
+    const empty = await request(app.getHttpServer())
+      .get(`/api/students/${studentId}/season-categories`)
+      .expect(200);
+    expect(empty.body.data).toEqual([]);
+
+    studentsRepository.seasonCategoryHistory[studentId] = [{
+      seasonId: '22222222-2222-4222-8222-222222222222',
+      year: 2026,
+      seasonLabel: 'Temporada 2026',
+      seasonStatus: 'ACTIVE',
+      startsOn: '2026-01-01',
+      endsOn: '2026-12-31',
+      categoryId: '33333333-3333-4333-8333-333333333333',
+      category: 'Mirim 1',
+      assignedAt: '2026-01-10T12:00:00.000Z',
+    }];
+
+    const withHistory = await request(app.getHttpServer())
+      .get(`/api/students/${studentId}/season-categories`)
+      .expect(200);
+    expect(withHistory.body.data).toHaveLength(1);
+    expect(withHistory.body.data[0].category).toBe('Mirim 1');
+    expect(withHistory.body.data[0]).not.toHaveProperty('birthDate');
+    expect(withHistory.body.data[0]).not.toHaveProperty('phone');
+
+    await request(app.getHttpServer())
+      .get('/api/students/44444444-4444-4444-8444-444444444444/season-categories')
+      .expect(404);
+  });
+
   it('filters and paginates students list', async () => {
     studentsRepository.items.push(
       makeStudent({

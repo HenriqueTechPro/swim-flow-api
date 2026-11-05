@@ -25,6 +25,18 @@ export interface StudentReferenceData {
   activeSeasonId?: string;
 }
 
+export interface StudentSeasonCategoryHistoryItem {
+  seasonId: string;
+  year: number;
+  seasonLabel: string;
+  seasonStatus: 'PLANNED' | 'ACTIVE' | 'CLOSED';
+  startsOn: string;
+  endsOn: string;
+  categoryId: string;
+  category: string;
+  assignedAt: string;
+}
+
 export interface UpcomingBirthday {
   id: string;
   name: string;
@@ -56,6 +68,9 @@ export abstract class StudentsRepository {
     params: ListUpcomingBirthdaysParams,
   ): Promise<UpcomingBirthday[]>;
   abstract listReferenceData(): Promise<StudentReferenceData>;
+  abstract listSeasonCategories(
+    studentId: string,
+  ): Promise<StudentSeasonCategoryHistoryItem[]>;
   abstract create(input: CreateStudentRepositoryInput): Promise<Student>;
   abstract update(
     id: string,
