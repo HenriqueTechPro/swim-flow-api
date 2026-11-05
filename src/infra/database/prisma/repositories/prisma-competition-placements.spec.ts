@@ -8,8 +8,8 @@ describe('PrismaResultsRepository recorded competition placements', () => {
   const count = jest.fn();
   const prisma = {
     poolResult: { findMany, count },
-    $transaction: jest.fn(
-      async (operations: Array<Promise<unknown>>) => Promise.all(operations),
+    $transaction: jest.fn(async (operations: Array<Promise<unknown>>) =>
+      Promise.all(operations),
     ),
   };
   const repository = new PrismaResultsRepository(
@@ -67,11 +67,7 @@ describe('PrismaResultsRepository recorded competition placements', () => {
         position: true,
         durationMs: true,
       },
-      orderBy: [
-        { position: 'asc' },
-        { durationMs: 'asc' },
-        { id: 'asc' },
-      ],
+      orderBy: [{ position: 'asc' }, { durationMs: 'asc' }, { id: 'asc' }],
       skip: 1,
       take: 1,
     });
@@ -96,8 +92,8 @@ describe('PrismaResultsRepository recorded competition placements', () => {
         durationMs: 30000,
       },
     ]);
-    await expect(
-      repository.listCompetitionPlacements(query),
-    ).rejects.toThrow('Invalid stored classified placement');
+    await expect(repository.listCompetitionPlacements(query)).rejects.toThrow(
+      'Invalid stored classified placement',
+    );
   });
 });

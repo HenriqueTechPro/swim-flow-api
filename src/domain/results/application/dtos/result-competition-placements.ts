@@ -1,6 +1,4 @@
-import type {
-  ResultStyle,
-} from '../../enterprise/entities/result';
+import type { ResultStyle } from '../../enterprise/entities/result';
 import type { PaginationParams } from '@/domain/shared/pagination/pagination-params';
 
 export interface ListCompetitionPlacementsRequest extends PaginationParams {

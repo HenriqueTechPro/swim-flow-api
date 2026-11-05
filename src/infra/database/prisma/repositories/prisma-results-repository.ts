@@ -407,11 +407,7 @@ export class PrismaResultsRepository implements ResultsRepository {
           position: true,
           durationMs: true,
         },
-        orderBy: [
-          { position: 'asc' },
-          { durationMs: 'asc' },
-          { id: 'asc' },
-        ],
+        orderBy: [{ position: 'asc' }, { durationMs: 'asc' }, { id: 'asc' }],
         skip: (page - 1) * perPage,
         take: perPage,
       }),

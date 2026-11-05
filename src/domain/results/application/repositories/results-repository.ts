@@ -138,4 +138,3 @@ export abstract class ResultsRepository {
   ): Promise<Result>;
   abstract remove(id: string): Promise<Result>;
 }
-

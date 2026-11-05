@@ -6,9 +6,8 @@ export class ListCompetitionPlacementsUseCase {
   constructor(private readonly resultsRepository: ResultsRepository) {}
 
   async execute(input: ListCompetitionPlacementsRequest) {
-    const response = await this.resultsRepository.listCompetitionPlacements(
-      input,
-    );
+    const response =
+      await this.resultsRepository.listCompetitionPlacements(input);
     return {
       placements: response.items,
       meta: toPaginationMeta(response),

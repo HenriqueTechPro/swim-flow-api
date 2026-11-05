@@ -275,9 +275,8 @@ export class ResultsController {
     @Query(new ZodValidationPipe(resultsCompetitionPlacementsQuerySchema))
     query: ResultsCompetitionPlacementsQueryDto,
   ) {
-    const { placements, meta } = await this.listCompetitionPlacements.execute(
-      query,
-    );
+    const { placements, meta } =
+      await this.listCompetitionPlacements.execute(query);
     return { data: placements, meta };
   }
 
@@ -375,4 +374,3 @@ export class ResultsController {
     return { data: ResultPresenter.toHTTP(result) };
   }
 }
-

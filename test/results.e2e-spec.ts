@@ -148,7 +148,9 @@ describe('ResultsController (e2e)', () => {
       }),
     );
     const first = await request(app.getHttpServer())
-      .get('/api/results/competition-placements?competition=Festival%20Interno&date=2026-03-31&category=Petiz%202&gender=Feminino&style=Livre&distance=50m&poolLengthMeters=25&page=1&perPage=1')
+      .get(
+        '/api/results/competition-placements?competition=Festival%20Interno&date=2026-03-31&category=Petiz%202&gender=Feminino&style=Livre&distance=50m&poolLengthMeters=25&page=1&perPage=1',
+      )
       .expect(200);
     expect(first.body.meta).toMatchObject({
       page: 1,
@@ -162,7 +164,9 @@ describe('ResultsController (e2e)', () => {
     });
 
     const second = await request(app.getHttpServer())
-      .get('/api/results/competition-placements?competition=Festival%20Interno&date=2026-03-31&category=Petiz%202&gender=Feminino&style=Livre&distance=50m&poolLengthMeters=25&page=2&perPage=1')
+      .get(
+        '/api/results/competition-placements?competition=Festival%20Interno&date=2026-03-31&category=Petiz%202&gender=Feminino&style=Livre&distance=50m&poolLengthMeters=25&page=2&perPage=1',
+      )
       .expect(200);
     expect(second.body.data[0]).toMatchObject({
       resultId: 'result-a',
@@ -178,13 +182,19 @@ describe('ResultsController (e2e)', () => {
       .get('/api/results/competition-placements')
       .expect(400);
     await request(app.getHttpServer())
-      .get('/api/results/competition-placements?competition=Festival%20Interno&date=2026-03-31&category=Petiz%202&gender=Feminino&style=Livre&distance=50m&poolLengthMeters=25&date=2026-02-30')
+      .get(
+        '/api/results/competition-placements?competition=Festival%20Interno&date=2026-03-31&category=Petiz%202&gender=Feminino&style=Livre&distance=50m&poolLengthMeters=25&date=2026-02-30',
+      )
       .expect(400);
     await request(app.getHttpServer())
-      .get('/api/results/competition-placements?competition=Festival%20Interno&date=2026-03-31&category=Petiz%202&gender=Feminino&style=Livre&distance=50m&poolLengthMeters=25&gender=Outro')
+      .get(
+        '/api/results/competition-placements?competition=Festival%20Interno&date=2026-03-31&category=Petiz%202&gender=Feminino&style=Livre&distance=50m&poolLengthMeters=25&gender=Outro',
+      )
       .expect(400);
     await request(app.getHttpServer())
-      .get('/api/results/competition-placements?competition=Festival%20Interno&date=2026-03-31&category=Petiz%202&gender=Feminino&style=Livre&distance=50m&poolLengthMeters=25&poolLengthMeters=0')
+      .get(
+        '/api/results/competition-placements?competition=Festival%20Interno&date=2026-03-31&category=Petiz%202&gender=Feminino&style=Livre&distance=50m&poolLengthMeters=25&poolLengthMeters=0',
+      )
       .expect(400);
   });
 

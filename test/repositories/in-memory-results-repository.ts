@@ -69,9 +69,7 @@ const formatMonthLabel = (monthKey: string) => {
 };
 
 export class InMemoryResultsRepository implements ResultsRepository {
-  async listCompetitionPlacements(
-    input: ListCompetitionPlacementsRequest,
-  ) {
+  async listCompetitionPlacements(input: ListCompetitionPlacementsRequest) {
     const placements: CompetitionPlacement[] = this.items
       .filter((item) => item.discipline === 'Piscina')
       .filter((item) => item.eventFormat === 'Prova Individual')
@@ -83,7 +81,9 @@ export class InMemoryResultsRepository implements ResultsRepository {
       .filter((item) => item.style === input.style)
       .filter((item) => item.distance === input.distance)
       .filter((item) => item.poolLengthMeters === input.poolLengthMeters)
-      .filter((item) => this.studentGenders.get(item.studentId) === input.gender)
+      .filter(
+        (item) => this.studentGenders.get(item.studentId) === input.gender,
+      )
       .map((item) => ({
         resultId: item.id,
         studentId: item.studentId,
