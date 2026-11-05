@@ -32,7 +32,10 @@ describe('Result season options (e2e)', () => {
     list.mockReset();
     create.mockReset();
     update.mockReset();
-    create.mockImplementation(async (input: object) => ({ id: seasonId, ...input }));
+    create.mockImplementation(async (input: object) => ({
+      id: seasonId,
+      ...input,
+    }));
     update.mockImplementation(async (_id: string, input: object) => ({
       id: seasonId,
       ...input,
@@ -123,7 +126,7 @@ describe('Result season options (e2e)', () => {
     expect(list).not.toHaveBeenCalled();
   });
 
-  it('creates a season and defaults an omitted status to PLANNED', async () => {
+  it('defaults new season status to PLANNED', async () => {
     const response = await request(app.getHttpServer())
       .post('/api/results/seasons')
       .send({
@@ -141,7 +144,7 @@ describe('Result season options (e2e)', () => {
     });
   });
 
-  it('updates an existing season with a validated complete payload', async () => {
+  it('updates a season with a validated payload', async () => {
     const response = await request(app.getHttpServer())
       .put(`/api/results/seasons/${seasonId}`)
       .send(payload)
