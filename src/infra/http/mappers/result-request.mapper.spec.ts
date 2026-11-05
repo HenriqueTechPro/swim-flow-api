@@ -1,5 +1,8 @@
 import { describe, expect, it } from '@jest/globals';
-import { updateResultSchema } from '@/shared/contracts/management';
+import {
+  createResultSchema,
+  updateResultSchema,
+} from '@/shared/contracts/management';
 import { ResultRequestMapper } from './result-request.mapper';
 
 const baseResult = {
@@ -14,6 +17,47 @@ const baseResult = {
 };
 
 describe('ResultRequestMapper.toUpdate', () => {
+  it('forwards explicit season link on creation and update', () => {
+    const seasonId = '88888888-8888-4888-8888-888888888888';
+    const fields = {
+      ...baseResult,
+      seasonId,
+      discipline: 'Piscina' as const,
+      competitionType: 'Piscina' as const,
+      courseType: 'Piscina Curta' as const,
+      eventFormat: 'Prova Individual' as const,
+    };
+    const create = ResultRequestMapper.toCreate(
+      createResultSchema.parse(fields),
+    );
+    const update = ResultRequestMapper.toUpdate(
+      updateResultSchema.parse(fields),
+    );
+    expect(create.seasonId).toBe(seasonId);
+    expect(update.seasonId).toBe(seasonId);
+  });
+
+  it('keeps season unspecified on updates and supports explicit unlink', () => {
+    const fields = {
+      ...baseResult,
+      discipline: 'Piscina' as const,
+      competitionType: 'Piscina' as const,
+      courseType: 'Piscina Curta' as const,
+      eventFormat: 'Prova Individual' as const,
+    };
+    expect(
+      ResultRequestMapper.toUpdate(updateResultSchema.parse(fields)).seasonId,
+    ).toBeUndefined();
+    expect(
+      ResultRequestMapper.toUpdate(
+        updateResultSchema.parse({ ...fields, seasonId: null }),
+      ).seasonId,
+    ).toBeNull();
+    expect(() =>
+      updateResultSchema.parse({ ...fields, seasonId: 'not-a-uuid' }),
+    ).toThrow();
+  });
+
   it('preserva o comprimento oficial da piscina na edicao', () => {
     const body = updateResultSchema.parse({
       ...baseResult,
