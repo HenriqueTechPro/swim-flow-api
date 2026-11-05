@@ -1,6 +1,4 @@
-import type {
-  CreateResultRepositoryInput,
-} from '@/domain/results/application/repositories/results-repository';
+import type { CreateResultRepositoryInput } from '@/domain/results/application/repositories/results-repository';
 import type { CacheRepository } from '@/infra/cache/cache-repository';
 import type { EnvService } from '@/infra/env/env.service';
 import type { PrismaService } from '../prisma.service';
