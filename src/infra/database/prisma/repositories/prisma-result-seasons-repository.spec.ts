@@ -168,14 +168,15 @@ describe('PrismaResultSeasonsRepository', () => {
     );
   });
 
-  it.each([
+  const linkedRelations = [
     'studentCategories',
     'events',
     'poolResults',
     'openWaterResults',
-  ] as const)(
-    'locks year and dates when %s is linked',
-    async (relation) => {
+  ] as const;
+
+  for (const relation of linkedRelations) {
+    it(`locks year and dates when ${relation} is linked`, async () => {
       prisma.season.findUnique.mockResolvedValue({
         year: season2026.year,
         startsOn: season2026.startsOn,
@@ -189,8 +190,8 @@ describe('PrismaResultSeasonsRepository', () => {
         repo.update(season2026.id, { ...input, year: 2027 }),
       ).rejects.toThrow('Season year and dates cannot change');
       expect(prisma.season.update).not.toHaveBeenCalled();
-    },
-  );
+    });
+  }
 
   it('rejects overlapping date changes on an unlinked season', async () => {
     prisma.season.findFirst.mockResolvedValueOnce({
