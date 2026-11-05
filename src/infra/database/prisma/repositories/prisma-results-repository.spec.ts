@@ -157,6 +157,42 @@ describe('PrismaResultsRepository canonical storage', () => {
       'Distance must be a positive whole number',
     );
   });
+  it('filters ranking by result year at the database while preserving category snapshots', async () => {
+    const input = {
+      page: 1,
+      perPage: 10,
+      discipline: 'Piscina' as const,
+      competitionType: 'Piscina' as const,
+      courseType: 'Piscina Curta' as const,
+      style: 'Livre' as const,
+      distance: '100m',
+      eventFormat: 'Prova Individual' as const,
+      category: 'Petiz 1',
+    };
+
+    await repo.listRankingCandidates({
+      ...input,
+      gender: 'Feminino',
+      year: 2026,
+    });
+    const filtered = prisma.poolResult.findMany.mock.calls[0][0].where.AND[0];
+    expect(filtered).toEqual(
+      expect.objectContaining({
+        categorySnapshot: 'Petiz 1',
+        student: { gender: 'Feminino' },
+        heldOn: {
+          gte: new Date('2026-01-01T00:00:00.000Z'),
+          lt: new Date('2027-01-01T00:00:00.000Z'),
+        },
+      }),
+    );
+
+    prisma.poolResult.findMany.mockClear();
+    await repo.listRankingCandidates(input);
+    const combined = prisma.poolResult.findMany.mock.calls[0][0].where.AND[0];
+    expect(combined.heldOn).toBeUndefined();
+  });
+
   it('filters ranking candidates in PostgreSQL by student gender when supplied', async () => {
     const input = {
       page: 1,
