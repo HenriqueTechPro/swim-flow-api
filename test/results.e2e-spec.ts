@@ -96,6 +96,45 @@ describe('ResultsController (e2e)', () => {
     expect(listFinal.body.data).toEqual([]);
   });
 
+  it('keeps explicit result event IDs on update and supports manual unlink', async () => {
+    const payload = {
+      studentId: '77777777-7777-4777-8777-777777777777',
+      discipline: 'Piscina',
+      competitionType: 'Piscina',
+      courseType: 'Piscina Curta',
+      eventFormat: 'Prova Individual',
+      resultStatus: 'Classificado',
+      style: 'Livre',
+      distance: '50m',
+      time: '00:34.21',
+      date: '2026-03-31',
+      competition: 'Festival Interno',
+      position: 1,
+      category: 'Petiz 2',
+    };
+    const eventId = '88888888-8888-4888-8888-888888888888';
+    const created = await request(app.getHttpServer())
+      .post('/api/results')
+      .send({ ...payload, eventId })
+      .expect(201);
+    expect(created.body.data.eventId).toBe(eventId);
+    const id = created.body.data.id as string;
+    const preserved = await request(app.getHttpServer())
+      .put(`/api/results/${id}`)
+      .send(payload)
+      .expect(200);
+    expect(preserved.body.data.eventId).toBe(eventId);
+    const unlinked = await request(app.getHttpServer())
+      .put(`/api/results/${id}`)
+      .send({ ...payload, eventId: null })
+      .expect(200);
+    expect(unlinked.body.data.eventId).toBeNull();
+    await request(app.getHttpServer())
+      .post('/api/results')
+      .send({ ...payload, eventId: 'not-a-uuid' })
+      .expect(400);
+  });
+
   it('lists recorded competition placements, not calculated historical ranks', async () => {
     resultsRepository.studentGenders.set('student-a', 'Feminino');
     resultsRepository.studentGenders.set('student-b', 'Feminino');
