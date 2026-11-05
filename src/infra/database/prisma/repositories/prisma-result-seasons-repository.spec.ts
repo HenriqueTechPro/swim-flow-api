@@ -58,7 +58,7 @@ describe('PrismaResultSeasonsRepository', () => {
     );
   });
 
-  it('returns only season selection fields in paginated, stable order', async () => {
+  it('paginates and sorts selected season fields', async () => {
     const result = await repo.list({ page: 2, perPage: 1 });
     expect(prisma.season.findMany).toHaveBeenCalledWith({
       select: {
@@ -94,7 +94,12 @@ describe('PrismaResultSeasonsRepository', () => {
     prisma.season.findMany.mockResolvedValue([]);
     prisma.season.count.mockResolvedValue(0);
     const result = await repo.list();
-    expect(result).toMatchObject({ items: [], total: 0, page: 1, perPage: 20 });
+    expect(result).toMatchObject({
+      items: [],
+      total: 0,
+      page: 1,
+      perPage: 20,
+    });
     expect(prisma.season.findMany.mock.calls[0][0]).toEqual(
       expect.objectContaining({ skip: 0, take: 20 }),
     );
@@ -105,7 +110,7 @@ describe('PrismaResultSeasonsRepository', () => {
     expect(prisma.season.findMany.mock.calls[0][0].take).toBe(100);
   });
 
-  it('creates a real season without touching historical relations', async () => {
+  it('creates a season without changing linked records', async () => {
     const created = await repo.create(input);
     expect(prisma.season.findFirst).toHaveBeenCalledWith({
       where: {
@@ -131,7 +136,7 @@ describe('PrismaResultSeasonsRepository', () => {
     });
   });
 
-  it('rejects overlapping inclusive periods without creating records', async () => {
+  it('rejects overlapping periods without writing', async () => {
     prisma.season.findFirst.mockResolvedValueOnce({ id: 'another-season' });
     await expect(repo.create(input)).rejects.toThrow(
       'Season dates overlap with another season',
@@ -139,14 +144,18 @@ describe('PrismaResultSeasonsRepository', () => {
     expect(prisma.season.create).not.toHaveBeenCalled();
   });
 
-  it('edits label and status while linked records remain untouched', async () => {
+  it('edits label and status with linked records', async () => {
     prisma.season.findUnique.mockResolvedValueOnce({
       year: season2026.year,
       startsOn: season2026.startsOn,
       endsOn: season2026.endsOn,
       _count: { ...references, poolResults: 2 },
     });
-    await repo.update(season2026.id, { ...input, label: 'Novo nome', status: 'CLOSED' });
+    await repo.update(season2026.id, {
+      ...input,
+      label: 'Novo nome',
+      status: 'CLOSED',
+    });
     expect(prisma.season.findFirst).not.toHaveBeenCalled();
     expect(prisma.season.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -159,8 +168,13 @@ describe('PrismaResultSeasonsRepository', () => {
     );
   });
 
-  it.each(['studentCategories', 'events', 'poolResults', 'openWaterResults'] as const)(
-    'protects historical season periods and reference years when %s is linked',
+  it.each([
+    'studentCategories',
+    'events',
+    'poolResults',
+    'openWaterResults',
+  ] as const)(
+    'locks year and dates when %s is linked',
     async (relation) => {
       prisma.season.findUnique.mockResolvedValue({
         year: season2026.year,
@@ -179,7 +193,9 @@ describe('PrismaResultSeasonsRepository', () => {
   );
 
   it('rejects overlapping date changes on an unlinked season', async () => {
-    prisma.season.findFirst.mockResolvedValueOnce({ id: 'different-season' });
+    prisma.season.findFirst.mockResolvedValueOnce({
+      id: 'different-season',
+    });
     await expect(
       repo.update(season2026.id, { ...input, startsOn: '2025-08-01' }),
     ).rejects.toThrow('Season dates overlap with another season');
