@@ -9,6 +9,7 @@ import { PERMISSIONS_KEY } from '@/infra/auth/permissions.decorator';
 import {
   createAuthenticatedE2EApp,
   createE2EApp,
+  withDefaultTestOverrides,
 } from './utils/create-e2e-app';
 
 describe('Result season options (e2e)', () => {
@@ -93,7 +94,9 @@ describe('Result season options (e2e)', () => {
   it('denies anonymous access', async () => {
     await app.close();
     app = await createE2EApp((builder) =>
-      builder.overrideProvider(ResultSeasonsRepository).useValue({ list }),
+      withDefaultTestOverrides(builder)
+        .overrideProvider(ResultSeasonsRepository)
+        .useValue({ list }),
     );
 
     await get('/api/results/seasons').expect(401);
