@@ -1,10 +1,4 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-} from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
@@ -135,7 +129,6 @@ describe('ResultsController (e2e)', () => {
     expect(response.body.meta.total).toBe(1);
   });
 
-
   it('lists record holders for the filtered context without duplicate record groups', async () => {
     resultsRepository.items.push(
       makeResult({
@@ -203,8 +196,14 @@ describe('ResultsController (e2e)', () => {
 
     expect(response.body.meta.total).toBe(2);
     expect(response.body.data).toHaveLength(2);
-    expect(response.body.data[0]).toMatchObject({ id: 'record-2', distance: '50m' });
-    expect(response.body.data[1]).toMatchObject({ id: 'record-3', distance: '100m' });
+    expect(response.body.data[0]).toMatchObject({
+      id: 'record-2',
+      distance: '50m',
+    });
+    expect(response.body.data[1]).toMatchObject({
+      id: 'record-3',
+      distance: '100m',
+    });
   });
   it('generates a ranking using only equivalent classified results', async () => {
     resultsRepository.items.push(
@@ -342,14 +341,10 @@ describe('ResultsController (e2e)', () => {
       rank: 1,
     });
 
-    const legacy = await request(app.getHttpServer())
-      .get(path)
-      .expect(200);
+    const legacy = await request(app.getHttpServer()).get(path).expect(200);
     expect(legacy.body.meta.total).toBe(2);
 
-    await request(app.getHttpServer())
-      .get(`${path}&gender=Outro`)
-      .expect(400);
+    await request(app.getHttpServer()).get(`${path}&gender=Outro`).expect(400);
   });
 
   it('returns official contexts, style distribution and evolution analytics', async () => {
@@ -428,7 +423,9 @@ describe('ResultsController (e2e)', () => {
     });
 
     const distributionResponse = await request(app.getHttpServer())
-      .get('/api/results/style-distribution?discipline=Piscina&category=Petiz%202')
+      .get(
+        '/api/results/style-distribution?discipline=Piscina&category=Petiz%202',
+      )
       .expect(200);
 
     expect(distributionResponse.body.data).toEqual(
@@ -447,7 +444,10 @@ describe('ResultsController (e2e)', () => {
     expect(evolutionResponse.body.data.students).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ studentId: 'student-1', studentName: 'Ana' }),
-        expect.objectContaining({ studentId: 'student-2', studentName: 'Bruno' }),
+        expect.objectContaining({
+          studentId: 'student-2',
+          studentName: 'Bruno',
+        }),
       ]),
     );
     expect(evolutionResponse.body.data.points).toEqual(
@@ -458,4 +458,3 @@ describe('ResultsController (e2e)', () => {
     );
   });
 });
-

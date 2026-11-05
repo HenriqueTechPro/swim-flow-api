@@ -19,7 +19,10 @@ describe('PrismaResultsRepository canonical storage', () => {
   beforeEach(() => {
     prisma = {
       student: { findUnique: jest.fn().mockResolvedValue({ id: studentId }) },
-      poolResult: { create: jest.fn(), findMany: jest.fn().mockResolvedValue([]) },
+      poolResult: {
+        create: jest.fn(),
+        findMany: jest.fn().mockResolvedValue([]),
+      },
       openWaterResult: { create: jest.fn() },
     };
     repo = new PrismaResultsRepository(
@@ -46,31 +49,40 @@ describe('PrismaResultsRepository canonical storage', () => {
   } satisfies CreateResultRepositoryInput;
 
   it('persists a pool result in meters/milliseconds, not as text', async () => {
-    prisma.poolResult.create.mockImplementation(async (args: { data: object }) => ({
-      id: 'pool-1', ...args.data,
-      poolLengthMeters: 25, student: { name: 'Atleta' },
-    }));
+    prisma.poolResult.create.mockImplementation(
+      async (args: { data: object }) => ({
+        id: 'pool-1',
+        ...args.data,
+        poolLengthMeters: 25,
+        student: { name: 'Atleta' },
+      }),
+    );
 
     const result = await repo.create(base);
 
-    expect(prisma.poolResult.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({
-        distanceMeters: 100,
-        durationMs: 64570,
-        poolLengthMeters: 25,
-        status: 'CLASSIFIED',
-        categorySnapshot: 'Petiz 1',
+    expect(prisma.poolResult.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          distanceMeters: 100,
+          durationMs: 64570,
+          poolLengthMeters: 25,
+          status: 'CLASSIFIED',
+          categorySnapshot: 'Petiz 1',
+        }),
       }),
-    }));
+    );
     expect(prisma.openWaterResult.create).not.toHaveBeenCalled();
     expect(result.durationMs).toBe(64570);
   });
 
   it('preserves a custom 20-meter pool length without using a 25m label', async () => {
-    prisma.poolResult.create.mockImplementation(async (args: { data: object }) => ({
-      id: 'pool-20', ...args.data,
-      student: { name: 'Atleta' },
-    }));
+    prisma.poolResult.create.mockImplementation(
+      async (args: { data: object }) => ({
+        id: 'pool-20',
+        ...args.data,
+        student: { name: 'Atleta' },
+      }),
+    );
 
     const result = await repo.create({
       ...base,
@@ -78,18 +90,23 @@ describe('PrismaResultsRepository canonical storage', () => {
       poolLengthMeters: 20,
     });
 
-    expect(prisma.poolResult.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ poolLengthMeters: 20 }),
-    }));
+    expect(prisma.poolResult.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ poolLengthMeters: 20 }),
+      }),
+    );
     expect(result.courseType).toBeUndefined();
     expect(result.poolLengthMeters).toBe(20);
   });
 
   it('writes open-water non-starters with null duration and null position', async () => {
-    prisma.openWaterResult.create.mockImplementation(async (args: { data: object }) => ({
-      id: 'water-1', ...args.data,
-      student: { name: 'Atleta' },
-    }));
+    prisma.openWaterResult.create.mockImplementation(
+      async (args: { data: object }) => ({
+        id: 'water-1',
+        ...args.data,
+        student: { name: 'Atleta' },
+      }),
+    );
 
     const result = await repo.create({
       studentId,
@@ -106,16 +123,18 @@ describe('PrismaResultsRepository canonical storage', () => {
       position: null,
     });
 
-    expect(prisma.openWaterResult.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({
-        distanceMeters: 1500,
-        bodyType: 'SEA',
-        routeKey: 'Village Itaparica',
-        durationMs: null,
-        position: null,
-        status: 'DID_NOT_START',
+    expect(prisma.openWaterResult.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          distanceMeters: 1500,
+          bodyType: 'SEA',
+          routeKey: 'Village Itaparica',
+          durationMs: null,
+          position: null,
+          status: 'DID_NOT_START',
+        }),
       }),
-    }));
+    );
     expect(prisma.poolResult.create).not.toHaveBeenCalled();
     expect(result.durationMs).toBeNull();
   });
@@ -128,9 +147,9 @@ describe('PrismaResultsRepository canonical storage', () => {
   });
 
   it('rejects an explicit pool-length contradiction', async () => {
-    await expect(repo.create({ ...base, poolLengthMeters: 50 })).rejects.toThrow(
-      'Pool length conflicts',
-    );
+    await expect(
+      repo.create({ ...base, poolLengthMeters: 50 }),
+    ).rejects.toThrow('Pool length conflicts');
   });
 
   it('rejects a fractional distance that cannot be represented as whole meters', async () => {
@@ -163,7 +182,8 @@ describe('PrismaResultsRepository canonical storage', () => {
 
     prisma.poolResult.findMany.mockClear();
     await repo.listRankingCandidates(input);
-    expect(prisma.poolResult.findMany.mock.calls[0][0].where.AND[0].student).toBeUndefined();
+    expect(
+      prisma.poolResult.findMany.mock.calls[0][0].where.AND[0].student,
+    ).toBeUndefined();
   });
-
 });

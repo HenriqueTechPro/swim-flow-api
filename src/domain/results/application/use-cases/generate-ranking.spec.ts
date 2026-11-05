@@ -196,5 +196,4 @@ describe('GenerateRankingUseCase', () => {
     expect(legacy.meta.total).toBe(3);
     expect(legacy.ranking.map((entry) => entry.rank)).toEqual([1, 2, 2]);
   });
-
 });
