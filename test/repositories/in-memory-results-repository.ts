@@ -365,6 +365,7 @@ export class InMemoryResultsRepository implements ResultsRepository {
 
     const result = makeResult({
       studentId: input.studentId,
+      seasonId: input.seasonId ?? null,
       discipline: input.discipline ?? 'Piscina',
       competitionType: input.competitionType ?? input.discipline ?? 'Piscina',
       courseType: normalizeCourseType(input.courseType),
@@ -401,6 +402,10 @@ export class InMemoryResultsRepository implements ResultsRepository {
     const updatedResult: Result = {
       ...this.items[itemIndex],
       studentId: input.studentId,
+      seasonId:
+        input.seasonId === undefined
+          ? this.items[itemIndex].seasonId
+          : input.seasonId,
       discipline: input.discipline,
       competitionType: input.competitionType,
       courseType: normalizeCourseType(input.courseType),
