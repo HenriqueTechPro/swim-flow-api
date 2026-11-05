@@ -6,10 +6,13 @@ export class ListResultSeasonsUseCase {
 
   async execute(params?: PaginationParams) {
     const result = await this.seasons.list(params);
-    return { seasons: result.items, meta: {
-      page: result.page,
-      perPage: result.perPage,
-      total: result.total,
-    } };
+    return {
+      seasons: result.items,
+      meta: {
+        page: result.page,
+        perPage: result.perPage,
+        total: result.total,
+      },
+    };
   }
 }
