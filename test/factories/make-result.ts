@@ -8,6 +8,7 @@ export function makeResult(override: MakeResultOverride = {}): Result {
     studentId: override.studentId ?? crypto.randomUUID(),
     studentName: override.studentName ?? 'Aluno Teste',
     seasonId: override.seasonId,
+    eventId: override.eventId,
     discipline: override.discipline ?? 'Piscina',
     competitionType: override.competitionType ?? 'Piscina',
     courseType: override.courseType ?? 'Piscina Curta',

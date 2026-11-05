@@ -353,6 +353,7 @@ const resultBaseSchema = z.object({
   poolLengthMeters: z.number().finite().positive().optional(),
   routeKey: z.string().trim().min(1).max(160).optional(),
   seasonId: z.string().uuid().nullable().optional(),
+  eventId: z.string().uuid().nullable().optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   competition: z.string().optional().default(''),
   position: z.number().int().min(0).nullable().optional().default(null),
