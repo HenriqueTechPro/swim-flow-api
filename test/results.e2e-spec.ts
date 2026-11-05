@@ -347,6 +347,80 @@ describe('ResultsController (e2e)', () => {
     await request(app.getHttpServer()).get(`${path}&gender=Outro`).expect(400);
   });
 
+  it('filters historical ranking by result calendar year without rewriting saved results', async () => {
+    resultsRepository.studentGenders.set('student-ana', 'Feminino');
+    resultsRepository.studentGenders.set('student-bia', 'Feminino');
+    resultsRepository.studentGenders.set('student-caio', 'Masculino');
+    resultsRepository.items.push(
+      makeResult({
+        id: 'ana-2025',
+        studentId: 'student-ana',
+        studentName: 'Ana',
+        date: '2025-12-31',
+        time: '00:29.00',
+        timeInSeconds: 29,
+      }),
+      makeResult({
+        id: 'ana-2026',
+        studentId: 'student-ana',
+        studentName: 'Ana',
+        date: '2026-01-01',
+        time: '00:32.00',
+        timeInSeconds: 32,
+      }),
+      makeResult({
+        id: 'bia-2026',
+        studentId: 'student-bia',
+        studentName: 'Bia',
+        date: '2026-12-31',
+        time: '00:32.00',
+        timeInSeconds: 32,
+      }),
+      makeResult({
+        id: 'caio-2027',
+        studentId: 'student-caio',
+        studentName: 'Caio',
+        date: '2027-01-01',
+        time: '00:27.00',
+        timeInSeconds: 27,
+      }),
+    );
+
+    const path =
+      '/api/results/ranking?page=1&perPage=25&discipline=Piscina&competitionType=Piscina&courseType=Piscina%20Curta&style=Livre&distance=50m&eventFormat=Prova%20Individual&category=Petiz%202';
+
+    const year2026 = await request(app.getHttpServer())
+      .get(`${path}&year=2026&gender=Feminino`)
+      .expect(200);
+    expect(year2026.body.meta.total).toBe(2);
+    expect(year2026.body.data.map((entry: { resultId: string }) => entry.resultId)).toEqual([
+      'ana-2026',
+      'bia-2026',
+    ]);
+    expect(year2026.body.data.map((entry: { rank: number }) => entry.rank)).toEqual([
+      1,
+      1,
+    ]);
+
+    const year2025 = await request(app.getHttpServer())
+      .get(`${path}&year=2025`)
+      .expect(200);
+    expect(year2025.body.data[0]).toMatchObject({
+      resultId: 'ana-2025',
+      rank: 1,
+    });
+
+    const allYears = await request(app.getHttpServer())
+      .get(path)
+      .expect(200);
+    expect(allYears.body.meta.total).toBe(3);
+    expect(allYears.body.data[0].resultId).toBe('caio-2027');
+
+    await request(app.getHttpServer()).get(`${path}&year=1899`).expect(400);
+    await request(app.getHttpServer()).get(`${path}&year=2026.5`).expect(400);
+    await request(app.getHttpServer()).get(`${path}&year=invalid`).expect(400);
+  });
+
   it('returns official contexts, style distribution and evolution analytics', async () => {
     resultsRepository.items.push(
       makeResult({
