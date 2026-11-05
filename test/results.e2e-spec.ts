@@ -1,10 +1,4 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-} from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
@@ -135,7 +129,6 @@ describe('ResultsController (e2e)', () => {
     expect(response.body.meta.total).toBe(1);
   });
 
-
   it('lists record holders for the filtered context without duplicate record groups', async () => {
     resultsRepository.items.push(
       makeResult({
@@ -203,8 +196,14 @@ describe('ResultsController (e2e)', () => {
 
     expect(response.body.meta.total).toBe(2);
     expect(response.body.data).toHaveLength(2);
-    expect(response.body.data[0]).toMatchObject({ id: 'record-2', distance: '50m' });
-    expect(response.body.data[1]).toMatchObject({ id: 'record-3', distance: '100m' });
+    expect(response.body.data[0]).toMatchObject({
+      id: 'record-2',
+      distance: '50m',
+    });
+    expect(response.body.data[1]).toMatchObject({
+      id: 'record-3',
+      distance: '100m',
+    });
   });
   it('generates a ranking using only equivalent classified results', async () => {
     resultsRepository.items.push(
@@ -303,6 +302,51 @@ describe('ResultsController (e2e)', () => {
     });
   });
 
+  it('filters ranking by student gender, rejects invalid values and preserves legacy requests', async () => {
+    resultsRepository.studentGenders.set('student-a', 'Feminino');
+    resultsRepository.studentGenders.set('student-b', 'Masculino');
+    resultsRepository.items.push(
+      makeResult({
+        studentId: 'student-a',
+        studentName: 'Ana',
+        time: '00:34.20',
+        timeInSeconds: 34.2,
+      }),
+      makeResult({
+        studentId: 'student-b',
+        studentName: 'Bruno',
+        time: '00:32.50',
+        timeInSeconds: 32.5,
+      }),
+    );
+
+    const path =
+      '/api/results/ranking?page=1&perPage=25&discipline=Piscina&competitionType=Piscina&courseType=Piscina%20Curta&style=Livre&distance=50m&eventFormat=Prova%20Individual&category=Petiz%202';
+
+    const female = await request(app.getHttpServer())
+      .get(`${path}&gender=Feminino`)
+      .expect(200);
+    expect(female.body.meta.total).toBe(1);
+    expect(female.body.data[0]).toMatchObject({
+      studentId: 'student-a',
+      rank: 1,
+    });
+
+    const male = await request(app.getHttpServer())
+      .get(`${path}&gender=Masculino`)
+      .expect(200);
+    expect(male.body.meta.total).toBe(1);
+    expect(male.body.data[0]).toMatchObject({
+      studentId: 'student-b',
+      rank: 1,
+    });
+
+    const legacy = await request(app.getHttpServer()).get(path).expect(200);
+    expect(legacy.body.meta.total).toBe(2);
+
+    await request(app.getHttpServer()).get(`${path}&gender=Outro`).expect(400);
+  });
+
   it('returns official contexts, style distribution and evolution analytics', async () => {
     resultsRepository.items.push(
       makeResult({
@@ -379,7 +423,9 @@ describe('ResultsController (e2e)', () => {
     });
 
     const distributionResponse = await request(app.getHttpServer())
-      .get('/api/results/style-distribution?discipline=Piscina&category=Petiz%202')
+      .get(
+        '/api/results/style-distribution?discipline=Piscina&category=Petiz%202',
+      )
       .expect(200);
 
     expect(distributionResponse.body.data).toEqual(
@@ -398,7 +444,10 @@ describe('ResultsController (e2e)', () => {
     expect(evolutionResponse.body.data.students).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ studentId: 'student-1', studentName: 'Ana' }),
-        expect.objectContaining({ studentId: 'student-2', studentName: 'Bruno' }),
+        expect.objectContaining({
+          studentId: 'student-2',
+          studentName: 'Bruno',
+        }),
       ]),
     );
     expect(evolutionResponse.body.data.points).toEqual(
@@ -409,4 +458,3 @@ describe('ResultsController (e2e)', () => {
     );
   });
 });
-

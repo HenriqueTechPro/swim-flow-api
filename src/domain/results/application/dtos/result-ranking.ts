@@ -13,6 +13,8 @@ export interface GenerateRankingRequest extends PaginationParams {
   competitionType: ResultCompetitionType;
   courseType?: ResultCourseType;
   poolLengthMeters?: number;
+  /** Optional athlete gender filter; omission keeps the legacy combined view. */
+  gender?: 'Masculino' | 'Feminino';
   style: ResultStyle;
   distance: ResultDistance;
   customDistance?: string;

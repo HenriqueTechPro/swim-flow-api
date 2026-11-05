@@ -2,36 +2,71 @@ import { z } from 'zod';
 import { isValidDurationString } from '@/shared/utils/duration';
 import { normalizeWeekday, weekdayValues } from './weekdays';
 
-export const studentGenderValues = ["Masculino", "Feminino"] as const;
-export const resultStyleValues = ["Livre", "Costas", "Peito", "Borboleta", "Medley"] as const;
+export const studentGenderValues = ['Masculino', 'Feminino'] as const;
+export const resultStyleValues = [
+  'Livre',
+  'Costas',
+  'Peito',
+  'Borboleta',
+  'Medley',
+] as const;
 export const resultDistancePattern = /^\d+(?:[.,]\d+)?(?:m|km)$/i;
-export const resultDisciplineValues = ["Piscina", "Aguas Abertas"] as const;
-export const resultPoolCourseTypeValues = ["Piscina Curta", "Piscina Longa"] as const;
-export const resultOpenWaterCourseTypeValues = ["Mar", "Rio", "Lago", "Represa"] as const;
-export const resultCourseTypeValues = [...resultPoolCourseTypeValues, ...resultOpenWaterCourseTypeValues] as const;
-export const resultEventFormatValues = ["Prova Individual", "Revezamento", "Travessia", "Knockout Sprint", "Ultramaratona"] as const;
-export const resultStatusValues = ["Classificado", "Desclassificado", "Pendente", "Não largou", "Não completou"] as const;
-export const trainingVenueTypeValues = ["Piscina", "Mar", "Represa"] as const;
+export const resultDisciplineValues = ['Piscina', 'Aguas Abertas'] as const;
+export const resultPoolCourseTypeValues = [
+  'Piscina Curta',
+  'Piscina Longa',
+] as const;
+export const resultOpenWaterCourseTypeValues = [
+  'Mar',
+  'Rio',
+  'Lago',
+  'Represa',
+] as const;
+export const resultCourseTypeValues = [
+  ...resultPoolCourseTypeValues,
+  ...resultOpenWaterCourseTypeValues,
+] as const;
+export const resultEventFormatValues = [
+  'Prova Individual',
+  'Revezamento',
+  'Travessia',
+  'Knockout Sprint',
+  'Ultramaratona',
+] as const;
+export const resultStatusValues = [
+  'Classificado',
+  'Desclassificado',
+  'Pendente',
+  'Não largou',
+  'Não completou',
+] as const;
+export const trainingVenueTypeValues = ['Piscina', 'Mar', 'Represa'] as const;
 export const exStudentExitReasonValues = [
-  "Mudança de cidade",
-  "Falta de tempo",
-  "Interesse por outro esporte",
-  "Idade limite da categoria",
-  "Motivos financeiros",
-  "Motivos de saúde",
-  "Outro",
+  'Mudança de cidade',
+  'Falta de tempo',
+  'Interesse por outro esporte',
+  'Idade limite da categoria',
+  'Motivos financeiros',
+  'Motivos de saúde',
+  'Outro',
 ] as const;
 
-const resultDistanceSchema = z.string().trim().regex(resultDistancePattern, "Invalid distance format");
+const resultDistanceSchema = z
+  .string()
+  .trim()
+  .regex(resultDistancePattern, 'Invalid distance format');
 const optionalResultDistanceSchema = z
   .string()
   .trim()
-  .refine((value) => value === "" || resultDistancePattern.test(value), "Invalid distance format");
+  .refine(
+    (value) => value === '' || resultDistancePattern.test(value),
+    'Invalid distance format',
+  );
 const resultTimeSchema = z
   .string()
   .trim()
-  .min(1, "Invalid time format")
-  .refine(isValidDurationString, "Invalid time format");
+  .min(1, 'Invalid time format')
+  .refine(isValidDurationString, 'Invalid time format');
 
 const weekdaySchema = z
   .string()
@@ -43,7 +78,7 @@ const applyResultConsistencyRules = (
   data: {
     discipline: (typeof resultDisciplineValues)[number];
     competitionType: (typeof resultDisciplineValues)[number];
-    courseType: (typeof resultCourseTypeValues)[number] | "";
+    courseType: (typeof resultCourseTypeValues)[number] | '';
     eventFormat: (typeof resultEventFormatValues)[number];
     customDistance?: string;
     resultStatus: (typeof resultStatusValues)[number];
@@ -54,25 +89,50 @@ const applyResultConsistencyRules = (
   },
   ctx: z.RefinementCtx,
 ) => {
-  if (data.resultStatus === "Classificado" && data.time !== undefined && !data.time) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["time"], message: "Classified results require a recorded duration" });
+  if (
+    data.resultStatus === 'Classificado' &&
+    data.time !== undefined &&
+    !data.time
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['time'],
+      message: 'Classified results require a recorded duration',
+    });
   }
 
   if (data.competitionType !== data.discipline) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      path: ["competitionType"],
-      message: "Competition type must match discipline",
+      path: ['competitionType'],
+      message: 'Competition type must match discipline',
     });
   }
 
-  if (data.discipline === "Piscina") {
+  if (data.discipline === 'Piscina') {
     if (data.routeKey) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["routeKey"], message: "Pool results cannot have open-water routes" });
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['routeKey'],
+        message: 'Pool results cannot have open-water routes',
+      });
     }
-    const length = data.courseType === "Piscina Curta" ? 25 : data.courseType === "Piscina Longa" ? 50 : null;
-    if (length !== null && data.poolLengthMeters !== undefined && length !== data.poolLengthMeters) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["poolLengthMeters"], message: "Pool length conflicts with selected course type" });
+    const length =
+      data.courseType === 'Piscina Curta'
+        ? 25
+        : data.courseType === 'Piscina Longa'
+          ? 50
+          : null;
+    if (
+      length !== null &&
+      data.poolLengthMeters !== undefined &&
+      length !== data.poolLengthMeters
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['poolLengthMeters'],
+        message: 'Pool length conflicts with selected course type',
+      });
     }
     if (
       data.courseType &&
@@ -82,31 +142,35 @@ const applyResultConsistencyRules = (
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ["courseType"],
-        message: "Invalid pool course type",
+        path: ['courseType'],
+        message: 'Invalid pool course type',
       });
     }
 
-    if (!["Prova Individual", "Revezamento"].includes(data.eventFormat)) {
+    if (!['Prova Individual', 'Revezamento'].includes(data.eventFormat)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ["eventFormat"],
-        message: "Invalid pool event format",
+        path: ['eventFormat'],
+        message: 'Invalid pool event format',
       });
     }
 
-    if ((data.customDistance || "").trim()) {
+    if ((data.customDistance || '').trim()) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ["customDistance"],
-        message: "Pool results must use official distance options only",
+        path: ['customDistance'],
+        message: 'Pool results must use official distance options only',
       });
     }
   }
 
-  if (data.discipline === "Aguas Abertas") {
+  if (data.discipline === 'Aguas Abertas') {
     if (data.poolLengthMeters !== undefined) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["poolLengthMeters"], message: "Open water cannot have a pool length" });
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['poolLengthMeters'],
+        message: 'Open water cannot have a pool length',
+      });
     }
     if (
       data.courseType &&
@@ -116,17 +180,17 @@ const applyResultConsistencyRules = (
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ["courseType"],
-        message: "Invalid open water course type",
+        path: ['courseType'],
+        message: 'Invalid open water course type',
       });
     }
   }
 
-  if (data.resultStatus !== "Classificado" && (data.position ?? 0) > 0) {
+  if (data.resultStatus !== 'Classificado' && (data.position ?? 0) > 0) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      path: ["position"],
-      message: "Non-classified results cannot keep a finishing position",
+      path: ['position'],
+      message: 'Non-classified results cannot keep a finishing position',
     });
   }
 };
@@ -139,7 +203,7 @@ export const classScheduleSchema = z.object({
 
 export const classTeacherSchema = z.object({
   teacherId: z.string().uuid(),
-  role: z.enum(["head_coach", "assistant_coach"]),
+  role: z.enum(['head_coach', 'assistant_coach']),
 });
 
 export const createStudentSchema = z.object({
@@ -173,7 +237,7 @@ export const createTeacherSchema = z.object({
   specialities: z.array(z.string().min(1)).min(1),
   categories: z.array(z.string().min(1)).min(1),
   experience: z.string().min(1),
-  certifications: z.string().optional().default(""),
+  certifications: z.string().optional().default(''),
   status: z.string().min(1),
   bio: z.string().optional().nullable(),
 });
@@ -200,7 +264,7 @@ export const createParentSchema = z.object({
   address: z.string().min(1),
   emergencyContact: z.string().min(1),
   emergencyPhone: z.string().min(1),
-  status: z.enum(["Ativo", "Inativo"]),
+  status: z.enum(['Ativo', 'Inativo']),
 });
 
 export const updateParentSchema = createParentSchema.partial().extend({
@@ -212,7 +276,7 @@ export const updateParentSchema = createParentSchema.partial().extend({
   address: z.string().min(1),
   emergencyContact: z.string().min(1),
   emergencyPhone: z.string().min(1),
-  status: z.enum(["Ativo", "Inativo"]),
+  status: z.enum(['Ativo', 'Inativo']),
 });
 
 export const createClassSchema = z.object({
@@ -222,7 +286,7 @@ export const createClassSchema = z.object({
   classTeachers: z.array(classTeacherSchema).default([]),
   maxStudents: z.number().int().min(1),
   poolId: z.string().uuid().nullable().optional(),
-  status: z.enum(["Ativa", "Pausada", "Encerrada"]),
+  status: z.enum(['Ativa', 'Pausada', 'Encerrada']),
 });
 
 export const updateClassSchema = createClassSchema.extend({
@@ -243,19 +307,22 @@ export const transferStudentSchema = z.object({
 
 export const assignClassTeacherSchema = z.object({
   teacherId: z.string().uuid(),
-  role: z.enum(["head_coach", "assistant_coach"]).optional().default("assistant_coach"),
+  role: z
+    .enum(['head_coach', 'assistant_coach'])
+    .optional()
+    .default('assistant_coach'),
 });
 
 export const updateClassTeacherRoleSchema = z.object({
-  role: z.enum(["head_coach", "assistant_coach"]),
+  role: z.enum(['head_coach', 'assistant_coach']),
 });
 
 export const attendanceRecordSchema = z.object({
   studentId: z.string().uuid(),
   classId: z.string().uuid(),
   date: z.string().min(1),
-  status: z.enum(["present", "absent", "late", "justified"]),
-  observations: z.string().optional().default(""),
+  status: z.enum(['present', 'absent', 'late', 'justified']),
+  observations: z.string().optional().default(''),
   savedAt: z.string().optional(),
 });
 
@@ -266,25 +333,36 @@ export const saveAttendanceBatchSchema = z.object({
 const resultBaseSchema = z.object({
   studentId: z.string().uuid(),
   studentName: z.string().optional(),
-  discipline: z.enum(resultDisciplineValues).optional().default("Piscina"),
+  discipline: z.enum(resultDisciplineValues).optional().default('Piscina'),
   style: z.enum(resultStyleValues),
   distance: resultDistanceSchema,
-  customDistance: optionalResultDistanceSchema.optional().default(""),
-  competitionType: z.enum(resultDisciplineValues).optional().default("Piscina"),
-  courseType: z.union([z.enum(resultCourseTypeValues), z.literal("")]).optional().default(""),
-  eventFormat: z.enum(resultEventFormatValues).optional().default("Prova Individual"),
-  time: z.union([resultTimeSchema, z.literal(""), z.null()]).optional().default(""),
+  customDistance: optionalResultDistanceSchema.optional().default(''),
+  competitionType: z.enum(resultDisciplineValues).optional().default('Piscina'),
+  courseType: z
+    .union([z.enum(resultCourseTypeValues), z.literal('')])
+    .optional()
+    .default(''),
+  eventFormat: z
+    .enum(resultEventFormatValues)
+    .optional()
+    .default('Prova Individual'),
+  time: z
+    .union([resultTimeSchema, z.literal(''), z.null()])
+    .optional()
+    .default(''),
   poolLengthMeters: z.number().finite().positive().optional(),
   routeKey: z.string().trim().min(1).max(160).optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  competition: z.string().optional().default(""),
+  competition: z.string().optional().default(''),
   position: z.number().int().min(0).nullable().optional().default(null),
-  resultStatus: z.enum(resultStatusValues).optional().default("Classificado"),
-  category: z.string().optional().default(""),
+  resultStatus: z.enum(resultStatusValues).optional().default('Classificado'),
+  category: z.string().optional().default(''),
   notes: z.string().optional(),
 });
 
-export const createResultSchema = resultBaseSchema.superRefine(applyResultConsistencyRules);
+export const createResultSchema = resultBaseSchema.superRefine(
+  applyResultConsistencyRules,
+);
 
 export const updateResultSchema = resultBaseSchema
   .extend({
@@ -301,15 +379,16 @@ export const resultsRankingQuerySchema = z
     discipline: z.enum(resultDisciplineValues),
     competitionType: z.enum(resultDisciplineValues),
     courseType: z
-      .union([z.enum(resultCourseTypeValues), z.literal("")])
+      .union([z.enum(resultCourseTypeValues), z.literal('')])
       .optional()
-      .default(""),
+      .default(''),
     style: z.enum(resultStyleValues),
     distance: resultDistanceSchema,
-    customDistance: optionalResultDistanceSchema.optional().default(""),
+    customDistance: optionalResultDistanceSchema.optional().default(''),
     poolLengthMeters: z.coerce.number().positive().optional(),
     eventFormat: z.enum(resultEventFormatValues),
     category: z.string().trim().min(1),
+    gender: z.enum(studentGenderValues).optional(),
   })
   .superRefine((data, ctx) =>
     applyResultConsistencyRules(
@@ -319,7 +398,7 @@ export const resultsRankingQuerySchema = z
         courseType: data.courseType,
         eventFormat: data.eventFormat,
         customDistance: data.customDistance,
-        resultStatus: "Classificado",
+        resultStatus: 'Classificado',
         position: 0,
         time: undefined,
       },
@@ -329,13 +408,13 @@ export const resultsRankingQuerySchema = z
 
 export const createEventSchema = z.object({
   title: z.string().min(3),
-  description: z.string().optional().default(""),
-  type: z.enum(["Competição", "Reunião", "Festival"]),
+  description: z.string().optional().default(''),
+  type: z.enum(['Competição', 'Reunião', 'Festival']),
   date: z.string().min(1),
   startTime: z.string().min(1),
   endTime: z.string().min(1),
   location: z.string().min(1),
-  status: z.enum(["Agendado", "Em Andamento", "Concluído", "Cancelado"]),
+  status: z.enum(['Agendado', 'Em Andamento', 'Concluído', 'Cancelado']),
 });
 
 export const updateEventSchema = createEventSchema;
@@ -344,63 +423,65 @@ export const createPoolSchema = z.object({
   name: z.string().min(3),
   lengthMeters: z.number().int().positive(),
   address: z.string().min(1),
-  status: z.enum(["Ativa", "Inativa", "Manutenção"]),
+  status: z.enum(['Ativa', 'Inativa', 'Manutenção']),
   maxCapacity: z.number().int().positive().nullable().optional(),
 });
 
 export const updatePoolSchema = createPoolSchema;
 
-export const createTrainingSchema = z.object({
-  title: z.string().min(3),
-  description: z.string().optional().default(""),
-  type: z.enum(["Técnico", "Resistência", "Velocidade", "Misto"]),
-  venueType: z.enum(trainingVenueTypeValues),
-  locationName: z.string().trim().max(120).optional().default(""),
-  dayOfWeek: weekdaySchema,
-  startTime: z.string().min(1),
-  endTime: z.string().min(1),
-  instructorId: z.string().uuid().nullable().optional(),
-  level: z.enum(["Iniciante", "Intermediário", "Avançado", "Todos"]),
-  maxParticipants: z.number().int().min(0),
-  currentParticipants: z.number().int().min(0),
-  status: z.enum(["Ativo", "Pausado", "Encerrado"]),
-  poolId: z.string().uuid().nullable().optional(),
-}).superRefine((data, ctx) => {
-  if (data.startTime >= data.endTime) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["endTime"],
-      message: "End time must be after start time",
-    });
-  }
-
-  if (data.venueType === "Piscina") {
-    if (!data.poolId) {
+export const createTrainingSchema = z
+  .object({
+    title: z.string().min(3),
+    description: z.string().optional().default(''),
+    type: z.enum(['Técnico', 'Resistência', 'Velocidade', 'Misto']),
+    venueType: z.enum(trainingVenueTypeValues),
+    locationName: z.string().trim().max(120).optional().default(''),
+    dayOfWeek: weekdaySchema,
+    startTime: z.string().min(1),
+    endTime: z.string().min(1),
+    instructorId: z.string().uuid().nullable().optional(),
+    level: z.enum(['Iniciante', 'Intermediário', 'Avançado', 'Todos']),
+    maxParticipants: z.number().int().min(0),
+    currentParticipants: z.number().int().min(0),
+    status: z.enum(['Ativo', 'Pausado', 'Encerrado']),
+    poolId: z.string().uuid().nullable().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.startTime >= data.endTime) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ["poolId"],
-        message: "Pool trainings must keep a linked pool",
+        path: ['endTime'],
+        message: 'End time must be after start time',
       });
     }
-    return;
-  }
 
-  if (!data.locationName.trim()) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["locationName"],
-      message: "Outdoor trainings must include a location name",
-    });
-  }
+    if (data.venueType === 'Piscina') {
+      if (!data.poolId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['poolId'],
+          message: 'Pool trainings must keep a linked pool',
+        });
+      }
+      return;
+    }
 
-  if (data.poolId) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["poolId"],
-      message: "Outdoor trainings cannot keep a linked pool",
-    });
-  }
-});
+    if (!data.locationName.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['locationName'],
+        message: 'Outdoor trainings must include a location name',
+      });
+    }
+
+    if (data.poolId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['poolId'],
+        message: 'Outdoor trainings cannot keep a linked pool',
+      });
+    }
+  });
 
 export const updateTrainingSchema = createTrainingSchema;
 
@@ -429,9 +510,12 @@ export const updateProfileSchema = z
     fullName: z.string().trim().min(1).optional(),
     avatarUrl: z.string().trim().url().nullable().optional(),
   })
-  .refine((data) => data.fullName !== undefined || data.avatarUrl !== undefined, {
-    message: "At least one profile field must be provided",
-  });
+  .refine(
+    (data) => data.fullName !== undefined || data.avatarUrl !== undefined,
+    {
+      message: 'At least one profile field must be provided',
+    },
+  );
 
 export type CreateStudentDto = z.infer<typeof createStudentSchema>;
 export type UpdateStudentDto = z.infer<typeof updateStudentSchema>;
@@ -444,7 +528,9 @@ export type UpdateClassDto = z.infer<typeof updateClassSchema>;
 export type TransferTeacherDto = z.infer<typeof transferTeacherSchema>;
 export type TransferStudentDto = z.infer<typeof transferStudentSchema>;
 export type AssignClassTeacherDto = z.infer<typeof assignClassTeacherSchema>;
-export type UpdateClassTeacherRoleDto = z.infer<typeof updateClassTeacherRoleSchema>;
+export type UpdateClassTeacherRoleDto = z.infer<
+  typeof updateClassTeacherRoleSchema
+>;
 export type SaveAttendanceBatchDto = z.infer<typeof saveAttendanceBatchSchema>;
 export type CreateResultDto = z.infer<typeof createResultSchema>;
 export type UpdateResultDto = z.infer<typeof updateResultSchema>;
@@ -459,8 +545,3 @@ export type CreateExStudentDto = z.infer<typeof createExStudentSchema>;
 export type UpdateExStudentDto = z.infer<typeof updateExStudentSchema>;
 export type ReactivateExStudentDto = z.infer<typeof reactivateExStudentSchema>;
 export type UpdateProfileDto = z.infer<typeof updateProfileSchema>;
-
-
-
-
-

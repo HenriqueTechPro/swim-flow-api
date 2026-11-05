@@ -1,5 +1,8 @@
 import { AppError } from '@/shared/errors/app-error';
-import { normalizeDurationString, parseDuration } from '@/shared/utils/duration';
+import {
+  normalizeDurationString,
+  parseDuration,
+} from '@/shared/utils/duration';
 import type { GenerateRankingRequest } from '@/domain/results/application/dtos/result-ranking';
 import type {
   CreateResultRepositoryInput,
@@ -63,6 +66,8 @@ const formatMonthLabel = (monthKey: string) => {
 
 export class InMemoryResultsRepository implements ResultsRepository {
   public items: Result[] = [];
+  // Represents Student.gender for ranking tests without altering result snapshots.
+  public studentGenders = new Map<string, 'Masculino' | 'Feminino'>();
 
   private filterItems(params?: ListResultsRepositoryParams) {
     const search = params?.search?.trim().toLocaleLowerCase('pt-BR');
@@ -82,8 +87,10 @@ export class InMemoryResultsRepository implements ResultsRepository {
 
     return this.items.filter((item) => {
       if (discipline && item.discipline !== discipline) return false;
-      if (competitionType && item.competitionType !== competitionType) return false;
-      if (courseType && normalizeCourseType(item.courseType) !== courseType) return false;
+      if (competitionType && item.competitionType !== competitionType)
+        return false;
+      if (courseType && normalizeCourseType(item.courseType) !== courseType)
+        return false;
       if (style && item.style !== style) return false;
       if (eventFormat && item.eventFormat !== eventFormat) return false;
       if (resultStatus && item.resultStatus !== resultStatus) return false;
@@ -95,7 +102,10 @@ export class InMemoryResultsRepository implements ResultsRepository {
         }
       }
 
-      if (customDistance && (item.customDistance?.trim() || '') !== customDistance) {
+      if (
+        customDistance &&
+        (item.customDistance?.trim() || '') !== customDistance
+      ) {
         return false;
       }
 
@@ -171,7 +181,9 @@ export class InMemoryResultsRepository implements ResultsRepository {
             .map((item) => item.customDistance?.trim() || item.distance)
             .filter(Boolean),
         ),
-      ).sort((left, right) => left.localeCompare(right, 'pt-BR', { numeric: true })),
+      ).sort((left, right) =>
+        left.localeCompare(right, 'pt-BR', { numeric: true }),
+      ),
       categories: Array.from(
         new Set(this.items.map((item) => item.category).filter(Boolean)),
       ).sort((left, right) => left.localeCompare(right, 'pt-BR')),
@@ -265,12 +277,20 @@ export class InMemoryResultsRepository implements ResultsRepository {
 
     const grouped = new Map<
       string,
-      Map<string, { studentId: string; studentName: string; bestTimeSeconds: number }>
+      Map<
+        string,
+        { studentId: string; studentName: string; bestTimeSeconds: number }
+      >
     >();
 
     focused.forEach((item) => {
       const monthKey = item.date.slice(0, 7);
-      const monthGroup = grouped.get(monthKey) ?? new Map<string, { studentId: string; studentName: string; bestTimeSeconds: number }>();
+      const monthGroup =
+        grouped.get(monthKey) ??
+        new Map<
+          string,
+          { studentId: string; studentName: string; bestTimeSeconds: number }
+        >();
       const existing = monthGroup.get(item.studentId);
 
       if (!existing || item.timeInSeconds < existing.bestTimeSeconds) {
@@ -300,7 +320,9 @@ export class InMemoryResultsRepository implements ResultsRepository {
     };
   }
 
-  async listRankingCandidates(input: GenerateRankingRequest): Promise<Result[]> {
+  async listRankingCandidates(
+    input: GenerateRankingRequest,
+  ): Promise<Result[]> {
     const normalizedCourseType = normalizeCourseType(input.courseType);
     const customDistance = input.customDistance?.trim() || undefined;
 
@@ -309,13 +331,22 @@ export class InMemoryResultsRepository implements ResultsRepository {
       .filter((item) => item.discipline === input.discipline)
       .filter((item) => item.competitionType === input.competitionType)
       .filter(
-        (item) => (normalizeCourseType(item.courseType) ?? undefined) === normalizedCourseType,
+        (item) =>
+          (normalizeCourseType(item.courseType) ?? undefined) ===
+          normalizedCourseType,
       )
       .filter((item) => item.style === input.style)
       .filter((item) => item.distance === input.distance)
-      .filter((item) => (item.customDistance?.trim() || undefined) === customDistance)
+      .filter(
+        (item) => (item.customDistance?.trim() || undefined) === customDistance,
+      )
       .filter((item) => item.eventFormat === input.eventFormat)
-      .filter((item) => item.category === input.category);
+      .filter((item) => item.category === input.category)
+      .filter(
+        (item) =>
+          !input.gender ||
+          this.studentGenders.get(item.studentId) === input.gender,
+      );
   }
 
   async listRecordCandidates(
@@ -399,4 +430,3 @@ export class InMemoryResultsRepository implements ResultsRepository {
     return removedResult;
   }
 }
-
