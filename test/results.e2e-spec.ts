@@ -347,7 +347,7 @@ describe('ResultsController (e2e)', () => {
     await request(app.getHttpServer()).get(`${path}&gender=Outro`).expect(400);
   });
 
-  it('filters historical ranking by result calendar year without rewriting saved results', async () => {
+  it('filters historical ranking by year without changing stored results', async () => {
     resultsRepository.studentGenders.set('student-ana', 'Feminino');
     resultsRepository.studentGenders.set('student-bia', 'Feminino');
     resultsRepository.studentGenders.set('student-caio', 'Masculino');
@@ -393,12 +393,10 @@ describe('ResultsController (e2e)', () => {
       .get(`${path}&year=2026&gender=Feminino`)
       .expect(200);
     expect(year2026.body.meta.total).toBe(2);
-    expect(
-      year2026.body.data.map((entry: { resultId: string }) => entry.resultId),
-    ).toEqual(['ana-2026', 'bia-2026']);
-    expect(
-      year2026.body.data.map((entry: { rank: number }) => entry.rank),
-    ).toEqual([1, 1]);
+    expect(year2026.body.data).toEqual([
+      expect.objectContaining({ resultId: 'ana-2026', rank: 1 }),
+      expect.objectContaining({ resultId: 'bia-2026', rank: 1 }),
+    ]);
 
     const year2025 = await request(app.getHttpServer())
       .get(`${path}&year=2025`)
