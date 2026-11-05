@@ -121,17 +121,19 @@ describe('StudentsController (e2e)', () => {
       .expect(200);
     expect(empty.body.data).toEqual([]);
 
-    studentsRepository.seasonCategoryHistory[studentId] = [{
-      seasonId: '22222222-2222-4222-8222-222222222222',
-      year: 2026,
-      seasonLabel: 'Temporada 2026',
-      seasonStatus: 'ACTIVE',
-      startsOn: '2026-01-01',
-      endsOn: '2026-12-31',
-      categoryId: '33333333-3333-4333-8333-333333333333',
-      category: 'Mirim 1',
-      assignedAt: '2026-01-10T12:00:00.000Z',
-    }];
+    studentsRepository.seasonCategoryHistory[studentId] = [
+      {
+        seasonId: '22222222-2222-4222-8222-222222222222',
+        year: 2026,
+        seasonLabel: 'Temporada 2026',
+        seasonStatus: 'ACTIVE',
+        startsOn: '2026-01-01',
+        endsOn: '2026-12-31',
+        categoryId: '33333333-3333-4333-8333-333333333333',
+        category: 'Mirim 1',
+        assignedAt: '2026-01-10T12:00:00.000Z',
+      },
+    ];
 
     const withHistory = await request(app.getHttpServer())
       .get(`/api/students/${studentId}/season-categories`)
@@ -142,7 +144,9 @@ describe('StudentsController (e2e)', () => {
     expect(withHistory.body.data[0]).not.toHaveProperty('phone');
 
     await request(app.getHttpServer())
-      .get('/api/students/44444444-4444-4444-8444-444444444444/season-categories')
+      .get(
+        '/api/students/44444444-4444-4444-8444-444444444444/season-categories',
+      )
       .expect(404);
   });
 
