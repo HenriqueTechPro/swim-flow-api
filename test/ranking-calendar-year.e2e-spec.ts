@@ -84,9 +84,7 @@ describe('Ranking calendar-year filter (e2e)', () => {
       .expect(200);
     expect(year2025.body.data[0].resultId).toBe('ana-2025');
 
-    const combined = await request(app.getHttpServer())
-      .get(path)
-      .expect(200);
+    const combined = await request(app.getHttpServer()).get(path).expect(200);
     expect(combined.body.meta.total).toBe(3);
     expect(combined.body.data[0].resultId).toBe('caio-2027');
 
