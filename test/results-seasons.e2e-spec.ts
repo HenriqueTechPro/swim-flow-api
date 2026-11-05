@@ -56,14 +56,16 @@ describe('Results season options (e2e)', () => {
 
   it('validates and passes pagination to the read use case', async () => {
     list.mockResolvedValueOnce({
-      items: [{
-        id: '88888888-8888-4888-8888-888888888888',
-        year: 2026,
-        label: 'Temporada 2026',
-        startsOn: '2025-09-01',
-        endsOn: '2026-08-31',
-        status: 'ACTIVE',
-      }],
+      items: [
+        {
+          id: '88888888-8888-4888-8888-888888888888',
+          year: 2026,
+          label: 'Temporada 2026',
+          startsOn: '2025-09-01',
+          endsOn: '2026-08-31',
+          status: 'ACTIVE',
+        },
+      ],
       page: 2,
       perPage: 10,
       total: 12,
