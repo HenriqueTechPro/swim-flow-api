@@ -15,6 +15,8 @@ export interface GenerateRankingRequest extends PaginationParams {
   poolLengthMeters?: number;
   /** Optional athlete gender filter; omission keeps the legacy combined view. */
   gender?: 'Masculino' | 'Feminino';
+  /** Calendar year of the result date; not a Season entity reference. */
+  year?: number;
   style: ResultStyle;
   distance: ResultDistance;
   customDistance?: string;
