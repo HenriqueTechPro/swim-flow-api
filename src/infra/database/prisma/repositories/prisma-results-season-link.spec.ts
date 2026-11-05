@@ -62,16 +62,20 @@ describe('PrismaResultsRepository season links', () => {
         update: jest.fn(),
       },
     };
-    prisma.poolResult.create.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({
+    prisma.poolResult.create.mockImplementation(
+      async ({ data }: { data: Record<string, unknown> }) => ({
       id: 'pool-result',
       ...data,
       student: { name: 'Atleta' },
-    }));
-    prisma.openWaterResult.create.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({
+      }),
+    );
+    prisma.openWaterResult.create.mockImplementation(
+      async ({ data }: { data: Record<string, unknown> }) => ({
       id: 'open-water-result',
       ...data,
       student: { name: 'Atleta' },
-    }));
+      }),
+    );
     const cache = { deleteMatching: jest.fn().mockResolvedValue(undefined) };
     repo = new PrismaResultsRepository(
       prisma as unknown as PrismaService,
@@ -145,12 +149,14 @@ describe('PrismaResultsRepository season links', () => {
       id: 'pool-result',
       seasonId,
     });
-    prisma.poolResult.update.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({
+    prisma.poolResult.update.mockImplementation(
+      async ({ data }: { data: Record<string, unknown> }) => ({
       id: 'pool-result',
       ...data,
       seasonId,
       student: { name: 'Atleta' },
-    }));
+      }),
+    );
 
     await repo.update('pool-result', {
       ...base,
@@ -177,11 +183,13 @@ describe('PrismaResultsRepository season links', () => {
       id: 'pool-result',
       seasonId,
     });
-    prisma.poolResult.update.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({
+    prisma.poolResult.update.mockImplementation(
+      async ({ data }: { data: Record<string, unknown> }) => ({
       id: 'pool-result',
       ...data,
       student: { name: 'Atleta' },
-    }));
+      }),
+    );
 
     const unlinked = await repo.update('pool-result', {
       ...base,
