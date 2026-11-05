@@ -104,11 +104,11 @@ describe('PrismaStudentsRepository season category integrity', () => {
     await expectBlocked(1, 0);
   });
 
-  it('blocks changes when an open water result belongs to the season', async () => {
+  it('blocks changed category with open-water result', async () => {
     await expectBlocked(0, 1);
   });
 
-  it('allows updates that preserve the recorded season category', async () => {
+  it('allows editing without changing season category', async () => {
     tx.studentSeasonCategory.findUnique.mockResolvedValue({
       categoryId: input.categoryId,
     });
@@ -144,7 +144,7 @@ describe('PrismaStudentsRepository season category integrity', () => {
     expect(tx.poolResult.count).not.toHaveBeenCalled();
   });
 
-  it('allows first association for a season without rewriting older ones', async () => {
+  it('allows first association in a new season', async () => {
     tx.studentSeasonCategory.findUnique.mockResolvedValue(null);
     await repo.update(studentId, input);
     expect(tx.poolResult.count).not.toHaveBeenCalled();
