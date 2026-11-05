@@ -13,11 +13,9 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   createResultSchema,
-  resultSeasonsQuerySchema,
   resultsRankingQuerySchema,
   updateResultSchema,
   type CreateResultDto,
-  type ResultSeasonsQueryDto,
   type ResultsRankingQueryDto,
   type UpdateResultDto,
 } from '@/shared/contracts/management';
@@ -31,7 +29,6 @@ import { ListResultCompetitionContextsUseCase } from '@/domain/results/applicati
 import { ListRecordsUseCase } from '@/domain/results/application/use-cases/list-records';
 import { ListResultFilterOptionsUseCase } from '@/domain/results/application/use-cases/list-result-filter-options';
 import { ListResultsUseCase } from '@/domain/results/application/use-cases/list-results';
-import { ListResultSeasonsUseCase } from '@/domain/results/application/use-cases/list-result-seasons';
 import { UpdateResultUseCase } from '@/domain/results/application/use-cases/update-result';
 import { normalizePaginationParams } from '@/domain/shared/pagination/pagination-utils';
 import { JwtAuthGuard } from '@/infra/auth/jwt-auth.guard';
@@ -58,7 +55,6 @@ export class ResultsController {
     private readonly listResultCompetitionContexts: ListResultCompetitionContextsUseCase,
     private readonly listRecords: ListRecordsUseCase,
     private readonly listResultFilterOptions: ListResultFilterOptionsUseCase,
-    private readonly listResultSeasons: ListResultSeasonsUseCase,
     private readonly listResults: ListResultsUseCase,
     private readonly createResult: CreateResultUseCase,
     private readonly updateResult: UpdateResultUseCase,
@@ -109,16 +105,6 @@ export class ResultsController {
     const { options } = await this.listResultFilterOptions.execute();
 
     return { data: options };
-  }
-
-  @Get('seasons')
-  @Permissions('results:read')
-  async seasons(
-    @Query(new ZodValidationPipe(resultSeasonsQuerySchema))
-    query: ResultSeasonsQueryDto,
-  ) {
-    const { seasons, meta } = await this.listResultSeasons.execute(query);
-    return { data: seasons, meta };
   }
 
   @Get('contexts')
