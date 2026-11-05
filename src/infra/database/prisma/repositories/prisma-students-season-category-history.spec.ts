@@ -17,7 +17,7 @@ describe('PrismaStudentsRepository season-category history', () => {
     jest.clearAllMocks();
   });
 
-  it('returns only selected season/category fields ordered by year', async () => {
+  it('selects and orders season category history fields', async () => {
     findMany.mockResolvedValue([
       {
         assignedAt: new Date('2026-01-10T12:00:00Z'),
@@ -74,6 +74,7 @@ describe('PrismaStudentsRepository season-category history', () => {
 
   it('does not invent a season when no assignment exists', async () => {
     findMany.mockResolvedValue([]);
-    await expect(repository.listSeasonCategories(studentId)).resolves.toEqual([]);
+    const history = await repository.listSeasonCategories(studentId);
+    expect(history).toEqual([]);
   });
 });
