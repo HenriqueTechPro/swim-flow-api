@@ -344,6 +344,10 @@ export class InMemoryResultsRepository implements ResultsRepository {
       .filter((item) => item.category === input.category)
       .filter(
         (item) =>
+          input.year === undefined || item.date.slice(0, 4) === String(input.year),
+      )
+      .filter(
+        (item) =>
           !input.gender ||
           this.studentGenders.get(item.studentId) === input.gender,
       );
