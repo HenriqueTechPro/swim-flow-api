@@ -18,6 +18,8 @@ export interface CreateResultRequest {
   courseType?: ResultCourseType;
   poolLengthMeters?: number;
   routeKey?: string;
+  /** Undefined preserves an existing link on update; null explicitly unlinks. */
+  seasonId?: string | null;
   eventFormat: ResultEventFormat;
   time?: string | null;
   date: string;
