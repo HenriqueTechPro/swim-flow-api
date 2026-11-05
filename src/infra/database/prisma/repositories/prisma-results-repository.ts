@@ -14,6 +14,10 @@ import {
   normalizePaginationParams,
 } from '@/domain/shared/pagination/pagination-utils';
 import type { GenerateRankingRequest } from '@/domain/results/application/dtos/result-ranking';
+import type {
+  CompetitionPlacement,
+  ListCompetitionPlacementsRequest,
+} from '@/domain/results/application/dtos/result-competition-placements';
 import type { PaginatedResult } from '@/domain/shared/pagination/pagination-params';
 import {
   ResultsRepository,
@@ -31,7 +35,10 @@ import { buildResultCompetitionContext } from '@/domain/results/application/serv
 import { CompetitiveResultPolicy } from '@/domain/results/application/services/competitive-result.policy';
 import { assertResultDateWithinSeason } from '@/domain/results/application/services/result-season.policy';
 import { AppError } from '@/shared/errors/app-error';
-import { parseDuration } from '@/shared/utils/duration';
+import {
+  formatDurationFromMilliseconds,
+  parseDuration,
+} from '@/shared/utils/duration';
 import type { Result } from '@/domain/results/enterprise/entities/result';
 import { PrismaService } from '../prisma.service';
 import {
@@ -372,6 +379,69 @@ export class PrismaResultsRepository implements ResultsRepository {
     private readonly cache: CacheRepository,
     private readonly env: EnvService,
   ) {}
+
+  async listCompetitionPlacements(
+    input: ListCompetitionPlacementsRequest,
+  ): Promise<PaginatedResult<CompetitionPlacement>> {
+    const { page, perPage } = normalizePaginationParams(input);
+    const where: Prisma.PoolResultWhereInput = {
+      competitionSnapshot: input.competition,
+      heldOn: parseDate(input.date, 'date'),
+      categorySnapshot: input.category,
+      student: { gender: input.gender },
+      style: input.style,
+      distanceMeters: parseMeters(input.distance),
+      poolLengthMeters: input.poolLengthMeters,
+      format: 'INDIVIDUAL',
+      status: 'CLASSIFIED',
+      durationMs: { gt: 0 },
+      position: { gt: 0 },
+    };
+    const [rows, total] = await this.prisma.$transaction([
+      this.prisma.poolResult.findMany({
+        where,
+        select: {
+          id: true,
+          studentId: true,
+          student: { select: { name: true } },
+          position: true,
+          durationMs: true,
+        },
+        orderBy: [
+          { position: 'asc' },
+          { durationMs: 'asc' },
+          { id: 'asc' },
+        ],
+        skip: (page - 1) * perPage,
+        take: perPage,
+      }),
+      this.prisma.poolResult.count({ where }),
+    ]);
+
+    const placements = rows.map((row) => {
+      if (row.position === null || row.durationMs === null) {
+        throw new AppError(500, 'Invalid stored classified placement');
+      }
+      return {
+        resultId: row.id,
+        studentId: row.studentId,
+        studentName: row.student.name,
+        position: row.position,
+        durationMs: row.durationMs,
+        time: formatDurationFromMilliseconds(row.durationMs, 2),
+        competition: input.competition,
+        date: input.date,
+        category: input.category,
+        discipline: 'Piscina' as const,
+        eventFormat: 'Prova Individual' as const,
+        gender: input.gender,
+        style: input.style,
+        distance: input.distance,
+        poolLengthMeters: input.poolLengthMeters,
+      };
+    });
+    return createPaginatedResult(placements, total, { page, perPage });
+  }
 
   private async assertSeasonLink(
     seasonId: string | null | undefined,

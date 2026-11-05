@@ -5,6 +5,10 @@ import {
 } from '@/shared/utils/duration';
 import type { GenerateRankingRequest } from '@/domain/results/application/dtos/result-ranking';
 import type {
+  CompetitionPlacement,
+  ListCompetitionPlacementsRequest,
+} from '@/domain/results/application/dtos/result-competition-placements';
+import type {
   CreateResultRepositoryInput,
   ResultCompetitionContext,
   ResultEvolution,
@@ -65,6 +69,46 @@ const formatMonthLabel = (monthKey: string) => {
 };
 
 export class InMemoryResultsRepository implements ResultsRepository {
+  async listCompetitionPlacements(
+    input: ListCompetitionPlacementsRequest,
+  ) {
+    const placements: CompetitionPlacement[] = this.items
+      .filter((item) => item.discipline === 'Piscina')
+      .filter((item) => item.eventFormat === 'Prova Individual')
+      .filter((item) => item.resultStatus === 'Classificado')
+      .filter((item) => item.position > 0 && item.timeInSeconds > 0)
+      .filter((item) => item.competition === input.competition)
+      .filter((item) => item.date === input.date)
+      .filter((item) => item.category === input.category)
+      .filter((item) => item.style === input.style)
+      .filter((item) => item.distance === input.distance)
+      .filter((item) => item.poolLengthMeters === input.poolLengthMeters)
+      .filter((item) => this.studentGenders.get(item.studentId) === input.gender)
+      .map((item) => ({
+        resultId: item.id,
+        studentId: item.studentId,
+        studentName: item.studentName,
+        position: item.position,
+        durationMs: item.durationMs ?? Math.round(item.timeInSeconds * 1000),
+        time: item.time,
+        competition: item.competition,
+        date: item.date,
+        category: item.category,
+        discipline: 'Piscina',
+        eventFormat: 'Prova Individual',
+        gender: input.gender,
+        style: input.style,
+        distance: item.distance,
+        poolLengthMeters: input.poolLengthMeters,
+      }))
+      .sort(
+        (a, b) =>
+          a.position - b.position ||
+          a.durationMs - b.durationMs ||
+          a.resultId.localeCompare(b.resultId),
+      );
+    return paginateItems(placements, input);
+  }
   public items: Result[] = [];
   // Represents Student.gender for ranking tests without altering result snapshots.
   public studentGenders = new Map<string, 'Masculino' | 'Feminino'>();
