@@ -6,7 +6,10 @@ import { ResultSeasonsRepository } from '@/domain/results/application/repositori
 import { ResultSeasonsController } from '@/infra/http/controllers/result-seasons.controller';
 import { ROLES_KEY } from '@/infra/auth/roles.decorator';
 import { PERMISSIONS_KEY } from '@/infra/auth/permissions.decorator';
-import { createAuthenticatedE2EApp, createE2EApp } from './utils/create-e2e-app';
+import {
+  createAuthenticatedE2EApp,
+  createE2EApp,
+} from './utils/create-e2e-app';
 
 describe('Result season options (e2e)', () => {
   let app: INestApplication<App>;
@@ -68,7 +71,8 @@ describe('Result season options (e2e)', () => {
       perPage: 10,
       total: 12,
     });
-    const response = await get('/api/results/seasons?page=2&perPage=10').expect(200);
+    const query = '/api/results/seasons?page=2&perPage=10';
+    const response = await get(query).expect(200);
 
     expect(response.body.data[0]).toMatchObject({
       year: 2026,
