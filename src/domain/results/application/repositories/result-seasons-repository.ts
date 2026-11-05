@@ -1,4 +1,7 @@
-import type { PaginationParams, PaginatedResult } from '@/domain/shared/pagination/pagination-params';
+import type {
+  PaginatedResult,
+  PaginationParams,
+} from '@/domain/shared/pagination/pagination-params';
 
 export type ResultSeasonStatus = 'PLANNED' | 'ACTIVE' | 'CLOSED';
 
