@@ -1,4 +1,3 @@
-import { AppError } from '@/shared/errors/app-error';
 import type { CacheRepository } from '@/infra/cache/cache-repository';
 import type { EnvService } from '@/infra/env/env.service';
 import type { PrismaService } from '../prisma.service';
@@ -35,8 +34,7 @@ describe('PrismaStudentsRepository season category integrity', () => {
       }),
     },
     $transaction: jest.fn(
-      async (callback: (client: typeof tx) => Promise<unknown>) =>
-        callback(tx),
+      async (callback: (client: typeof tx) => Promise<unknown>) => callback(tx),
     ),
   };
   const cache = { deleteMatching: jest.fn().mockResolvedValue(undefined) };
@@ -83,14 +81,7 @@ describe('PrismaStudentsRepository season category integrity', () => {
     });
   });
 
-  it.each([
-    ['pool', 1, 0],
-    ['open water', 0, 1],
-  ])('rejects a changed category with linked %s results', async (
-    _discipline,
-    poolCount,
-    openWaterCount,
-  ) => {
+  async function expectBlocked(poolCount: number, openWaterCount: number) {
     tx.poolResult.count.mockResolvedValue(poolCount);
     tx.openWaterResult.count.mockResolvedValue(openWaterCount);
 
@@ -99,10 +90,7 @@ describe('PrismaStudentsRepository season category integrity', () => {
     });
     const scope = {
       studentId,
-      OR: [
-        { seasonId },
-        { event: { is: { seasonId } } },
-      ],
+      OR: [{ seasonId }, { event: { is: { seasonId } } }],
     };
     expect(tx.poolResult.count).toHaveBeenCalledWith({ where: scope });
     expect(tx.openWaterResult.count).toHaveBeenCalledWith({ where: scope });
@@ -110,6 +98,14 @@ describe('PrismaStudentsRepository season category integrity', () => {
     expect(tx.studentSeasonCategory.upsert).not.toHaveBeenCalled();
     expect(tx.studentGuardian.updateMany).not.toHaveBeenCalled();
     expect(cache.deleteMatching).not.toHaveBeenCalled();
+  }
+
+  it('blocks changes when a pool result belongs to the season', async () => {
+    await expectBlocked(1, 0);
+  });
+
+  it('blocks changes when an open water result belongs to the season', async () => {
+    await expectBlocked(0, 1);
   });
 
   it('allows updates that preserve the recorded season category', async () => {
