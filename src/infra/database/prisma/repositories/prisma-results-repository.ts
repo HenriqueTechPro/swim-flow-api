@@ -389,7 +389,10 @@ export class PrismaResultsRepository implements ResultsRepository {
       throw new AppError(422, 'Legacy placements require competition and date');
     }
     if (input.eventId && (input.competition || input.date)) {
-      throw new AppError(422, 'Event identity cannot be mixed with legacy filters');
+      throw new AppError(
+        422,
+        'Event identity cannot be mixed with legacy filters',
+      );
     }
     const where: Prisma.PoolResultWhereInput = {
       ...(input.eventId

@@ -245,9 +245,12 @@ describe('ResultsController (e2e)', () => {
         poolLengthMeters: 25,
       }),
     );
-    const common = 'category=Petiz%202&gender=Feminino&style=Livre&distance=50m&poolLengthMeters=25';
+    const common =
+      'category=Petiz%202&gender=Feminino&style=Livre&distance=50m&poolLengthMeters=25';
     const linked = await request(app.getHttpServer())
-      .get(`/api/results/competition-placements?${common}&eventId=${firstEvent}`)
+      .get(
+        `/api/results/competition-placements?${common}&eventId=${firstEvent}`,
+      )
       .expect(200);
     expect(linked.body.meta.total).toBe(1);
     expect(linked.body.data[0]).toMatchObject({
@@ -256,7 +259,9 @@ describe('ResultsController (e2e)', () => {
       position: 2,
     });
     const legacy = await request(app.getHttpServer())
-      .get(`/api/results/competition-placements?${common}&competition=Festival%20Interno&date=2026-03-31`)
+      .get(
+        `/api/results/competition-placements?${common}&competition=Festival%20Interno&date=2026-03-31`,
+      )
       .expect(200);
     expect(legacy.body.meta.total).toBe(1);
     expect(legacy.body.data[0]).toMatchObject({
@@ -271,7 +276,9 @@ describe('ResultsController (e2e)', () => {
       .get(`/api/results/competition-placements?${common}&eventId=invalid`)
       .expect(400);
     await request(app.getHttpServer())
-      .get(`/api/results/competition-placements?${common}&eventId=${firstEvent}&competition=Festival%20Interno&date=2026-03-31`)
+      .get(
+        `/api/results/competition-placements?${common}&eventId=${firstEvent}&competition=Festival%20Interno&date=2026-03-31`,
+      )
       .expect(400);
   });
 
