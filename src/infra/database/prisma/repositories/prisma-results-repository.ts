@@ -764,6 +764,12 @@ export class PrismaResultsRepository implements ResultsRepository {
     if (!pool || (!input.courseType && !input.poolLengthMeters)) return [];
     // Filter at the database before ranking, deduplication, and pagination.
     if (input.gender) pool.student = { gender: input.gender };
+    if (input.year !== undefined) {
+      pool.heldOn = {
+        gte: new Date(Date.UTC(input.year, 0, 1)),
+        lt: new Date(Date.UTC(input.year + 1, 0, 1)),
+      };
+    }
     const rows = await this.prisma.poolResult.findMany({
       where: {
         AND: [

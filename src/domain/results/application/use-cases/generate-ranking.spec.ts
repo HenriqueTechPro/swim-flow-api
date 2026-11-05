@@ -140,6 +140,79 @@ describe('GenerateRankingUseCase', () => {
       timeInSeconds: 33.9,
     });
   });
+  it('uses the recorded result year and category snapshot without reclassifying prior seasons', async () => {
+    resultsRepository.items.push(
+      makeResult({
+        id: 'mirim-2025',
+        studentId: 'same-athlete',
+        category: 'Mirim 2',
+        date: '2025-12-31',
+        time: '00:30.00',
+        timeInSeconds: 30,
+      }),
+      makeResult({
+        id: 'petiz-2026',
+        studentId: 'same-athlete',
+        category: 'Petiz 1',
+        date: '2026-01-01',
+        time: '00:32.00',
+        timeInSeconds: 32,
+      }),
+      makeResult({
+        id: 'petiz-2026-late',
+        studentId: 'other-athlete',
+        category: 'Petiz 1',
+        date: '2026-12-31',
+        time: '00:33.00',
+        timeInSeconds: 33,
+      }),
+      makeResult({
+        id: 'petiz-2027',
+        studentId: 'future-athlete',
+        category: 'Petiz 1',
+        date: '2027-01-01',
+        time: '00:28.00',
+        timeInSeconds: 28,
+      }),
+    );
+
+    const request = {
+      page: 1,
+      perPage: 10,
+      discipline: 'Piscina' as const,
+      competitionType: 'Piscina' as const,
+      courseType: 'Piscina Curta' as const,
+      style: 'Livre' as const,
+      distance: '50m',
+      eventFormat: 'Prova Individual' as const,
+      category: 'Petiz 1',
+    };
+
+    const currentYear = await sut.execute({ ...request, year: 2026 });
+    expect(currentYear.meta.total).toBe(2);
+    expect(currentYear.ranking.map((entry) => entry.resultId)).toEqual([
+      'petiz-2026',
+      'petiz-2026-late',
+    ]);
+    expect(currentYear.ranking.map((entry) => entry.rank)).toEqual([1, 2]);
+
+    const previousYear = await sut.execute({
+      ...request,
+      category: 'Mirim 2',
+      year: 2025,
+    });
+    expect(previousYear.ranking[0]).toMatchObject({
+      studentId: 'same-athlete',
+      resultId: 'mirim-2025',
+      category: 'Mirim 2',
+      rank: 1,
+    });
+
+    const allYears = await sut.execute(request);
+    expect(allYears.meta.total).toBe(3);
+    expect(allYears.ranking[0].resultId).toBe('petiz-2027');
+  });
+
   it('separates gender rankings before calculating positions while preserving the legacy view', async () => {
     resultsRepository.studentGenders.set('student-a', 'Feminino');
     resultsRepository.studentGenders.set('student-b', 'Feminino');

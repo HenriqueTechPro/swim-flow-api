@@ -389,6 +389,7 @@ export const resultsRankingQuerySchema = z
     eventFormat: z.enum(resultEventFormatValues),
     category: z.string().trim().min(1),
     gender: z.enum(studentGenderValues).optional(),
+    year: z.coerce.number().int().min(1900).max(2100).optional(),
   })
   .superRefine((data, ctx) =>
     applyResultConsistencyRules(
