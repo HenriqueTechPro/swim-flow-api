@@ -4,6 +4,7 @@ import { AppError } from '@/shared/errors/app-error';
 import type {
   CreateStudentRepositoryInput,
   StudentReferenceData,
+  StudentSeasonCategoryHistoryItem,
   ListUpcomingBirthdaysParams,
   UpdateStudentRepositoryInput,
 } from '@/domain/students/application/repositories/students-repository';
@@ -30,6 +31,10 @@ const levelReferenceData = [
 
 export class InMemoryStudentsRepository implements StudentsRepository {
   public items: Student[] = [];
+  public seasonCategoryHistory: Record<
+    string,
+    StudentSeasonCategoryHistoryItem[]
+  > = {};
 
   async findById(
     id: string,
@@ -79,6 +84,12 @@ export class InMemoryStudentsRepository implements StudentsRepository {
       categories: categoryReferenceData,
       levels: levelReferenceData,
     };
+  }
+
+  async listSeasonCategories(
+    studentId: string,
+  ): Promise<StudentSeasonCategoryHistoryItem[]> {
+    return [...(this.seasonCategoryHistory[studentId] ?? [])];
   }
 
   async create(input: CreateStudentRepositoryInput): Promise<Student> {

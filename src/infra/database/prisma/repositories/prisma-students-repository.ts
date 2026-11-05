@@ -17,11 +17,15 @@ import {
   type ListUpcomingBirthdaysParams,
   type UpcomingBirthday,
   type StudentReferenceData,
+  type StudentSeasonCategoryHistoryItem,
   type UpdateStudentRepositoryInput,
 } from '@/domain/students/application/repositories/students-repository';
 import { StudentClassAssignmentPolicy } from '@/domain/students/application/services/student-class-assignment-policy';
 import { AppError } from '@/shared/errors/app-error';
-import { parseCategoryValue } from '@/shared/utils/domain-formatters';
+import {
+  formatCategoryLabel,
+  parseCategoryValue,
+} from '@/shared/utils/domain-formatters';
 import { PrismaService } from '../prisma.service';
 import { assertLegacyPhotoWriteAllowed } from './legacy-photo-write-guard';
 import {
@@ -257,6 +261,41 @@ export class PrismaStudentsRepository implements StudentsRepository {
       activeSeasonId: activeSeason?.id,
       activeSeasonYear: activeSeason?.year,
     };
+  }
+
+  async listSeasonCategories(
+    studentId: string,
+  ): Promise<StudentSeasonCategoryHistoryItem[]> {
+    const rows = await this.prisma.studentSeasonCategory.findMany({
+      where: { studentId },
+      select: {
+        assignedAt: true,
+        season: {
+          select: {
+            id: true,
+            year: true,
+            label: true,
+            status: true,
+            startsOn: true,
+            endsOn: true,
+          },
+        },
+        category: { select: { id: true, name: true } },
+      },
+      orderBy: [{ season: { year: 'desc' } }, { assignedAt: 'desc' }],
+    });
+
+    return rows.map((row) => ({
+      seasonId: row.season.id,
+      year: row.season.year,
+      seasonLabel: row.season.label,
+      seasonStatus: row.season.status,
+      startsOn: row.season.startsOn.toISOString().slice(0, 10),
+      endsOn: row.season.endsOn.toISOString().slice(0, 10),
+      categoryId: row.category.id,
+      category: formatCategoryLabel(row.category.name),
+      assignedAt: row.assignedAt.toISOString(),
+    }));
   }
 
   async create(input: CreateStudentRepositoryInput) {

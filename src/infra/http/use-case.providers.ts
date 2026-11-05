@@ -82,6 +82,7 @@ import { UpdateResultUseCase } from '@/domain/results/application/use-cases/upda
 import { CreateStudentUseCase } from '@/domain/students/application/use-cases/create-student';
 import { DeleteStudentUseCase } from '@/domain/students/application/use-cases/delete-student';
 import { ListStudentReferenceDataUseCase } from '@/domain/students/application/use-cases/list-student-reference-data';
+import { ListStudentSeasonCategoriesUseCase } from '@/domain/students/application/use-cases/list-student-season-categories';
 import { GetStudentUseCase } from '@/domain/students/application/use-cases/get-student';
 import { ListStudentsUseCase } from '@/domain/students/application/use-cases/list-students';
 import { ListUpcomingBirthdaysUseCase } from '@/domain/students/application/use-cases/list-upcoming-birthdays';
@@ -204,6 +205,7 @@ export const useCaseProviders: Provider[] = [
   provideUseCase(CreateStudentUseCase, StudentsRepository),
   provideUseCase(DeleteStudentUseCase, StudentsRepository),
   provideUseCase(ListStudentReferenceDataUseCase, StudentsRepository),
+  provideUseCase(ListStudentSeasonCategoriesUseCase, StudentsRepository),
   provideUseCase(ListStudentsUseCase, StudentsRepository),
   provideUseCase(GetStudentUseCase, StudentsRepository),
   provideUseCase(ListUpcomingBirthdaysUseCase, StudentsRepository),
