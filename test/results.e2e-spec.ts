@@ -393,14 +393,12 @@ describe('ResultsController (e2e)', () => {
       .get(`${path}&year=2026&gender=Feminino`)
       .expect(200);
     expect(year2026.body.meta.total).toBe(2);
-    expect(year2026.body.data.map((entry: { resultId: string }) => entry.resultId)).toEqual([
-      'ana-2026',
-      'bia-2026',
-    ]);
-    expect(year2026.body.data.map((entry: { rank: number }) => entry.rank)).toEqual([
-      1,
-      1,
-    ]);
+    expect(
+      year2026.body.data.map((entry: { resultId: string }) => entry.resultId),
+    ).toEqual(['ana-2026', 'bia-2026']);
+    expect(
+      year2026.body.data.map((entry: { rank: number }) => entry.rank),
+    ).toEqual([1, 1]);
 
     const year2025 = await request(app.getHttpServer())
       .get(`${path}&year=2025`)
