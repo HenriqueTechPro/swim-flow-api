@@ -375,6 +375,36 @@ export class PrismaStudentsRepository implements StudentsRepository {
     );
 
     const student = await this.prisma.$transaction(async (tx) => {
+      if (input.seasonId) {
+        const recorded = await tx.studentSeasonCategory.findUnique({
+          where: {
+            studentId_seasonId: { studentId: id, seasonId: input.seasonId },
+          },
+          select: { categoryId: true },
+        });
+        if (recorded && recorded.categoryId !== input.categoryId) {
+          // Results can link to the season directly or through their event.
+          // Guard before any student/guardian/class write takes place.
+          const resultScope = {
+            studentId: id,
+            OR: [
+              { seasonId: input.seasonId },
+              { event: { is: { seasonId: input.seasonId } } },
+            ],
+          };
+          const [poolCount, openWaterCount] = await Promise.all([
+            tx.poolResult.count({ where: resultScope }),
+            tx.openWaterResult.count({ where: resultScope }),
+          ]);
+          if (poolCount > 0 || openWaterCount > 0) {
+            throw new AppError(
+              409,
+              'Season category cannot change while linked competition results exist',
+            );
+          }
+        }
+      }
+
       await assertLegacyPhotoWriteAllowed(tx, 'student-photo', id, input.photo);
       await tx.student.update({
         where: { id },
