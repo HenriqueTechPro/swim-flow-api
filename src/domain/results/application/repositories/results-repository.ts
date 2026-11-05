@@ -5,6 +5,10 @@ import type {
 } from '../dtos/result-requests';
 import type { GenerateRankingRequest } from '../dtos/result-ranking';
 import type {
+  CompetitionPlacement,
+  ListCompetitionPlacementsRequest,
+} from '../dtos/result-competition-placements';
+import type {
   PaginatedResult,
   PaginationParams,
 } from '@/domain/shared/pagination/pagination-params';
@@ -102,6 +106,9 @@ export interface ResultEvolutionParams extends ListResultsRepositoryParams {
 }
 
 export abstract class ResultsRepository {
+  abstract listCompetitionPlacements(
+    input: ListCompetitionPlacementsRequest,
+  ): Promise<PaginatedResult<CompetitionPlacement>>;
   abstract list(
     params?: ListResultsRepositoryParams,
   ): Promise<PaginatedResult<Result>>;
@@ -131,4 +138,3 @@ export abstract class ResultsRepository {
   ): Promise<Result>;
   abstract remove(id: string): Promise<Result>;
 }
-

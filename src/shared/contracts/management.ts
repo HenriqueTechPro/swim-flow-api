@@ -453,6 +453,23 @@ export const resultsRankingQuerySchema = z
     ),
   );
 
+/**
+ * Exact context for recorded placements in an individual pool race.
+ * The source of position is PoolResult.position, not a historical PB ranking.
+ * Relay team placements and open-water courses need dedicated contracts.
+ */
+export const resultsCompetitionPlacementsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).optional().default(1),
+  perPage: z.coerce.number().int().min(1).max(100).optional().default(20),
+  competition: z.string().trim().min(1).max(160),
+  date: seasonDateField,
+  category: z.string().trim().min(1).max(120),
+  gender: z.enum(studentGenderValues),
+  style: z.enum(resultStyleValues),
+  distance: resultDistanceSchema,
+  poolLengthMeters: z.coerce.number().finite().positive(),
+});
+
 export const createEventSchema = z.object({
   title: z.string().min(3),
   description: z.string().optional().default(''),
@@ -580,6 +597,9 @@ export type UpdateClassTeacherRoleDto = z.infer<
 >;
 export type SaveAttendanceBatchDto = z.infer<typeof saveAttendanceBatchSchema>;
 export type CreateResultDto = z.infer<typeof createResultSchema>;
+export type ResultsCompetitionPlacementsQueryDto = z.infer<
+  typeof resultsCompetitionPlacementsQuerySchema
+>;
 export type UpdateResultDto = z.infer<typeof updateResultSchema>;
 export type ResultsRankingQueryDto = z.infer<typeof resultsRankingQuerySchema>;
 export type ResultSeasonsQueryDto = z.infer<typeof resultSeasonsQuerySchema>;

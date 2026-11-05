@@ -13,15 +13,18 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   createResultSchema,
+  resultsCompetitionPlacementsQuerySchema,
   resultsRankingQuerySchema,
   updateResultSchema,
   type CreateResultDto,
+  type ResultsCompetitionPlacementsQueryDto,
   type ResultsRankingQueryDto,
   type UpdateResultDto,
 } from '@/shared/contracts/management';
 import { CreateResultUseCase } from '@/domain/results/application/use-cases/create-result';
 import { DeleteResultUseCase } from '@/domain/results/application/use-cases/delete-result';
 import { GenerateRankingUseCase } from '@/domain/results/application/use-cases/generate-ranking';
+import { ListCompetitionPlacementsUseCase } from '@/domain/results/application/use-cases/list-competition-placements';
 import { GetResultEvolutionUseCase } from '@/domain/results/application/use-cases/get-result-evolution';
 import { GetResultStyleDistributionUseCase } from '@/domain/results/application/use-cases/get-result-style-distribution';
 import { GetResultsSummaryUseCase } from '@/domain/results/application/use-cases/get-results-summary';
@@ -49,6 +52,7 @@ import { ResultRankingPresenter } from '../presenters/result-ranking.presenter';
 export class ResultsController {
   constructor(
     private readonly generateRanking: GenerateRankingUseCase,
+    private readonly listCompetitionPlacements: ListCompetitionPlacementsUseCase,
     private readonly getResultEvolution: GetResultEvolutionUseCase,
     private readonly getResultStyleDistribution: GetResultStyleDistributionUseCase,
     private readonly getResultsSummary: GetResultsSummaryUseCase,
@@ -265,6 +269,17 @@ export class ResultsController {
     return { data: records.map(ResultPresenter.toHTTP), meta };
   }
 
+  @Get('competition-placements')
+  @Permissions('results:read')
+  async competitionPlacements(
+    @Query(new ZodValidationPipe(resultsCompetitionPlacementsQuerySchema))
+    query: ResultsCompetitionPlacementsQueryDto,
+  ) {
+    const { placements, meta } =
+      await this.listCompetitionPlacements.execute(query);
+    return { data: placements, meta };
+  }
+
   @Get('ranking')
   @Permissions('results:read')
   async ranking(
@@ -359,4 +374,3 @@ export class ResultsController {
     return { data: ResultPresenter.toHTTP(result) };
   }
 }
-

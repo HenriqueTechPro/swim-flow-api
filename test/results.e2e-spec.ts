@@ -96,6 +96,108 @@ describe('ResultsController (e2e)', () => {
     expect(listFinal.body.data).toEqual([]);
   });
 
+  it('lists recorded competition placements, not calculated historical ranks', async () => {
+    resultsRepository.studentGenders.set('student-a', 'Feminino');
+    resultsRepository.studentGenders.set('student-b', 'Feminino');
+    resultsRepository.studentGenders.set('student-c', 'Masculino');
+    resultsRepository.items.push(
+      makeResult({
+        id: 'result-a',
+        studentId: 'student-a',
+        studentName: 'Ana',
+        poolLengthMeters: 25,
+        time: '00:32.00',
+        timeInSeconds: 32,
+        position: 2,
+      }),
+      makeResult({
+        id: 'result-b',
+        studentId: 'student-b',
+        studentName: 'Bia',
+        poolLengthMeters: 25,
+        time: '00:34.00',
+        timeInSeconds: 34,
+        position: 1,
+      }),
+      makeResult({
+        id: 'result-c',
+        studentId: 'student-c',
+        studentName: 'Carlos',
+        poolLengthMeters: 25,
+        position: 1,
+      }),
+      makeResult({
+        id: 'result-dq',
+        studentId: 'student-b',
+        poolLengthMeters: 25,
+        resultStatus: 'Desclassificado',
+        position: 0,
+      }),
+      makeResult({
+        id: 'result-other-pool',
+        studentId: 'student-b',
+        poolLengthMeters: 20,
+        position: 1,
+      }),
+      makeResult({
+        id: 'result-other-day',
+        studentId: 'student-b',
+        poolLengthMeters: 25,
+        date: '2026-04-01',
+        position: 1,
+      }),
+    );
+    const first = await request(app.getHttpServer())
+      .get(
+        '/api/results/competition-placements?competition=Festival%20Interno&date=2026-03-31&category=Petiz%202&gender=Feminino&style=Livre&distance=50m&poolLengthMeters=25&page=1&perPage=1',
+      )
+      .expect(200);
+    expect(first.body.meta).toMatchObject({
+      page: 1,
+      perPage: 1,
+      total: 2,
+    });
+    expect(first.body.data[0]).toMatchObject({
+      resultId: 'result-b',
+      studentName: 'Bia',
+      position: 1,
+    });
+
+    const second = await request(app.getHttpServer())
+      .get(
+        '/api/results/competition-placements?competition=Festival%20Interno&date=2026-03-31&category=Petiz%202&gender=Feminino&style=Livre&distance=50m&poolLengthMeters=25&page=2&perPage=1',
+      )
+      .expect(200);
+    expect(second.body.data[0]).toMatchObject({
+      resultId: 'result-a',
+      position: 2,
+      time: '00:32.00',
+    });
+    expect(second.body.data[0]).not.toHaveProperty('birthDate');
+    expect(second.body.data[0]).not.toHaveProperty('phone');
+  });
+
+  it('requires a complete race context for recorded placements', async () => {
+    await request(app.getHttpServer())
+      .get('/api/results/competition-placements')
+      .expect(400);
+    await request(app.getHttpServer())
+      .get(
+        '/api/results/competition-placements?competition=Festival%20Interno&date=2026-03-31&category=Petiz%202&gender=Feminino&style=Livre&distance=50m&poolLengthMeters=25&date=2026-02-30',
+      )
+      .expect(400);
+    await request(app.getHttpServer())
+      .get(
+        '/api/results/competition-placements?competition=Festival%20Interno&date=2026-03-31&category=Petiz%202&gender=Feminino&style=Livre&distance=50m&poolLengthMeters=25&gender=Outro',
+      )
+      .expect(400);
+    await request(app.getHttpServer())
+      .get(
+        '/api/results/competition-placements?competition=Festival%20Interno&date=2026-03-31&category=Petiz%202&gender=Feminino&style=Livre&distance=50m&poolLengthMeters=25&poolLengthMeters=0',
+      )
+      .expect(400);
+  });
+
   it('filters and paginates results list', async () => {
     resultsRepository.items.push(
       makeResult({

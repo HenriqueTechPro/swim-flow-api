@@ -11,6 +11,7 @@ export function makeResult(override: MakeResultOverride = {}): Result {
     discipline: override.discipline ?? 'Piscina',
     competitionType: override.competitionType ?? 'Piscina',
     courseType: override.courseType ?? 'Piscina Curta',
+    poolLengthMeters: override.poolLengthMeters,
     style: override.style ?? 'Livre',
     distance: override.distance ?? '50m',
     customDistance: override.customDistance,

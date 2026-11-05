@@ -68,6 +68,7 @@ import { UpdatePoolUseCase } from '@/domain/pools/application/use-cases/update-p
 import { CreateResultUseCase } from '@/domain/results/application/use-cases/create-result';
 import { DeleteResultUseCase } from '@/domain/results/application/use-cases/delete-result';
 import { GenerateRankingUseCase } from '@/domain/results/application/use-cases/generate-ranking';
+import { ListCompetitionPlacementsUseCase } from '@/domain/results/application/use-cases/list-competition-placements';
 import { GetResultEvolutionUseCase } from '@/domain/results/application/use-cases/get-result-evolution';
 import { GetResultStyleDistributionUseCase } from '@/domain/results/application/use-cases/get-result-style-distribution';
 import { GetResultsSummaryUseCase } from '@/domain/results/application/use-cases/get-results-summary';
@@ -191,6 +192,7 @@ export const useCaseProviders: Provider[] = [
   provideUseCase(CreateResultUseCase, ResultsRepository),
   provideUseCase(DeleteResultUseCase, ResultsRepository),
   provideUseCase(GenerateRankingUseCase, ResultsRepository),
+  provideUseCase(ListCompetitionPlacementsUseCase, ResultsRepository),
   provideUseCase(GetResultEvolutionUseCase, ResultsRepository),
   provideUseCase(GetResultStyleDistributionUseCase, ResultsRepository),
   provideUseCase(GetResultsSummaryUseCase, ResultsRepository),
