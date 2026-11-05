@@ -6,6 +6,7 @@ export class ResultPresenter {
       id: result.id,
       studentId: result.studentId,
       studentName: result.studentName,
+      seasonId: result.seasonId,
       discipline: result.discipline,
       style: result.style,
       distance: result.distance,
