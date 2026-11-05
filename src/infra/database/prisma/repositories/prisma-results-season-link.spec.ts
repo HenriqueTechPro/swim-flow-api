@@ -1,4 +1,6 @@
-import type { CreateResultRepositoryInput } from '@/domain/results/application/repositories/results-repository';
+import type {
+  CreateResultRepositoryInput,
+} from '@/domain/results/application/repositories/results-repository';
 import type { CacheRepository } from '@/infra/cache/cache-repository';
 import type { EnvService } from '@/infra/env/env.service';
 import type { PrismaService } from '../prisma.service';
@@ -64,16 +66,16 @@ describe('PrismaResultsRepository season links', () => {
     };
     prisma.poolResult.create.mockImplementation(
       async ({ data }: { data: Record<string, unknown> }) => ({
-      id: 'pool-result',
-      ...data,
-      student: { name: 'Atleta' },
+        id: 'pool-result',
+        ...data,
+        student: { name: 'Atleta' },
       }),
     );
     prisma.openWaterResult.create.mockImplementation(
       async ({ data }: { data: Record<string, unknown> }) => ({
-      id: 'open-water-result',
-      ...data,
-      student: { name: 'Atleta' },
+        id: 'open-water-result',
+        ...data,
+        student: { name: 'Atleta' },
       }),
     );
     const cache = { deleteMatching: jest.fn().mockResolvedValue(undefined) };
@@ -84,7 +86,7 @@ describe('PrismaResultsRepository season links', () => {
     );
   });
 
-  it('stores an explicitly selected season without changing the historic category', async () => {
+  it('stores an explicit season without changing the category', async () => {
     const result = await repo.create({ ...base, seasonId });
     expect(prisma.season.findUnique).toHaveBeenCalledWith({
       where: { id: seasonId },
@@ -102,14 +104,14 @@ describe('PrismaResultsRepository season links', () => {
     expect(result.seasonId).toBe(seasonId);
   });
 
-  it('does not invent a season when the field is omitted', async () => {
+  it('does not infer a season when omitted', async () => {
     await repo.create(base);
     expect(prisma.season.findUnique).not.toHaveBeenCalled();
     const data = prisma.poolResult.create.mock.calls[0][0].data;
     expect(data).not.toHaveProperty('seasonId');
   });
 
-  it('rejects a missing season or result outside its inclusive dates', async () => {
+  it('rejects missing seasons and results outside their dates', async () => {
     prisma.season.findUnique.mockResolvedValueOnce(null);
     await expect(repo.create({ ...base, seasonId })).rejects.toThrow(
       'Selected season does not exist',
@@ -120,7 +122,7 @@ describe('PrismaResultsRepository season links', () => {
     expect(prisma.poolResult.create).not.toHaveBeenCalled();
   });
 
-  it('can link open-water results without changing the original discipline', async () => {
+  it('links open-water results without changing discipline', async () => {
     const result = await repo.create({
       studentId,
       seasonId,
@@ -144,17 +146,17 @@ describe('PrismaResultsRepository season links', () => {
     expect(result.seasonId).toBe(seasonId);
   });
 
-  it('preserves the existing association and rejects an incompatible date edit', async () => {
+  it('preserves the season and rejects incompatible date edits', async () => {
     prisma.poolResult.findUnique.mockResolvedValue({
       id: 'pool-result',
       seasonId,
     });
     prisma.poolResult.update.mockImplementation(
       async ({ data }: { data: Record<string, unknown> }) => ({
-      id: 'pool-result',
-      ...data,
-      seasonId,
-      student: { name: 'Atleta' },
+        id: 'pool-result',
+        ...data,
+        seasonId,
+        student: { name: 'Atleta' },
       }),
     );
 
@@ -178,16 +180,16 @@ describe('PrismaResultsRepository season links', () => {
     expect(prisma.poolResult.update).toHaveBeenCalledTimes(1);
   });
 
-  it('unlinks only when explicitly null and allows replacing a valid season', async () => {
+  it('unlinks only with null and accepts a new valid season', async () => {
     prisma.poolResult.findUnique.mockResolvedValue({
       id: 'pool-result',
       seasonId,
     });
     prisma.poolResult.update.mockImplementation(
       async ({ data }: { data: Record<string, unknown> }) => ({
-      id: 'pool-result',
-      ...data,
-      student: { name: 'Atleta' },
+        id: 'pool-result',
+        ...data,
+        student: { name: 'Atleta' },
       }),
     );
 
