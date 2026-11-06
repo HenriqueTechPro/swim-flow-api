@@ -44,8 +44,10 @@ function mockPrisma() {
   const openWaterProgramStart = {
     findUnique: jest.fn(async () => null),
   };
+  const openWaterResult = { count: jest.fn(async () => 0) };
+  const poolResult = { count: jest.fn(async () => 0) };
   return {
-    client: { poolProgramRace, poolProgramHeat, openWaterProgramRace, openWaterProgramStart } as unknown as PrismaService,
+    client: { poolProgramRace, poolProgramHeat, openWaterProgramRace, openWaterProgramStart, openWaterResult, poolResult } as unknown as PrismaService,
     poolProgramRace, poolProgramHeat, openWaterProgramRace,
   };
 }
