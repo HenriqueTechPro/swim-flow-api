@@ -459,17 +459,45 @@ export const resultsRankingQuerySchema = z
  * The source of position is PoolResult.position, not a historical PB ranking.
  * Relay team placements and open-water courses need dedicated contracts.
  */
-export const resultsCompetitionPlacementsQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).optional().default(1),
-  perPage: z.coerce.number().int().min(1).max(100).optional().default(20),
-  competition: z.string().trim().min(1).max(160),
-  date: seasonDateField,
-  category: z.string().trim().min(1).max(120),
-  gender: z.enum(studentGenderValues),
-  style: z.enum(resultStyleValues),
-  distance: resultDistanceSchema,
-  poolLengthMeters: z.coerce.number().finite().positive(),
-});
+export const resultsCompetitionPlacementsQuerySchema = z
+  .object({
+    page: z.coerce.number().int().min(1).optional().default(1),
+    perPage: z.coerce.number().int().min(1).max(100).optional().default(20),
+    eventId: z.string().uuid().optional(),
+    competition: z.string().trim().min(1).max(160).optional(),
+    date: seasonDateField.optional(),
+    category: z.string().trim().min(1).max(120),
+    gender: z.enum(studentGenderValues),
+    style: z.enum(resultStyleValues),
+    distance: resultDistanceSchema,
+    poolLengthMeters: z.coerce.number().finite().positive(),
+  })
+  .superRefine((input, ctx) => {
+    if (input.eventId) {
+      if (input.competition !== undefined || input.date !== undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['eventId'],
+          message: 'Use either eventId or legacy competition/date filters',
+        });
+      }
+      return;
+    }
+    if (!input.competition) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['competition'],
+        message: 'Competition is required for unlinked historical results',
+      });
+    }
+    if (!input.date) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['date'],
+        message: 'Date is required for unlinked historical results',
+      });
+    }
+  });
 
 export const createEventSchema = z.object({
   title: z.string().min(3),

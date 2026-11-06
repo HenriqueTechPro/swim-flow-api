@@ -216,6 +216,72 @@ describe('ResultsController (e2e)', () => {
     expect(second.body.data[0]).not.toHaveProperty('phone');
   });
 
+  it('separates linked events with the same title/date from legacy results', async () => {
+    const firstEvent = '88888888-8888-4888-8888-888888888888';
+    const secondEvent = '99999999-9999-4999-8999-999999999999';
+    for (const id of ['student-1', 'student-2', 'student-3']) {
+      resultsRepository.studentGenders.set(id, 'Feminino');
+    }
+    resultsRepository.items.push(
+      makeResult({
+        id: 'linked-1',
+        studentId: 'student-1',
+        eventId: firstEvent,
+        position: 2,
+        poolLengthMeters: 25,
+      }),
+      makeResult({
+        id: 'linked-2',
+        studentId: 'student-2',
+        eventId: secondEvent,
+        position: 1,
+        poolLengthMeters: 25,
+      }),
+      makeResult({
+        id: 'legacy',
+        studentId: 'student-3',
+        eventId: null,
+        position: 3,
+        poolLengthMeters: 25,
+      }),
+    );
+    const common =
+      'category=Petiz%202&gender=Feminino&style=Livre&distance=50m&poolLengthMeters=25';
+    const linked = await request(app.getHttpServer())
+      .get(
+        `/api/results/competition-placements?${common}&eventId=${firstEvent}`,
+      )
+      .expect(200);
+    expect(linked.body.meta.total).toBe(1);
+    expect(linked.body.data[0]).toMatchObject({
+      resultId: 'linked-1',
+      eventId: firstEvent,
+      position: 2,
+    });
+    const legacy = await request(app.getHttpServer())
+      .get(
+        `/api/results/competition-placements?${common}&competition=Festival%20Interno&date=2026-03-31`,
+      )
+      .expect(200);
+    expect(legacy.body.meta.total).toBe(1);
+    expect(legacy.body.data[0]).toMatchObject({
+      resultId: 'legacy',
+      eventId: null,
+      position: 3,
+    });
+    await request(app.getHttpServer())
+      .get(`/api/results/competition-placements?${common}`)
+      .expect(400);
+    await request(app.getHttpServer())
+      .get(`/api/results/competition-placements?${common}&eventId=invalid`)
+      .expect(400);
+    await request(app.getHttpServer())
+      .get(
+        `/api/results/competition-placements?${common}&eventId=${firstEvent}&competition=Festival%20Interno&date=2026-03-31`,
+      )
+      .expect(400);
+  });
+
   it('requires a complete race context for recorded placements', async () => {
     await request(app.getHttpServer())
       .get('/api/results/competition-placements')

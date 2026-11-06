@@ -10,7 +10,29 @@ em `pool_results.position` para uma prova individual de piscina.
 Não recalcula posição pelo tempo, não seleciona melhor marca anterior
 e não afirma homologação oficial que o banco ainda não armazena.
 
-## Filtros obrigatórios
+## Duas formas independentes de identificar o evento
+
+A pesquisa oferece dois modos **mutuamente exclusivos**:
+
+- **Vinculado:** `eventId` UUID, sem `competition` ou `date`.
+  Filtra no PostgreSQL pelo `pool_results.event_id` exato.
+- **Legado:** `competition` e `date` como antes, sem `eventId`.
+  Passa a exigir `event_id IS NULL`, para nunca misturar eventos
+  com o mesmo nome e data que tenham vínculo explícito.
+
+Os filtros de categoria, sexo, estilo, distância e metragem de piscina
+continuam necessários em ambos os modos. A resposta inclui
+`eventId` (`null` para registros legados) e os snapshots originais
+de competição e data do próprio resultado. A posição nunca é recalculada.
+
+É HTTP 400 tentar combinar `eventId` com nome/data, deixar os dois
+escopos incompletos ou fornecer UUID inválido.
+
+Exemplo vinculado:
+
+`/api/results/competition-placements?eventId=88888888-8888-4888-8888-888888888888&category=Petiz%202&gender=Feminino&style=Livre&distance=50m&poolLengthMeters=20`
+
+## Filtros obrigatórios do modo legado
 
 `competition`, `date` (YYYY-MM-DD válido), `category`, `gender`
 (Masculino/Feminino), `style`, `distance` e `poolLengthMeters`
@@ -33,11 +55,11 @@ no PostgreSQL; a operação não modifica dados.
 ## Limitações e sequência
 
 Esta é uma consulta de **colocações lançadas**, não uma ata homologada.
-`competitionSnapshot` e `heldOn` podem não identificar univocamente
-um evento com sessões homônimas. Um futuro fluxo deverá vincular resultados
-a `Event.id`, prova, categoria regulamentar, bateria e status de
-homologação auditável. Não se deve inferir isso a partir de nomes
-ou recalcular colocações.
+O filtro por `Event.id` distingue eventos vinculados homônimos, mas não
+identifica provas/baterias dentro do mesmo evento. Registros legados sem
+vínculo ainda podem ter nomes e datas iguais; não inferir a identidade
+desses eventos por texto nem recalcular posições. Homologação e identidade
+de prova precisam de evolução separada.
 
 Águas abertas (percursos, largadas e gênero), revezamentos por equipe,
 ausência de sexo de prova no snapshot e critérios oficiais de empate

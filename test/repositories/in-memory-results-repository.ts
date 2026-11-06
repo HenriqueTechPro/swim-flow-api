@@ -75,8 +75,13 @@ export class InMemoryResultsRepository implements ResultsRepository {
       .filter((item) => item.eventFormat === 'Prova Individual')
       .filter((item) => item.resultStatus === 'Classificado')
       .filter((item) => item.position > 0 && item.timeInSeconds > 0)
-      .filter((item) => item.competition === input.competition)
-      .filter((item) => item.date === input.date)
+      .filter((item) =>
+        input.eventId
+          ? item.eventId === input.eventId
+          : !item.eventId &&
+            item.competition === input.competition &&
+            item.date === input.date,
+      )
       .filter((item) => item.category === input.category)
       .filter((item) => item.style === input.style)
       .filter((item) => item.distance === input.distance)
@@ -86,6 +91,7 @@ export class InMemoryResultsRepository implements ResultsRepository {
       )
       .map((item) => ({
         resultId: item.id,
+        eventId: item.eventId ?? null,
         studentId: item.studentId,
         studentName: item.studentName,
         position: item.position,

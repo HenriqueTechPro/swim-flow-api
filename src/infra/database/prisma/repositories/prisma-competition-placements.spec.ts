@@ -35,6 +35,9 @@ describe('PrismaResultsRepository recorded competition placements', () => {
     findMany.mockResolvedValue([
       {
         id: 'result-a',
+        eventId: null,
+        heldOn: new Date('2026-03-31T00:00:00.000Z'),
+        competitionSnapshot: 'Festival Interno',
         studentId: 'student-a',
         student: { name: 'Ana' },
         position: 3,
@@ -46,6 +49,7 @@ describe('PrismaResultsRepository recorded competition placements', () => {
   it('reads exact historical race scope and persists positions, not time ranks', async () => {
     const result = await repository.listCompetitionPlacements(query);
     const where = {
+      eventId: null,
       competitionSnapshot: query.competition,
       heldOn: new Date('2026-03-31T00:00:00.000Z'),
       categorySnapshot: query.category,
@@ -62,6 +66,9 @@ describe('PrismaResultsRepository recorded competition placements', () => {
       where,
       select: {
         id: true,
+        eventId: true,
+        heldOn: true,
+        competitionSnapshot: true,
         studentId: true,
         student: { select: { name: true } },
         position: true,
@@ -75,11 +82,71 @@ describe('PrismaResultsRepository recorded competition placements', () => {
     expect(result.total).toBe(4);
     expect(result.items[0]).toMatchObject({
       resultId: 'result-a',
+      eventId: null,
+      competition: 'Festival Interno',
+      date: '2026-03-31',
       position: 3,
       time: '00:32.10',
       poolLengthMeters: 20,
     });
     expect(result.items[0]).not.toHaveProperty('birthDate');
+  });
+
+  it('isolates linked rows by event ID regardless of renamed event title', async () => {
+    const eventId = '88888888-8888-4888-8888-888888888888';
+    findMany.mockResolvedValue([
+      {
+        id: 'result-a',
+        eventId,
+        heldOn: new Date('2026-03-31T00:00:00.000Z'),
+        competitionSnapshot: 'Original title',
+        studentId: 'student-a',
+        student: { name: 'Ana' },
+        position: 2,
+        durationMs: 32000,
+      },
+    ]);
+    const response = await repository.listCompetitionPlacements({
+      eventId,
+      category: query.category,
+      gender: query.gender,
+      style: query.style,
+      distance: query.distance,
+      poolLengthMeters: query.poolLengthMeters,
+      page: 1,
+      perPage: 20,
+    });
+    const where = findMany.mock.calls[0][0].where;
+    expect(where.eventId).toBe(eventId);
+    expect(where).not.toHaveProperty('competitionSnapshot');
+    expect(where).not.toHaveProperty('heldOn');
+    expect(count).toHaveBeenCalledWith({ where });
+    expect(response.items[0]).toMatchObject({
+      eventId,
+      competition: 'Original title',
+      date: '2026-03-31',
+      position: 2,
+    });
+  });
+
+  it('rejects missing legacy identity or mixed scopes', async () => {
+    const legacy = {
+      category: query.category,
+      gender: query.gender,
+      style: query.style,
+      distance: query.distance,
+      poolLengthMeters: query.poolLengthMeters,
+    };
+    await expect(repository.listCompetitionPlacements(legacy)).rejects.toThrow(
+      'Legacy placements require competition and date',
+    );
+    await expect(
+      repository.listCompetitionPlacements({
+        ...query,
+        eventId: '88888888-8888-4888-8888-888888888888',
+      }),
+    ).rejects.toThrow('Event identity cannot be mixed');
+    expect(findMany).not.toHaveBeenCalled();
   });
 
   it('never invents a position for an inconsistent database row', async () => {

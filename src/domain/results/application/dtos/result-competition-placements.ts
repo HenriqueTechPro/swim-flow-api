@@ -2,8 +2,11 @@ import type { ResultStyle } from '../../enterprise/entities/result';
 import type { PaginationParams } from '@/domain/shared/pagination/pagination-params';
 
 export interface ListCompetitionPlacementsRequest extends PaginationParams {
-  competition: string;
-  date: string;
+  /** Exclusive scope for a linked competition. */
+  eventId?: string;
+  /** Exact snapshot scope for unlinked legacy results. */
+  competition?: string;
+  date?: string;
   category: string;
   gender: 'Masculino' | 'Feminino';
   style: Exclude<ResultStyle, 'Nao informado'>;
@@ -13,6 +16,7 @@ export interface ListCompetitionPlacementsRequest extends PaginationParams {
 
 export interface CompetitionPlacement {
   resultId: string;
+  eventId: string | null;
   studentId: string;
   studentName: string;
   position: number;
