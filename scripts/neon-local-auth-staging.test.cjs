@@ -26,7 +26,7 @@ function after() {
     local_migration_ok: 1, identity_rows: 0, token_rows: 0, local_constraints: 9 };
 }
 
-test('checks two frozen migrations and five additive media migrations offline', () => {
+test('checks frozen migrations and reviewed additive sports programming SQL offline', () => {
   assert.equal(verifyVersionedMigrations(), true);
 });
 
