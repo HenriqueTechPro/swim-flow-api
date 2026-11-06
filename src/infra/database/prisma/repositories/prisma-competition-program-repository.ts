@@ -3,7 +3,6 @@ import { Prisma } from '@prisma/client';
 import {
   CompetitionProgramRepository,
   type PoolProgramRaceRecord,
-  type OpenWaterProgramRaceRecord,
 } from '@/domain/competition-program/application/repositories/competition-program-repository';
 import type {
   CreateOpenWaterProgramRaceDto,
