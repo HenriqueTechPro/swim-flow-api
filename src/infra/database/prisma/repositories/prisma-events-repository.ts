@@ -144,14 +144,17 @@ export class PrismaEventsRepository implements EventsRepository {
   }
 
   private async assertNoLinkedResults(id: string): Promise<void> {
-    const [poolResults, openWaterResults] = await Promise.all([
-      this.prisma.poolResult.count({ where: { eventId: id } }),
-      this.prisma.openWaterResult.count({ where: { eventId: id } }),
-    ]);
-    if (poolResults + openWaterResults > 0) {
+    const [poolResults, openWaterResults, poolRaces, openWaterRaces] =
+      await Promise.all([
+        this.prisma.poolResult.count({ where: { eventId: id } }),
+        this.prisma.openWaterResult.count({ where: { eventId: id } }),
+        this.prisma.poolProgramRace.count({ where: { eventId: id } }),
+        this.prisma.openWaterProgramRace.count({ where: { eventId: id } }),
+      ]);
+    if (poolResults + openWaterResults + poolRaces + openWaterRaces > 0) {
       throw new AppError(
         409,
-        'Event has linked results; identity and date must be preserved',
+        'Event has linked results or scheduled races; identity and date must be preserved',
       );
     }
   }

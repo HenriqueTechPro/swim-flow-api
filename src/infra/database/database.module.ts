@@ -10,6 +10,7 @@ import { EventsRepository } from '@/domain/events/application/repositories/event
 import { ParentsRepository } from '@/domain/parents/application/repositories/parents-repository';
 import { PoolsRepository } from '@/domain/pools/application/repositories/pools-repository';
 import { ResultsRepository } from '@/domain/results/application/repositories/results-repository';
+import { CompetitionProgramRepository } from '@/domain/competition-program/application/repositories/competition-program-repository';
 import { ResultSeasonsRepository } from '@/domain/results/application/repositories/result-seasons-repository';
 import { StudentsRepository } from '@/domain/students/application/repositories/students-repository';
 import { TeachersRepository } from '@/domain/teachers/application/repositories/teachers-repository';
@@ -23,6 +24,7 @@ import { PrismaManagedUploadResourcesRepository } from './prisma/repositories/pr
 import { PrismaParentsRepository } from './prisma/repositories/prisma-parents-repository';
 import { PrismaPoolsRepository } from './prisma/repositories/prisma-pools-repository';
 import { PrismaResultsRepository } from './prisma/repositories/prisma-results-repository';
+import { PrismaCompetitionProgramRepository } from './prisma/repositories/prisma-competition-program-repository';
 import { PrismaResultSeasonsRepository } from './prisma/repositories/prisma-result-seasons-repository';
 import { PrismaService } from './prisma/prisma.service';
 import { PrismaClassesRepository } from './prisma/repositories/prisma-classes-repository';
@@ -78,6 +80,10 @@ import { PrismaTrainingsRepository } from './prisma/repositories/prisma-training
       useClass: PrismaResultsRepository,
     },
     {
+      provide: CompetitionProgramRepository,
+      useClass: PrismaCompetitionProgramRepository,
+    },
+    {
       provide: ResultSeasonsRepository,
       useClass: PrismaResultSeasonsRepository,
     },
@@ -110,6 +116,7 @@ import { PrismaTrainingsRepository } from './prisma/repositories/prisma-training
     ParentsRepository,
     PoolsRepository,
     ResultsRepository,
+    CompetitionProgramRepository,
     ResultSeasonsRepository,
     StudentsRepository,
     TeachersRepository,
