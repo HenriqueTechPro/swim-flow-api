@@ -3,9 +3,10 @@
 DO $$
 DECLARE
   -- Frozen baseline has 31 domain tables, native Auth adds two,
-  -- private media metadata adds one, and active Blob binding adds one;
+  -- private media metadata adds one, active Blob binding adds one,
+  -- and additive competition program adds four (pool and open water);
   -- _prisma_migrations excluded.
-  expected_tables integer := 35;
+  expected_tables integer := 39;
   found_tables integer;
   missing_indexes text;
   missing_checks text;
