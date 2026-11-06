@@ -87,10 +87,12 @@ describe('Event identity protection with linked results (Prisma)', () => {
   it('prevents editing or deleting an event scheduled for pool races', async () => {
     prisma.poolResult.count.mockResolvedValue(0);
     prisma.poolProgramRace.count.mockResolvedValue(1);
-    await expect(repo.update(id, { ...input, date: '2026-04-01' })).rejects.toThrow(
+    await expect(
+      repo.update(id, { ...input, date: '2026-04-01' }),
+    ).rejects.toThrow('linked results or scheduled races');
+    await expect(repo.remove(id)).rejects.toThrow(
       'linked results or scheduled races',
     );
-    await expect(repo.remove(id)).rejects.toThrow('linked results or scheduled races');
     expect(prisma.event.update).not.toHaveBeenCalled();
     expect(prisma.event.delete).not.toHaveBeenCalled();
   });
@@ -98,9 +100,9 @@ describe('Event identity protection with linked results (Prisma)', () => {
   it('prevents cancellation with open-water start programming', async () => {
     prisma.poolResult.count.mockResolvedValue(0);
     prisma.openWaterProgramRace.count.mockResolvedValue(1);
-    await expect(repo.update(id, { ...input, status: 'Cancelado' })).rejects.toThrow(
-      'linked results or scheduled races',
-    );
+    await expect(
+      repo.update(id, { ...input, status: 'Cancelado' }),
+    ).rejects.toThrow('linked results or scheduled races');
     expect(prisma.event.update).not.toHaveBeenCalled();
   });
 

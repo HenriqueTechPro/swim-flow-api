@@ -1,11 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CompetitionProgramRepository } from '@/domain/competition-program/application/repositories/competition-program-repository';
 import {
@@ -29,7 +22,12 @@ import { Roles } from '@/infra/auth/roles.decorator';
 import { RolesGuard } from '@/infra/auth/roles.guard';
 import { ZodValidationPipe } from '../pipes/zod-validation-pipe';
 
-const toResponse = <T>(result: { items: T[]; total: number; page: number; perPage: number }) => ({
+const toResponse = <T>(result: {
+  items: T[];
+  total: number;
+  page: number;
+  perPage: number;
+}) => ({
   data: result.items,
   meta: { total: result.total, page: result.page, perPage: result.perPage },
 });
@@ -45,7 +43,8 @@ export class CompetitionProgramController {
   @Get('pool/races')
   @Permissions('events:read')
   async poolRaces(
-    @Query(new ZodValidationPipe(programRaceListSchema)) input: ProgramRaceListDto,
+    @Query(new ZodValidationPipe(programRaceListSchema))
+    input: ProgramRaceListDto,
   ) {
     return toResponse(await this.program.listPoolRaces(input));
   }
@@ -62,7 +61,8 @@ export class CompetitionProgramController {
   @Get('pool/heats')
   @Permissions('events:read')
   async poolHeats(
-    @Query(new ZodValidationPipe(programSeriesListSchema)) input: ProgramSeriesListDto,
+    @Query(new ZodValidationPipe(programSeriesListSchema))
+    input: ProgramSeriesListDto,
   ) {
     return toResponse(await this.program.listPoolHeats(input));
   }
@@ -79,7 +79,8 @@ export class CompetitionProgramController {
   @Get('open-water/races')
   @Permissions('events:read')
   async openWaterRaces(
-    @Query(new ZodValidationPipe(programRaceListSchema)) input: ProgramRaceListDto,
+    @Query(new ZodValidationPipe(programRaceListSchema))
+    input: ProgramRaceListDto,
   ) {
     return toResponse(await this.program.listOpenWaterRaces(input));
   }
@@ -96,7 +97,8 @@ export class CompetitionProgramController {
   @Get('open-water/starts')
   @Permissions('events:read')
   async openWaterStarts(
-    @Query(new ZodValidationPipe(programSeriesListSchema)) input: ProgramSeriesListDto,
+    @Query(new ZodValidationPipe(programSeriesListSchema))
+    input: ProgramSeriesListDto,
   ) {
     return toResponse(await this.program.listOpenWaterStarts(input));
   }

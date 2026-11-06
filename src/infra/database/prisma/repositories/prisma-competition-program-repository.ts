@@ -37,10 +37,16 @@ const toPoolRecord = (value: {
 function toConflict(error: unknown): never {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     if (error.code === 'P2002') {
-      throw new AppError(409, 'Competition number or heat/start number is already registered');
+      throw new AppError(
+        409,
+        'Competition number or heat/start number is already registered',
+      );
     }
     if (error.code === 'P2003') {
-      throw new AppError(422, 'The referenced event or race is no longer available');
+      throw new AppError(
+        422,
+        'The referenced event or race is no longer available',
+      );
     }
   }
   throw error;
@@ -57,7 +63,10 @@ export class PrismaCompetitionProgramRepository implements CompetitionProgramRep
     });
     if (!event) throw new AppError(404, 'Competition event not found');
     if (event.type !== 'Competicao' && event.type !== 'Festival') {
-      throw new AppError(422, 'Only competitions or festivals can have sporting races');
+      throw new AppError(
+        422,
+        'Only competitions or festivals can have sporting races',
+      );
     }
     if (event.status === 'Cancelado') {
       throw new AppError(409, 'Cancelled events cannot receive races');

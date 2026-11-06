@@ -109,17 +109,34 @@ describe('Separated competition program contracts', () => {
     });
     expect(pool).toMatchObject({ heatNumber: 1 });
     expect(openWater).toMatchObject({ waveNumber: 1 });
-    expect(createPoolProgramHeatSchema.safeParse({ raceId: common.eventId, waveNumber: 1 }).success).toBe(false);
-    expect(createOpenWaterProgramStartSchema.safeParse({ raceId: common.eventId, heatNumber: 1 }).success).toBe(false);
+    expect(
+      createPoolProgramHeatSchema.safeParse({
+        raceId: common.eventId,
+        waveNumber: 1,
+      }).success,
+    ).toBe(false);
+    expect(
+      createOpenWaterProgramStartSchema.safeParse({
+        raceId: common.eventId,
+        heatNumber: 1,
+      }).success,
+    ).toBe(false);
   });
 
   it('requires exact event UUID and bounded pagination', () => {
-    expect(programRaceListSchema.parse({ eventId: common.eventId })).toMatchObject({
+    expect(
+      programRaceListSchema.parse({ eventId: common.eventId }),
+    ).toMatchObject({
       page: 1,
       perPage: 20,
     });
-    expect(programRaceListSchema.safeParse({ eventId: common.eventId, perPage: 101 }).success).toBe(false);
-    expect(programRaceListSchema.safeParse({ eventId: 'any text' }).success).toBe(false);
+    expect(
+      programRaceListSchema.safeParse({ eventId: common.eventId, perPage: 101 })
+        .success,
+    ).toBe(false);
+    expect(
+      programRaceListSchema.safeParse({ eventId: 'any text' }).success,
+    ).toBe(false);
     expect(programRaceListSchema.safeParse({}).success).toBe(false);
   });
 });

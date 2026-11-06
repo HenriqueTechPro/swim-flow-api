@@ -1,4 +1,11 @@
-import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  jest,
+} from '@jest/globals';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
@@ -22,16 +29,46 @@ describe('Competition program (authenticated API)', () => {
 
   beforeEach(async () => {
     for (const method of Object.values(repository)) method.mockReset();
-    repository.listPoolRaces.mockResolvedValue({ items: [], page: 1, perPage: 20, total: 0 } as never);
-    repository.listOpenWaterRaces.mockResolvedValue({ items: [], page: 1, perPage: 20, total: 0 } as never);
-    repository.listPoolHeats.mockResolvedValue({ items: [], page: 1, perPage: 20, total: 0 } as never);
-    repository.listOpenWaterStarts.mockResolvedValue({ items: [], page: 1, perPage: 20, total: 0 } as never);
-    repository.createPoolRace.mockImplementation(async (input: never) => ({ id: raceId, ...input }) as never);
-    repository.createOpenWaterRace.mockImplementation(async (input: never) => ({ id: raceId, ...input }) as never);
-    repository.createPoolHeat.mockImplementation(async (input: never) => ({ id: raceId, ...input }) as never);
-    repository.createOpenWaterStart.mockImplementation(async (input: never) => ({ id: raceId, ...input }) as never);
+    repository.listPoolRaces.mockResolvedValue({
+      items: [],
+      page: 1,
+      perPage: 20,
+      total: 0,
+    } as never);
+    repository.listOpenWaterRaces.mockResolvedValue({
+      items: [],
+      page: 1,
+      perPage: 20,
+      total: 0,
+    } as never);
+    repository.listPoolHeats.mockResolvedValue({
+      items: [],
+      page: 1,
+      perPage: 20,
+      total: 0,
+    } as never);
+    repository.listOpenWaterStarts.mockResolvedValue({
+      items: [],
+      page: 1,
+      perPage: 20,
+      total: 0,
+    } as never);
+    repository.createPoolRace.mockImplementation(
+      async (input: never) => ({ id: raceId, ...input }) as never,
+    );
+    repository.createOpenWaterRace.mockImplementation(
+      async (input: never) => ({ id: raceId, ...input }) as never,
+    );
+    repository.createPoolHeat.mockImplementation(
+      async (input: never) => ({ id: raceId, ...input }) as never,
+    );
+    repository.createOpenWaterStart.mockImplementation(
+      async (input: never) => ({ id: raceId, ...input }) as never,
+    );
     app = await createAuthenticatedE2EApp((builder) =>
-      builder.overrideProvider(CompetitionProgramRepository).useValue(repository),
+      builder
+        .overrideProvider(CompetitionProgramRepository)
+        .useValue(repository),
     );
   });
 
@@ -119,7 +156,10 @@ describe('Competition program (authenticated API)', () => {
       .post('/api/competition-program/open-water/starts')
       .send({ raceId, waveNumber: 1 })
       .expect(201);
-    expect(repository.createOpenWaterStart).toHaveBeenCalledWith({ raceId, waveNumber: 1 });
+    expect(repository.createOpenWaterStart).toHaveBeenCalledWith({
+      raceId,
+      waveNumber: 1,
+    });
   });
 
   it('does not confuse pool heat numbers with open-water wave numbers', async () => {
@@ -127,7 +167,10 @@ describe('Competition program (authenticated API)', () => {
       .post('/api/competition-program/pool/heats')
       .send({ raceId, heatNumber: 1 })
       .expect(201);
-    expect(repository.createPoolHeat).toHaveBeenCalledWith({ raceId, heatNumber: 1 });
+    expect(repository.createPoolHeat).toHaveBeenCalledWith({
+      raceId,
+      heatNumber: 1,
+    });
     await request(app.getHttpServer())
       .post('/api/competition-program/pool/heats')
       .send({ raceId, waveNumber: 1 })

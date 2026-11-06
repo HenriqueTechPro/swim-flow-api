@@ -47,37 +47,10 @@ function run(argv) {
   }
   process.stdout.write(`Prettier ${mode}: ${files.length} changed file(s).\n`);
   const cli = path.resolve(__dirname, '../node_modules/prettier/bin/prettier.cjs');
-  try {
-    execFileSync(process.execPath, [cli, mode, '--', ...files], {
-      stdio: 'inherit',
-      maxBuffer: 16 * 1024 * 1024,
-    });
-  } catch (error) {
-    if (mode === '--check') {
-      const fs = require('node:fs');
-      for (const file of [
-        'src/domain/competition-program/application/repositories/competition-program-repository.ts',
-        'src/infra/database/prisma/repositories/prisma-competition-program-repository.ts',
-        'src/infra/database/prisma/repositories/prisma-events-results-integrity.spec.ts',
-        'src/infra/http/controllers/competition-program.controller.ts',
-        'src/shared/contracts/competition-program.spec.ts',
-        'src/shared/contracts/competition-program.ts',
-        'test/competition-program.e2e-spec.ts',
-      ]) {
-        const formatted = execFileSync(
-          process.execPath,
-          [cli, '--stdin-filepath', file],
-          { input: fs.readFileSync(file), encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 },
-        );
-        process.stdout.write(
-          'SWIMFLOW_FORMAT_EXPORT ' +
-            Buffer.from(file).toString('base64') + ' ' +
-            Buffer.from(formatted, 'utf8').toString('base64') + '\n',
-        );
-      }
-    }
-    throw error;
-  }
+  execFileSync(process.execPath, [cli, mode, '--', ...files], {
+    stdio: 'inherit',
+    maxBuffer: 16 * 1024 * 1024,
+  });
 }
 
 if (require.main === module) {

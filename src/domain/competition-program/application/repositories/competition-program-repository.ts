@@ -39,13 +39,29 @@ export interface OpenWaterProgramStartRecord {
 }
 
 export abstract class CompetitionProgramRepository {
-  abstract createPoolRace(input: CreatePoolProgramRaceDto): Promise<PoolProgramRaceRecord>;
-  abstract listPoolRaces(input: ProgramRaceListDto): Promise<PaginatedResult<PoolProgramRaceRecord>>;
-  abstract createPoolHeat(input: CreatePoolProgramHeatDto): Promise<PoolProgramHeatRecord>;
-  abstract listPoolHeats(input: ProgramSeriesListDto): Promise<PaginatedResult<PoolProgramHeatRecord>>;
+  abstract createPoolRace(
+    input: CreatePoolProgramRaceDto,
+  ): Promise<PoolProgramRaceRecord>;
+  abstract listPoolRaces(
+    input: ProgramRaceListDto,
+  ): Promise<PaginatedResult<PoolProgramRaceRecord>>;
+  abstract createPoolHeat(
+    input: CreatePoolProgramHeatDto,
+  ): Promise<PoolProgramHeatRecord>;
+  abstract listPoolHeats(
+    input: ProgramSeriesListDto,
+  ): Promise<PaginatedResult<PoolProgramHeatRecord>>;
 
-  abstract createOpenWaterRace(input: CreateOpenWaterProgramRaceDto): Promise<OpenWaterProgramRaceRecord>;
-  abstract listOpenWaterRaces(input: ProgramRaceListDto): Promise<PaginatedResult<OpenWaterProgramRaceRecord>>;
-  abstract createOpenWaterStart(input: CreateOpenWaterProgramStartDto): Promise<OpenWaterProgramStartRecord>;
-  abstract listOpenWaterStarts(input: ProgramSeriesListDto): Promise<PaginatedResult<OpenWaterProgramStartRecord>>;
+  abstract createOpenWaterRace(
+    input: CreateOpenWaterProgramRaceDto,
+  ): Promise<OpenWaterProgramRaceRecord>;
+  abstract listOpenWaterRaces(
+    input: ProgramRaceListDto,
+  ): Promise<PaginatedResult<OpenWaterProgramRaceRecord>>;
+  abstract createOpenWaterStart(
+    input: CreateOpenWaterProgramStartDto,
+  ): Promise<OpenWaterProgramStartRecord>;
+  abstract listOpenWaterStarts(
+    input: ProgramSeriesListDto,
+  ): Promise<PaginatedResult<OpenWaterProgramStartRecord>>;
 }
