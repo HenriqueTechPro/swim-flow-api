@@ -56,6 +56,8 @@ export class PrismaCompetitiveResultMapper {
       studentName: row.student.name,
       seasonId: row.seasonId,
       eventId: row.eventId,
+      poolProgramRaceId: row.poolProgramRaceId,
+      poolProgramHeatId: row.poolProgramHeatId,
       discipline: 'Piscina',
       competitionType: 'Piscina',
       style: row.style,
@@ -84,6 +86,8 @@ export class PrismaCompetitiveResultMapper {
       studentName: row.student.name,
       seasonId: row.seasonId,
       eventId: row.eventId,
+      openWaterProgramRaceId: row.openWaterProgramRaceId,
+      openWaterProgramStartId: row.openWaterProgramStartId,
       discipline: 'Aguas Abertas',
       competitionType: 'Aguas Abertas',
       // Explicit legacy display label; the DB still stores NULL when unspecified.

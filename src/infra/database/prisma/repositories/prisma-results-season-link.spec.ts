@@ -30,6 +30,7 @@ const base = {
 
 describe('PrismaResultsRepository season links', () => {
   let prisma: {
+    $queryRaw: jest.Mock;
     season: { findUnique: jest.Mock };
     student: { findUnique: jest.Mock };
     poolResult: {
@@ -47,6 +48,7 @@ describe('PrismaResultsRepository season links', () => {
 
   beforeEach(() => {
     prisma = {
+      $queryRaw: jest.fn().mockResolvedValue([]),
       season: { findUnique: jest.fn().mockResolvedValue(season) },
       student: {
         findUnique: jest.fn().mockResolvedValue({ id: studentId }),
@@ -78,7 +80,11 @@ describe('PrismaResultsRepository season links', () => {
     );
     const cache = { deleteMatching: jest.fn().mockResolvedValue(undefined) };
     repo = new PrismaResultsRepository(
-      prisma as unknown as PrismaService,
+      {
+        ...prisma,
+        $transaction: (run: (tx: typeof prisma) => Promise<unknown>) =>
+          run(prisma),
+      } as unknown as PrismaService,
       cache as unknown as CacheRepository,
       { cacheTtlSeconds: 60 } as EnvService,
     );

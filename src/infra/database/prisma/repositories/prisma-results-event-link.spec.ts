@@ -34,22 +34,31 @@ describe('Result event ID integrity (Prisma)', () => {
     notes: null,
   };
   const prisma = {
+    $queryRaw: jest.fn().mockResolvedValue([]),
+    poolProgramRace: { count: jest.fn().mockResolvedValue(0) },
+    openWaterProgramRace: { count: jest.fn().mockResolvedValue(0) },
     student: { findUnique: jest.fn() },
     event: { findUnique: jest.fn() },
     season: { findUnique: jest.fn() },
     poolResult: {
+      count: jest.fn().mockResolvedValue(0),
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
     },
     openWaterResult: {
+      count: jest.fn().mockResolvedValue(0),
       findUnique: jest.fn(),
       create: jest.fn(),
     },
   };
   const cache = { deleteMatching: jest.fn() };
   const repo = new PrismaResultsRepository(
-    prisma as unknown as PrismaService,
+    {
+      ...prisma,
+      $transaction: (run: (tx: typeof prisma) => Promise<unknown>) =>
+        run(prisma),
+    } as unknown as PrismaService,
     cache as unknown as CacheRepository,
     {} as EnvService,
   );

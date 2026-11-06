@@ -56,8 +56,12 @@ function toConflict(error: unknown): never {
 export class PrismaCompetitionProgramRepository implements CompetitionProgramRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async assertSportingEvent(eventId: string): Promise<void> {
-    const event = await this.prisma.event.findUnique({
+  private async assertSportingEvent(
+    eventId: string,
+    discipline?: 'pool' | 'open-water',
+    client: Prisma.TransactionClient | PrismaService = this.prisma,
+  ): Promise<void> {
+    const event = await client.event.findUnique({
       where: { id: eventId },
       select: { type: true, status: true },
     });
@@ -71,18 +75,49 @@ export class PrismaCompetitionProgramRepository implements CompetitionProgramRep
     if (event.status === 'Cancelado') {
       throw new AppError(409, 'Cancelled events cannot receive races');
     }
+    if (discipline === 'pool') {
+      const [oppositeRaces, oppositeResults] = await Promise.all([
+        client.openWaterProgramRace.count({ where: { eventId } }),
+        client.openWaterResult.count({ where: { eventId } }),
+      ]);
+      if (oppositeRaces || oppositeResults) {
+        throw new AppError(409, 'Event already contains open-water records');
+      }
+    }
+    if (discipline === 'open-water') {
+      const [oppositeRaces, oppositeResults] = await Promise.all([
+        client.poolProgramRace.count({ where: { eventId } }),
+        client.poolResult.count({ where: { eventId } }),
+      ]);
+      if (oppositeRaces || oppositeResults) {
+        throw new AppError(409, 'Event already contains pool records');
+      }
+    }
+  }
+
+  private async lockEvent(
+    tx: Prisma.TransactionClient,
+    eventId: string,
+  ): Promise<void> {
+    // Serialize competing pool and open-water race creation for one event.
+    await tx.$queryRaw(
+      Prisma.sql`SELECT id FROM public.events WHERE id = ${eventId}::uuid FOR UPDATE`,
+    );
   }
 
   async createPoolRace(input: CreatePoolProgramRaceDto) {
-    await this.assertSportingEvent(input.eventId);
     try {
-      const race = await this.prisma.poolProgramRace.create({
-        data: {
-          ...input,
-          poolLengthMeters: new Prisma.Decimal(input.poolLengthMeters),
-        },
+      return await this.prisma.$transaction(async (tx) => {
+        await this.lockEvent(tx, input.eventId);
+        await this.assertSportingEvent(input.eventId, 'pool', tx);
+        const race = await tx.poolProgramRace.create({
+          data: {
+            ...input,
+            poolLengthMeters: new Prisma.Decimal(input.poolLengthMeters),
+          },
+        });
+        return toPoolRecord(race);
       });
-      return toPoolRecord(race);
     } catch (error) {
       return toConflict(error);
     }
@@ -103,22 +138,26 @@ export class PrismaCompetitionProgramRepository implements CompetitionProgramRep
   }
 
   async createPoolHeat(input: CreatePoolProgramHeatDto) {
-    const race = await this.prisma.poolProgramRace.findUnique({
-      where: { id: input.raceId },
-      select: { eventId: true },
-    });
-    if (!race) throw new AppError(404, 'Pool race not found');
-    await this.assertSportingEvent(race.eventId);
     try {
-      return await this.prisma.poolProgramHeat.create({
-        data: {
-          raceId: input.raceId,
-          heatNumber: input.heatNumber,
-          plannedStartAt:
-            input.plannedStartAt === undefined || input.plannedStartAt === null
-              ? null
-              : new Date(input.plannedStartAt),
-        },
+      return await this.prisma.$transaction(async (tx) => {
+        const race = await tx.poolProgramRace.findUnique({
+          where: { id: input.raceId },
+          select: { eventId: true },
+        });
+        if (!race) throw new AppError(404, 'Pool race not found');
+        await this.lockEvent(tx, race.eventId);
+        await this.assertSportingEvent(race.eventId, 'pool', tx);
+        return tx.poolProgramHeat.create({
+          data: {
+            raceId: input.raceId,
+            heatNumber: input.heatNumber,
+            plannedStartAt:
+              input.plannedStartAt === undefined ||
+              input.plannedStartAt === null
+                ? null
+                : new Date(input.plannedStartAt),
+          },
+        });
       });
     } catch (error) {
       return toConflict(error);
@@ -140,9 +179,12 @@ export class PrismaCompetitionProgramRepository implements CompetitionProgramRep
   }
 
   async createOpenWaterRace(input: CreateOpenWaterProgramRaceDto) {
-    await this.assertSportingEvent(input.eventId);
     try {
-      return await this.prisma.openWaterProgramRace.create({ data: input });
+      return await this.prisma.$transaction(async (tx) => {
+        await this.lockEvent(tx, input.eventId);
+        await this.assertSportingEvent(input.eventId, 'open-water', tx);
+        return tx.openWaterProgramRace.create({ data: input });
+      });
     } catch (error) {
       return toConflict(error);
     }
@@ -163,22 +205,26 @@ export class PrismaCompetitionProgramRepository implements CompetitionProgramRep
   }
 
   async createOpenWaterStart(input: CreateOpenWaterProgramStartDto) {
-    const race = await this.prisma.openWaterProgramRace.findUnique({
-      where: { id: input.raceId },
-      select: { eventId: true },
-    });
-    if (!race) throw new AppError(404, 'Open-water race not found');
-    await this.assertSportingEvent(race.eventId);
     try {
-      return await this.prisma.openWaterProgramStart.create({
-        data: {
-          raceId: input.raceId,
-          waveNumber: input.waveNumber,
-          plannedStartAt:
-            input.plannedStartAt === undefined || input.plannedStartAt === null
-              ? null
-              : new Date(input.plannedStartAt),
-        },
+      return await this.prisma.$transaction(async (tx) => {
+        const race = await tx.openWaterProgramRace.findUnique({
+          where: { id: input.raceId },
+          select: { eventId: true },
+        });
+        if (!race) throw new AppError(404, 'Open-water race not found');
+        await this.lockEvent(tx, race.eventId);
+        await this.assertSportingEvent(race.eventId, 'open-water', tx);
+        return tx.openWaterProgramStart.create({
+          data: {
+            raceId: input.raceId,
+            waveNumber: input.waveNumber,
+            plannedStartAt:
+              input.plannedStartAt === undefined ||
+              input.plannedStartAt === null
+                ? null
+                : new Date(input.plannedStartAt),
+          },
+        });
       });
     } catch (error) {
       return toConflict(error);

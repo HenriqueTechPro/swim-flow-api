@@ -26,7 +26,11 @@ describe('PrismaResultsRepository canonical storage', () => {
       openWaterResult: { create: jest.fn() },
     };
     repo = new PrismaResultsRepository(
-      prisma as unknown as PrismaService,
+      {
+        ...prisma,
+        $transaction: (run: (tx: typeof prisma) => Promise<unknown>) =>
+          run(prisma),
+      } as unknown as PrismaService,
       cache as unknown as CacheRepository,
       env as unknown as EnvService,
     );

@@ -42,6 +42,10 @@ export interface Result {
   routeKey?: string | null;
   seasonId?: string | null;
   eventId?: string | null;
+  poolProgramRaceId?: string | null;
+  poolProgramHeatId?: string | null;
+  openWaterProgramRaceId?: string | null;
+  openWaterProgramStartId?: string | null;
   durationMs?: number | null;
   eventFormat: ResultEventFormat;
   time: string;

@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import type {
   OpenWaterBodyType,
   OpenWaterResultFormat,
   PoolResultFormat,
-  Prisma,
   RaceResultStatus,
   SwimmingStyle,
 } from '@prisma/client';
@@ -41,6 +41,7 @@ import {
 } from '@/shared/utils/duration';
 import type { Result } from '@/domain/results/enterprise/entities/result';
 import { PrismaService } from '../prisma.service';
+import { validateProgramLinks } from './result-program-links';
 import {
   PrismaCompetitiveResultMapper,
   resultStudentInclude,
@@ -334,6 +335,12 @@ function prepared(input: CreateResultRepositoryInput) {
         style: swimmingStyle,
         format,
         poolLengthMeters: length,
+        ...(input.poolProgramRaceId !== undefined
+          ? { poolProgramRaceId: input.poolProgramRaceId }
+          : {}),
+        ...(input.poolProgramHeatId !== undefined
+          ? { poolProgramHeatId: input.poolProgramHeatId }
+          : {}),
       },
     };
   }
@@ -365,6 +372,12 @@ function prepared(input: CreateResultRepositoryInput) {
       format,
       bodyType: bodyType ?? null,
       routeKey,
+      ...(input.openWaterProgramRaceId !== undefined
+        ? { openWaterProgramRaceId: input.openWaterProgramRaceId }
+        : {}),
+      ...(input.openWaterProgramStartId !== undefined
+        ? { openWaterProgramStartId: input.openWaterProgramStartId }
+        : {}),
     },
   };
 }
@@ -462,9 +475,10 @@ export class PrismaResultsRepository implements ResultsRepository {
     eventId: string | null | undefined,
     heldOn: Date,
     seasonId: string | null | undefined,
+    client: Prisma.TransactionClient | PrismaService = this.prisma,
   ): Promise<void> {
     if (!eventId) return;
-    const event = await this.prisma.event.findUnique({
+    const event = await client.event.findUnique({
       where: { id: eventId },
       select: {
         id: true,
@@ -501,9 +515,10 @@ export class PrismaResultsRepository implements ResultsRepository {
   private async assertSeasonLink(
     seasonId: string | null | undefined,
     heldOn: Date,
+    client: Prisma.TransactionClient | PrismaService = this.prisma,
   ): Promise<void> {
     if (!seasonId) return;
-    const season = await this.prisma.season.findUnique({
+    const season = await client.season.findUnique({
       where: { id: seasonId },
       select: { startsOn: true, endsOn: true },
     });
@@ -951,29 +966,50 @@ export class PrismaResultsRepository implements ResultsRepository {
     return rows.map(PrismaCompetitiveResultMapper.pool);
   }
 
+  private async lockResultEvent(
+    tx: Prisma.TransactionClient,
+    eventIds: Array<string | null | undefined>,
+  ): Promise<void> {
+    // Program creation uses the same lock; checks and result writes are atomic.
+    const unique = [...new Set(eventIds.filter((id): id is string => !!id))];
+    for (const eventId of unique.sort()) {
+      await tx.$queryRaw(
+        Prisma.sql`SELECT id FROM public.events WHERE id = ${eventId}::uuid FOR UPDATE`,
+      );
+    }
+  }
+
   async create(input: CreateResultRepositoryInput): Promise<Result> {
     const row = prepared(input);
-    const student = await this.prisma.student.findUnique({
-      where: { id: input.studentId },
-      select: { id: true },
-    });
-    if (!student) throw new AppError(404, 'Student not found');
-    await this.assertSeasonLink(input.seasonId, row.data.heldOn);
-    await this.assertEventLink(input.eventId, row.data.heldOn, input.seasonId);
-    const result =
-      row.discipline === 'Piscina'
+    const result = await this.prisma.$transaction(async (tx) => {
+      await this.lockResultEvent(tx, [input.eventId]);
+      const student = await tx.student.findUnique({
+        where: { id: input.studentId },
+        select: { id: true },
+      });
+      if (!student) throw new AppError(404, 'Student not found');
+      await this.assertSeasonLink(input.seasonId, row.data.heldOn, tx);
+      await this.assertEventLink(
+        input.eventId,
+        row.data.heldOn,
+        input.seasonId,
+        tx,
+      );
+      await validateProgramLinks(tx, input, input.eventId, input);
+      return row.discipline === 'Piscina'
         ? PrismaCompetitiveResultMapper.pool(
-            await this.prisma.poolResult.create({
+            await tx.poolResult.create({
               data: row.data,
               include: resultStudentInclude,
             }),
           )
         : PrismaCompetitiveResultMapper.openWater(
-            await this.prisma.openWaterResult.create({
+            await tx.openWaterResult.create({
               data: row.data,
               include: resultStudentInclude,
             }),
           );
+    });
     await this.cache.deleteMatching('results:');
     return result;
   }
@@ -983,58 +1019,104 @@ export class PrismaResultsRepository implements ResultsRepository {
     input: UpdateResultRepositoryInput,
   ): Promise<Result> {
     const row = prepared(input);
-    const [poolOld, waterOld] = await Promise.all([
-      this.prisma.poolResult.findUnique({
-        where: { id },
-        select: { id: true, seasonId: true, eventId: true },
-      }),
-      this.prisma.openWaterResult.findUnique({
-        where: { id },
-        select: { id: true, seasonId: true, eventId: true },
-      }),
-    ]);
-    if (!poolOld && !waterOld) throw new AppError(404, 'Result not found');
-    if (
-      (poolOld && row.discipline !== 'Piscina') ||
-      (waterOld && row.discipline !== 'Aguas Abertas')
-    )
-      throw new AppError(
-        422,
-        'Changing result discipline requires recreating the result',
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Serialize edits to the same result before reading its current links.
+      await tx.$queryRaw(
+        Prisma.sql`SELECT id FROM public.pool_results WHERE id = ${id}::uuid FOR UPDATE`,
       );
-    // Omitting seasonId preserves an existing association; null clears it.
-    const existingSeasonId = poolOld?.seasonId ?? waterOld?.seasonId;
-    const effectiveSeasonId =
-      input.seasonId === undefined ? existingSeasonId : input.seasonId;
-    const existingEventId = poolOld?.eventId ?? waterOld?.eventId;
-    const effectiveEventId =
-      input.eventId === undefined ? existingEventId : input.eventId;
-    await this.assertSeasonLink(effectiveSeasonId, row.data.heldOn);
-    await this.assertEventLink(
-      effectiveEventId,
-      row.data.heldOn,
-      effectiveSeasonId,
-    );
-    const result =
-      poolOld && row.discipline === 'Piscina'
-        ? PrismaCompetitiveResultMapper.pool(
-            await this.prisma.poolResult.update({
-              where: { id },
-              data: row.data,
-              include: resultStudentInclude,
-            }),
-          )
-        : row.discipline === 'Aguas Abertas'
-          ? PrismaCompetitiveResultMapper.openWater(
-              await this.prisma.openWaterResult.update({
-                where: { id },
-                data: row.data,
-                include: resultStudentInclude,
-              }),
-            )
-          : (() => {
-              throw new AppError(422, 'Invalid result context');
-            })();
+      await tx.$queryRaw(
+        Prisma.sql`SELECT id FROM public.open_water_results WHERE id = ${id}::uuid FOR UPDATE`,
+      );
+      const [poolOld, waterOld] = await Promise.all([
+        tx.poolResult.findUnique({
+          where: { id },
+          select: {
+            id: true,
+            seasonId: true,
+            eventId: true,
+            poolProgramRaceId: true,
+            poolProgramHeatId: true,
+          },
+        }),
+        tx.openWaterResult.findUnique({
+          where: { id },
+          select: {
+            id: true,
+            seasonId: true,
+            eventId: true,
+            openWaterProgramRaceId: true,
+            openWaterProgramStartId: true,
+          },
+        }),
+      ]);
+      if (!poolOld && !waterOld) throw new AppError(404, 'Result not found');
+      if (
+        (poolOld && row.discipline !== 'Piscina') ||
+        (waterOld && row.discipline !== 'Aguas Abertas')
+      ) {
+        throw new AppError(
+          422,
+          'Changing result discipline requires recreating the result',
+        );
+      }
+      const existingSeasonId = poolOld?.seasonId ?? waterOld?.seasonId;
+      const effectiveSeasonId =
+        input.seasonId === undefined ? existingSeasonId : input.seasonId;
+      const existingEventId = poolOld?.eventId ?? waterOld?.eventId;
+      const effectiveEventId =
+        input.eventId === undefined ? existingEventId : input.eventId;
+      const effectiveProgramLinks = {
+        poolProgramRaceId:
+          input.poolProgramRaceId === undefined
+            ? poolOld?.poolProgramRaceId
+            : input.poolProgramRaceId,
+        poolProgramHeatId:
+          input.poolProgramHeatId === undefined
+            ? poolOld?.poolProgramHeatId
+            : input.poolProgramHeatId,
+        openWaterProgramRaceId:
+          input.openWaterProgramRaceId === undefined
+            ? waterOld?.openWaterProgramRaceId
+            : input.openWaterProgramRaceId,
+        openWaterProgramStartId:
+          input.openWaterProgramStartId === undefined
+            ? waterOld?.openWaterProgramStartId
+            : input.openWaterProgramStartId,
+      };
+      await this.lockResultEvent(tx, [existingEventId, effectiveEventId]);
+      await this.assertSeasonLink(effectiveSeasonId, row.data.heldOn, tx);
+      await this.assertEventLink(
+        effectiveEventId,
+        row.data.heldOn,
+        effectiveSeasonId,
+        tx,
+      );
+      await validateProgramLinks(
+        tx,
+        input,
+        effectiveEventId,
+        effectiveProgramLinks,
+      );
+      if (poolOld && row.discipline === 'Piscina') {
+        return PrismaCompetitiveResultMapper.pool(
+          await tx.poolResult.update({
+            where: { id },
+            data: row.data,
+            include: resultStudentInclude,
+          }),
+        );
+      }
+      if (waterOld && row.discipline === 'Aguas Abertas') {
+        return PrismaCompetitiveResultMapper.openWater(
+          await tx.openWaterResult.update({
+            where: { id },
+            data: row.data,
+            include: resultStudentInclude,
+          }),
+        );
+      }
+      throw new AppError(422, 'Invalid result context');
+    });
     await this.cache.deleteMatching('results:');
     return result;
   }

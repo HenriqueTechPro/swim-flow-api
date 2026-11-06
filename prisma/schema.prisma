@@ -849,6 +849,8 @@ model PoolResult {
   studentId           String           @map("student_id") @db.Uuid
   seasonId            String?          @map("season_id") @db.Uuid
   eventId             String?          @map("event_id") @db.Uuid
+  poolProgramRaceId String? @map("pool_program_race_id") @db.Uuid
+  poolProgramHeatId String? @map("pool_program_heat_id") @db.Uuid
   heldOn              DateTime         @map("held_on") @db.Date
   distanceMeters      Int              @map("distance_meters")
   poolLengthMeters    Decimal?         @map("pool_length_meters") @db.Decimal(6, 2)
@@ -865,7 +867,11 @@ model PoolResult {
   student             Student          @relation(fields: [studentId], references: [id], onDelete: Restrict)
   season              Season?          @relation(fields: [seasonId], references: [id], onDelete: SetNull)
   event               Event?           @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  poolProgramRace PoolProgramRace? @relation(fields: [poolProgramRaceId], references: [id], onDelete: Restrict)
+  poolProgramHeat PoolProgramHeat? @relation(fields: [poolProgramHeatId], references: [id], onDelete: Restrict)
 
+  @@index([poolProgramRaceId])
+  @@index([poolProgramHeatId])
   @@map("pool_results")
   @@index([studentId, heldOn])
   @@index([studentId, style, distanceMeters, poolLengthMeters])
@@ -881,6 +887,8 @@ model OpenWaterResult {
   studentId           String                @map("student_id") @db.Uuid
   seasonId            String?          @map("season_id") @db.Uuid
   eventId             String?               @map("event_id") @db.Uuid
+  openWaterProgramRaceId String? @map("open_water_program_race_id") @db.Uuid
+  openWaterProgramStartId String? @map("open_water_program_start_id") @db.Uuid
   heldOn              DateTime              @map("held_on") @db.Date
   distanceMeters      Int                   @map("distance_meters")
   bodyType            OpenWaterBodyType?    @map("body_type")
@@ -898,7 +906,11 @@ model OpenWaterResult {
   student             Student               @relation(fields: [studentId], references: [id], onDelete: Restrict)
   season              Season?          @relation(fields: [seasonId], references: [id], onDelete: SetNull)
   event               Event?                @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  openWaterProgramRace OpenWaterProgramRace? @relation(fields: [openWaterProgramRaceId], references: [id], onDelete: Restrict)
+  openWaterProgramStart OpenWaterProgramStart? @relation(fields: [openWaterProgramStartId], references: [id], onDelete: Restrict)
 
+  @@index([openWaterProgramRaceId])
+  @@index([openWaterProgramStartId])
   @@map("open_water_results")
   @@index([studentId, heldOn])
   @@index([studentId, distanceMeters, bodyType])
@@ -927,6 +939,8 @@ model PoolProgramRace {
 
   @@unique([eventId, sessionCode, raceNumber], map: "pool_program_race_event_session_number_uq")
   @@index([eventId, genderScope, categorySnapshot], map: "pool_program_race_scope_idx")
+  results PoolResult[]
+
   @@map("pool_program_races")
 }
 
@@ -942,6 +956,8 @@ model PoolProgramHeat {
 
   @@unique([raceId, heatNumber], map: "pool_program_heat_race_number_uq")
   @@index([plannedStartAt], map: "pool_program_heat_start_idx")
+  results PoolResult[]
+
   @@map("pool_program_heats")
 }
 
@@ -965,6 +981,8 @@ model OpenWaterProgramRace {
 
   @@unique([eventId, sessionCode, raceNumber], map: "open_water_program_race_event_session_number_uq")
   @@index([eventId, routeKey, distanceMeters], map: "open_water_program_race_route_idx")
+  results OpenWaterResult[]
+
   @@map("open_water_program_races")
 }
 
@@ -980,6 +998,8 @@ model OpenWaterProgramStart {
 
   @@unique([raceId, waveNumber], map: "open_water_program_start_race_wave_uq")
   @@index([plannedStartAt], map: "open_water_program_start_at_idx")
+  results OpenWaterResult[]
+
   @@map("open_water_program_starts")
 }
 
