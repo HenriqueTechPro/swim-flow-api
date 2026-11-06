@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client';
 import { AppError } from '@/shared/errors/app-error';
 import type { CreateResultRequest } from '@/domain/results/application/dtos/result-requests';
 import { PrismaService } from '../prisma.service';
@@ -50,7 +51,7 @@ function poolLength(input: CreateResultRequest): number | null {
  * optional IDs are null for historical results until manually selected.
  */
 export async function validateProgramLinks(
-  prisma: PrismaService,
+  prisma: Prisma.TransactionClient | PrismaService,
   input: CreateResultRequest,
   eventId: string | null | undefined,
   links: ProgramLinks,
