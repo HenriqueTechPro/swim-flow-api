@@ -47,48 +47,80 @@ function mockPrisma() {
   const openWaterResult = { count: jest.fn(async () => 0) };
   const poolResult = { count: jest.fn(async () => 0) };
   return {
-    client: { poolProgramRace, poolProgramHeat, openWaterProgramRace, openWaterProgramStart, openWaterResult, poolResult } as unknown as PrismaService,
-    poolProgramRace, poolProgramHeat, openWaterProgramRace,
+    client: {
+      poolProgramRace,
+      poolProgramHeat,
+      openWaterProgramRace,
+      openWaterProgramStart,
+      openWaterResult,
+      poolResult,
+    } as unknown as PrismaService,
+    poolProgramRace,
+    poolProgramHeat,
+    openWaterProgramRace,
   };
 }
 
 describe('explicit result-program links', () => {
   it('leaves historical results without program links untouched', async () => {
     const db = mockPrisma();
-    await expect(validateProgramLinks(db.client, poolInput, undefined, {})).resolves.toBeUndefined();
+    await expect(
+      validateProgramLinks(db.client, poolInput, undefined, {}),
+    ).resolves.toBeUndefined();
     expect(db.poolProgramRace.findUnique).not.toHaveBeenCalled();
     expect(db.poolProgramHeat.findUnique).not.toHaveBeenCalled();
   });
 
   it('accepts a matching 20m pool race and its heat', async () => {
     const db = mockPrisma();
-    await expect(validateProgramLinks(db.client, poolInput, eventId, {
-      poolProgramRaceId: poolRaceId, poolProgramHeatId: poolHeatId,
-    })).resolves.toBeUndefined();
+    await expect(
+      validateProgramLinks(db.client, poolInput, eventId, {
+        poolProgramRaceId: poolRaceId,
+        poolProgramHeatId: poolHeatId,
+      }),
+    ).resolves.toBeUndefined();
     expect(db.poolProgramHeat.findUnique).toHaveBeenCalled();
   });
 
   it('rejects race from another event even if its distance matches', async () => {
     const db = mockPrisma();
-    await expect(validateProgramLinks(db.client, poolInput, '99999999-9999-4999-8999-999999999999', {
-      poolProgramRaceId: poolRaceId,
-    })).rejects.toMatchObject({ statusCode: 422 });
+    await expect(
+      validateProgramLinks(
+        db.client,
+        poolInput,
+        '99999999-9999-4999-8999-999999999999',
+        {
+          poolProgramRaceId: poolRaceId,
+        },
+      ),
+    ).rejects.toMatchObject({ statusCode: 422 });
   });
 
   it('rejects mixed disciplines and a heat without its race', async () => {
     const db = mockPrisma();
-    await expect(validateProgramLinks(db.client, poolInput, eventId, {
-      openWaterProgramRaceId: poolRaceId,
-    })).rejects.toThrow('Pool results cannot use open-water links');
-    await expect(validateProgramLinks(db.client, poolInput, eventId, {
-      poolProgramHeatId: poolHeatId,
-    })).rejects.toThrow('A pool heat requires the matching pool race');
+    await expect(
+      validateProgramLinks(db.client, poolInput, eventId, {
+        openWaterProgramRaceId: poolRaceId,
+      }),
+    ).rejects.toThrow('Pool results cannot use open-water links');
+    await expect(
+      validateProgramLinks(db.client, poolInput, eventId, {
+        poolProgramHeatId: poolHeatId,
+      }),
+    ).rejects.toThrow('A pool heat requires the matching pool race');
   });
 
   it('rejects programs with a conflicting regulatory category', async () => {
     const db = mockPrisma();
-    await expect(validateProgramLinks(db.client, { ...poolInput, category: 'Mirim 1' }, eventId, {
-      poolProgramRaceId: poolRaceId,
-    })).rejects.toThrow('Pool result does not match selected race');
+    await expect(
+      validateProgramLinks(
+        db.client,
+        { ...poolInput, category: 'Mirim 1' },
+        eventId,
+        {
+          poolProgramRaceId: poolRaceId,
+        },
+      ),
+    ).rejects.toThrow('Pool result does not match selected race');
   });
 });

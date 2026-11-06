@@ -115,7 +115,11 @@ const applyResultConsistencyRules = (
 
   if (data.discipline === 'Piscina') {
     if (data.openWaterProgramRaceId || data.openWaterProgramStartId) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['openWaterProgramRaceId'], message: 'Pool results cannot link to open-water programming' });
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['openWaterProgramRaceId'],
+        message: 'Pool results cannot link to open-water programming',
+      });
     }
     if (data.routeKey) {
       ctx.addIssue({
@@ -173,7 +177,11 @@ const applyResultConsistencyRules = (
 
   if (data.discipline === 'Aguas Abertas') {
     if (data.poolProgramRaceId || data.poolProgramHeatId) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['poolProgramRaceId'], message: 'Open-water results cannot link to pool programming' });
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['poolProgramRaceId'],
+        message: 'Open-water results cannot link to pool programming',
+      });
     }
     if (data.poolLengthMeters !== undefined) {
       ctx.addIssue({

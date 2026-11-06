@@ -23,7 +23,10 @@ const waterFormats: Record<string, string> = {
   Ultramaratona: 'ULTRAMARATHON',
 };
 const waterTypes: Record<string, string> = {
-  Mar: 'SEA', Rio: 'RIVER', Lago: 'LAKE', Represa: 'RESERVOIR',
+  Mar: 'SEA',
+  Rio: 'RIVER',
+  Lago: 'LAKE',
+  Represa: 'RESERVOIR',
 };
 
 function distanceMeters(input: CreateResultRequest): number {
@@ -31,8 +34,11 @@ function distanceMeters(input: CreateResultRequest): number {
     (input.customDistance?.trim() || input.distance).trim(),
   );
   if (!match) throw new AppError(422, 'Invalid race distance');
-  const meters = Number(match[1].replace(',', '.')) * (match[2].toLowerCase() === 'km' ? 1000 : 1);
-  if (!Number.isSafeInteger(meters) || meters <= 0) throw new AppError(422, 'Invalid race distance');
+  const meters =
+    Number(match[1].replace(',', '.')) *
+    (match[2].toLowerCase() === 'km' ? 1000 : 1);
+  if (!Number.isSafeInteger(meters) || meters <= 0)
+    throw new AppError(422, 'Invalid race distance');
   return meters;
 }
 
@@ -56,7 +62,12 @@ export async function validateProgramLinks(
   eventId: string | null | undefined,
   links: ProgramLinks,
 ): Promise<void> {
-  const { poolProgramRaceId, poolProgramHeatId, openWaterProgramRaceId, openWaterProgramStartId } = links;
+  const {
+    poolProgramRaceId,
+    poolProgramHeatId,
+    openWaterProgramRaceId,
+    openWaterProgramStartId,
+  } = links;
 
   if (input.discipline === 'Piscina') {
     if (openWaterProgramRaceId || openWaterProgramStartId) {
@@ -70,11 +81,15 @@ export async function validateProgramLinks(
         prisma.openWaterProgramRace.count({ where: { eventId } }),
         prisma.openWaterResult.count({ where: { eventId } }),
       ]);
-      if (programs || results) throw new AppError(409, 'Event already has open-water records');
+      if (programs || results)
+        throw new AppError(409, 'Event already has open-water records');
     }
     if (!poolProgramRaceId) return;
-    if (!eventId) throw new AppError(422, 'Select an event before linking a pool race');
-    const race = await prisma.poolProgramRace.findUnique({ where: { id: poolProgramRaceId } });
+    if (!eventId)
+      throw new AppError(422, 'Select an event before linking a pool race');
+    const race = await prisma.poolProgramRace.findUnique({
+      where: { id: poolProgramRaceId },
+    });
     if (!race || race.eventId !== eventId) {
       throw new AppError(422, 'Selected pool race belongs to another event');
     }
@@ -89,7 +104,8 @@ export async function validateProgramLinks(
     }
     if (poolProgramHeatId) {
       const heat = await prisma.poolProgramHeat.findUnique({
-        where: { id: poolProgramHeatId }, select: { raceId: true },
+        where: { id: poolProgramHeatId },
+        select: { raceId: true },
       });
       if (!heat || heat.raceId !== race.id) {
         throw new AppError(422, 'Selected pool heat belongs to another race');
@@ -109,13 +125,23 @@ export async function validateProgramLinks(
       prisma.poolProgramRace.count({ where: { eventId } }),
       prisma.poolResult.count({ where: { eventId } }),
     ]);
-    if (programs || results) throw new AppError(409, 'Event already has pool records');
+    if (programs || results)
+      throw new AppError(409, 'Event already has pool records');
   }
   if (!openWaterProgramRaceId) return;
-  if (!eventId) throw new AppError(422, 'Select an event before linking an open-water race');
-  const race = await prisma.openWaterProgramRace.findUnique({ where: { id: openWaterProgramRaceId } });
+  if (!eventId)
+    throw new AppError(
+      422,
+      'Select an event before linking an open-water race',
+    );
+  const race = await prisma.openWaterProgramRace.findUnique({
+    where: { id: openWaterProgramRaceId },
+  });
   if (!race || race.eventId !== eventId) {
-    throw new AppError(422, 'Selected open-water race belongs to another event');
+    throw new AppError(
+      422,
+      'Selected open-water race belongs to another event',
+    );
   }
   if (
     race.distanceMeters !== distanceMeters(input) ||
@@ -124,14 +150,21 @@ export async function validateProgramLinks(
     race.format !== waterFormats[input.eventFormat] ||
     race.categorySnapshot !== input.category?.trim()
   ) {
-    throw new AppError(422, 'Open-water result does not match selected race and route');
+    throw new AppError(
+      422,
+      'Open-water result does not match selected race and route',
+    );
   }
   if (openWaterProgramStartId) {
     const start = await prisma.openWaterProgramStart.findUnique({
-      where: { id: openWaterProgramStartId }, select: { raceId: true },
+      where: { id: openWaterProgramStartId },
+      select: { raceId: true },
     });
     if (!start || start.raceId !== race.id) {
-      throw new AppError(422, 'Selected open-water start belongs to another race');
+      throw new AppError(
+        422,
+        'Selected open-water start belongs to another race',
+      );
     }
   }
 }

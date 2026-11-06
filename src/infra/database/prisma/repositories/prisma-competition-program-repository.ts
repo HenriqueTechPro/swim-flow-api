@@ -95,9 +95,14 @@ export class PrismaCompetitionProgramRepository implements CompetitionProgramRep
     }
   }
 
-  private async lockEvent(tx: Prisma.TransactionClient, eventId: string): Promise<void> {
+  private async lockEvent(
+    tx: Prisma.TransactionClient,
+    eventId: string,
+  ): Promise<void> {
     // Serialize competing pool and open-water race creation for one event.
-    await tx.$queryRaw(Prisma.sql`SELECT id FROM public.events WHERE id = ${eventId}::uuid FOR UPDATE`);
+    await tx.$queryRaw(
+      Prisma.sql`SELECT id FROM public.events WHERE id = ${eventId}::uuid FOR UPDATE`,
+    );
   }
 
   async createPoolRace(input: CreatePoolProgramRaceDto) {
@@ -106,7 +111,10 @@ export class PrismaCompetitionProgramRepository implements CompetitionProgramRep
         await this.lockEvent(tx, input.eventId);
         await this.assertSportingEvent(input.eventId, 'pool', tx);
         const race = await tx.poolProgramRace.create({
-          data: { ...input, poolLengthMeters: new Prisma.Decimal(input.poolLengthMeters) },
+          data: {
+            ...input,
+            poolLengthMeters: new Prisma.Decimal(input.poolLengthMeters),
+          },
         });
         return toPoolRecord(race);
       });
@@ -144,7 +152,8 @@ export class PrismaCompetitionProgramRepository implements CompetitionProgramRep
             raceId: input.raceId,
             heatNumber: input.heatNumber,
             plannedStartAt:
-              input.plannedStartAt === undefined || input.plannedStartAt === null
+              input.plannedStartAt === undefined ||
+              input.plannedStartAt === null
                 ? null
                 : new Date(input.plannedStartAt),
           },
@@ -210,7 +219,8 @@ export class PrismaCompetitionProgramRepository implements CompetitionProgramRep
             raceId: input.raceId,
             waveNumber: input.waveNumber,
             plannedStartAt:
-              input.plannedStartAt === undefined || input.plannedStartAt === null
+              input.plannedStartAt === undefined ||
+              input.plannedStartAt === null
                 ? null
                 : new Date(input.plannedStartAt),
           },

@@ -335,8 +335,12 @@ function prepared(input: CreateResultRepositoryInput) {
         style: swimmingStyle,
         format,
         poolLengthMeters: length,
-        ...(input.poolProgramRaceId !== undefined ? { poolProgramRaceId: input.poolProgramRaceId } : {}),
-        ...(input.poolProgramHeatId !== undefined ? { poolProgramHeatId: input.poolProgramHeatId } : {}),
+        ...(input.poolProgramRaceId !== undefined
+          ? { poolProgramRaceId: input.poolProgramRaceId }
+          : {}),
+        ...(input.poolProgramHeatId !== undefined
+          ? { poolProgramHeatId: input.poolProgramHeatId }
+          : {}),
       },
     };
   }
@@ -368,8 +372,12 @@ function prepared(input: CreateResultRepositoryInput) {
       format,
       bodyType: bodyType ?? null,
       routeKey,
-      ...(input.openWaterProgramRaceId !== undefined ? { openWaterProgramRaceId: input.openWaterProgramRaceId } : {}),
-      ...(input.openWaterProgramStartId !== undefined ? { openWaterProgramStartId: input.openWaterProgramStartId } : {}),
+      ...(input.openWaterProgramRaceId !== undefined
+        ? { openWaterProgramRaceId: input.openWaterProgramRaceId }
+        : {}),
+      ...(input.openWaterProgramStartId !== undefined
+        ? { openWaterProgramStartId: input.openWaterProgramStartId }
+        : {}),
     },
   };
 }
@@ -981,7 +989,12 @@ export class PrismaResultsRepository implements ResultsRepository {
       });
       if (!student) throw new AppError(404, 'Student not found');
       await this.assertSeasonLink(input.seasonId, row.data.heldOn, tx);
-      await this.assertEventLink(input.eventId, row.data.heldOn, input.seasonId, tx);
+      await this.assertEventLink(
+        input.eventId,
+        row.data.heldOn,
+        input.seasonId,
+        tx,
+      );
       await validateProgramLinks(tx, input, input.eventId, input);
       return row.discipline === 'Piscina'
         ? PrismaCompetitiveResultMapper.pool(
@@ -1008,8 +1021,12 @@ export class PrismaResultsRepository implements ResultsRepository {
     const row = prepared(input);
     const result = await this.prisma.$transaction(async (tx) => {
       // Serialize edits to the same result before reading its current links.
-      await tx.$queryRaw(Prisma.sql`SELECT id FROM public.pool_results WHERE id = ${id}::uuid FOR UPDATE`);
-      await tx.$queryRaw(Prisma.sql`SELECT id FROM public.open_water_results WHERE id = ${id}::uuid FOR UPDATE`);
+      await tx.$queryRaw(
+        Prisma.sql`SELECT id FROM public.pool_results WHERE id = ${id}::uuid FOR UPDATE`,
+      );
+      await tx.$queryRaw(
+        Prisma.sql`SELECT id FROM public.open_water_results WHERE id = ${id}::uuid FOR UPDATE`,
+      );
       const [poolOld, waterOld] = await Promise.all([
         tx.poolResult.findUnique({
           where: { id },

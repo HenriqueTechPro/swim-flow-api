@@ -27,6 +27,7 @@ const ADDITIONAL_MIGRATION_BLOBS = Object.freeze({
   '20261026010000_private_blob_cleanup_completion': 'be4beab2f829fea46005b8191a89060252286a97',
   // Empty, independent pool/open-water programming tables (no historical rewrites).
   '20261106000000_competition_program_separated_identity': '129970f991f5432ae149803e71b528275ae65812',
+  '20261106170000_results_program_optional_links': '5f0c041f8216b57543d44a1ecc0140d383230863',
 });
 const HISTORICAL_MIGRATIONS = Object.keys(EXPECTED).length;
 const APPROVED_MIGRATIONS = HISTORICAL_MIGRATIONS +
