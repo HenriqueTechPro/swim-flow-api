@@ -130,22 +130,25 @@ export class PrismaCompetitionProgramRepository implements CompetitionProgramRep
   }
 
   async createPoolHeat(input: CreatePoolProgramHeatDto) {
-    const race = await this.prisma.poolProgramRace.findUnique({
-      where: { id: input.raceId },
-      select: { eventId: true },
-    });
-    if (!race) throw new AppError(404, 'Pool race not found');
-    await this.assertSportingEvent(race.eventId, 'pool');
     try {
-      return await this.prisma.poolProgramHeat.create({
-        data: {
-          raceId: input.raceId,
-          heatNumber: input.heatNumber,
-          plannedStartAt:
-            input.plannedStartAt === undefined || input.plannedStartAt === null
-              ? null
-              : new Date(input.plannedStartAt),
-        },
+      return await this.prisma.$transaction(async (tx) => {
+        const race = await tx.poolProgramRace.findUnique({
+          where: { id: input.raceId },
+          select: { eventId: true },
+        });
+        if (!race) throw new AppError(404, 'Pool race not found');
+        await this.lockEvent(tx, race.eventId);
+        await this.assertSportingEvent(race.eventId, 'pool', tx);
+        return tx.poolProgramHeat.create({
+          data: {
+            raceId: input.raceId,
+            heatNumber: input.heatNumber,
+            plannedStartAt:
+              input.plannedStartAt === undefined || input.plannedStartAt === null
+                ? null
+                : new Date(input.plannedStartAt),
+          },
+        });
       });
     } catch (error) {
       return toConflict(error);
@@ -193,22 +196,25 @@ export class PrismaCompetitionProgramRepository implements CompetitionProgramRep
   }
 
   async createOpenWaterStart(input: CreateOpenWaterProgramStartDto) {
-    const race = await this.prisma.openWaterProgramRace.findUnique({
-      where: { id: input.raceId },
-      select: { eventId: true },
-    });
-    if (!race) throw new AppError(404, 'Open-water race not found');
-    await this.assertSportingEvent(race.eventId, 'open-water');
     try {
-      return await this.prisma.openWaterProgramStart.create({
-        data: {
-          raceId: input.raceId,
-          waveNumber: input.waveNumber,
-          plannedStartAt:
-            input.plannedStartAt === undefined || input.plannedStartAt === null
-              ? null
-              : new Date(input.plannedStartAt),
-        },
+      return await this.prisma.$transaction(async (tx) => {
+        const race = await tx.openWaterProgramRace.findUnique({
+          where: { id: input.raceId },
+          select: { eventId: true },
+        });
+        if (!race) throw new AppError(404, 'Open-water race not found');
+        await this.lockEvent(tx, race.eventId);
+        await this.assertSportingEvent(race.eventId, 'open-water', tx);
+        return tx.openWaterProgramStart.create({
+          data: {
+            raceId: input.raceId,
+            waveNumber: input.waveNumber,
+            plannedStartAt:
+              input.plannedStartAt === undefined || input.plannedStartAt === null
+                ? null
+                : new Date(input.plannedStartAt),
+          },
+        });
       });
     } catch (error) {
       return toConflict(error);
