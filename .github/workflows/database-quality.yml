@@ -48,6 +48,8 @@ jobs:
           mkdir prisma/migrations/20270101000000_ci_incremental
           trap 'rmdir prisma/migrations/20270101000000_ci_incremental' EXIT
           node scripts/create-neon-baseline.cjs --check
+      - name: Verify competition program structural boundaries (offline)
+        run: node --test scripts/competition-program-boundaries.test.cjs
       - name: Deploy versioned migration to disposable PostgreSQL
         run: npm run prisma:migrate:deploy
       - name: Verify concrete SQL constraints and nullability
@@ -117,6 +119,10 @@ jobs:
           VITE_SUPABASE_PUBLISHABLE_KEY: ci-placeholder
           JWT_ACCESS_SECRET: ci-only-secret-must-be-at-least-32-characters
         run: npx jest --config ./test/jest-postgres-http.json --runInBand
+      - name: Validate separate pool and open-water competition program (disposable PostgreSQL)
+        env:
+          SWIMFLOW_DISPOSABLE_DB: 'yes'
+        run: node scripts/verify-competition-program-postgres.cjs
       - name: Check migration status
         run: node node_modules/prisma/build/index.js migrate status --schema prisma/schema.prisma
       - name: Compare deployed Prisma-managed schema with current schema
