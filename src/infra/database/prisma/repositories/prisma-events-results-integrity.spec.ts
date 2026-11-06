@@ -31,6 +31,8 @@ describe('Event identity protection with linked results (Prisma)', () => {
     event: { findUnique: jest.fn(), update: jest.fn(), delete: jest.fn() },
     poolResult: { count: jest.fn() },
     openWaterResult: { count: jest.fn() },
+    poolProgramRace: { count: jest.fn() },
+    openWaterProgramRace: { count: jest.fn() },
   };
   const cache = { deleteMatching: jest.fn() };
   const repo = new PrismaEventsRepository(
@@ -46,6 +48,8 @@ describe('Event identity protection with linked results (Prisma)', () => {
     prisma.event.delete.mockResolvedValue(row);
     prisma.poolResult.count.mockResolvedValue(1);
     prisma.openWaterResult.count.mockResolvedValue(0);
+    prisma.poolProgramRace.count.mockResolvedValue(0);
+    prisma.openWaterProgramRace.count.mockResolvedValue(0);
     cache.deleteMatching.mockResolvedValue(undefined);
   });
 
@@ -78,6 +82,26 @@ describe('Event identity protection with linked results (Prisma)', () => {
     prisma.openWaterResult.count.mockResolvedValue(1);
     await expect(repo.remove(id)).rejects.toThrow('Event has linked results');
     expect(prisma.event.delete).not.toHaveBeenCalled();
+  });
+
+  it('prevents editing or deleting an event scheduled for pool races', async () => {
+    prisma.poolResult.count.mockResolvedValue(0);
+    prisma.poolProgramRace.count.mockResolvedValue(1);
+    await expect(repo.update(id, { ...input, date: '2026-04-01' })).rejects.toThrow(
+      'linked results or scheduled races',
+    );
+    await expect(repo.remove(id)).rejects.toThrow('linked results or scheduled races');
+    expect(prisma.event.update).not.toHaveBeenCalled();
+    expect(prisma.event.delete).not.toHaveBeenCalled();
+  });
+
+  it('prevents cancellation with open-water start programming', async () => {
+    prisma.poolResult.count.mockResolvedValue(0);
+    prisma.openWaterProgramRace.count.mockResolvedValue(1);
+    await expect(repo.update(id, { ...input, status: 'Cancelado' })).rejects.toThrow(
+      'linked results or scheduled races',
+    );
+    expect(prisma.event.update).not.toHaveBeenCalled();
   });
 
   it('allows identity changes and deletion when no results refer to the event', async () => {
