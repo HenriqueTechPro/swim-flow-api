@@ -64,8 +64,12 @@ export async function validateProgramLinks(
     if (poolProgramHeatId && !poolProgramRaceId) {
       throw new AppError(422, 'A pool heat requires the matching pool race');
     }
-    if (eventId && await prisma.openWaterProgramRace.count({ where: { eventId } })) {
-      throw new AppError(409, 'Event already has open-water programming');
+    if (eventId) {
+      const [programs, results] = await Promise.all([
+        prisma.openWaterProgramRace.count({ where: { eventId } }),
+        prisma.openWaterResult.count({ where: { eventId } }),
+      ]);
+      if (programs || results) throw new AppError(409, 'Event already has open-water records');
     }
     if (!poolProgramRaceId) return;
     if (!eventId) throw new AppError(422, 'Select an event before linking a pool race');
@@ -99,8 +103,12 @@ export async function validateProgramLinks(
   if (openWaterProgramStartId && !openWaterProgramRaceId) {
     throw new AppError(422, 'An open-water start requires the matching race');
   }
-  if (eventId && await prisma.poolProgramRace.count({ where: { eventId } })) {
-    throw new AppError(409, 'Event already has pool programming');
+  if (eventId) {
+    const [programs, results] = await Promise.all([
+      prisma.poolProgramRace.count({ where: { eventId } }),
+      prisma.poolResult.count({ where: { eventId } }),
+    ]);
+    if (programs || results) throw new AppError(409, 'Event already has pool records');
   }
   if (!openWaterProgramRaceId) return;
   if (!eventId) throw new AppError(422, 'Select an event before linking an open-water race');
