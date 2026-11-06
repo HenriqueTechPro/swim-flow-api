@@ -48,6 +48,8 @@ jobs:
           mkdir prisma/migrations/20270101000000_ci_incremental
           trap 'rmdir prisma/migrations/20270101000000_ci_incremental' EXIT
           node scripts/create-neon-baseline.cjs --check
+      - name: Verify competition program structural boundaries (offline)
+        run: node --test scripts/competition-program-boundaries.test.cjs
       - name: Deploy versioned migration to disposable PostgreSQL
         run: npm run prisma:migrate:deploy
       - name: Verify concrete SQL constraints and nullability
