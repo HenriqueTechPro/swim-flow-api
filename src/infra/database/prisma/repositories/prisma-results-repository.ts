@@ -41,6 +41,7 @@ import {
 } from '@/shared/utils/duration';
 import type { Result } from '@/domain/results/enterprise/entities/result';
 import { PrismaService } from '../prisma.service';
+import { validateProgramLinks } from './result-program-links';
 import {
   PrismaCompetitiveResultMapper,
   resultStudentInclude,
@@ -334,6 +335,8 @@ function prepared(input: CreateResultRepositoryInput) {
         style: swimmingStyle,
         format,
         poolLengthMeters: length,
+        ...(input.poolProgramRaceId !== undefined ? { poolProgramRaceId: input.poolProgramRaceId } : {}),
+        ...(input.poolProgramHeatId !== undefined ? { poolProgramHeatId: input.poolProgramHeatId } : {}),
       },
     };
   }
@@ -365,6 +368,8 @@ function prepared(input: CreateResultRepositoryInput) {
       format,
       bodyType: bodyType ?? null,
       routeKey,
+      ...(input.openWaterProgramRaceId !== undefined ? { openWaterProgramRaceId: input.openWaterProgramRaceId } : {}),
+      ...(input.openWaterProgramStartId !== undefined ? { openWaterProgramStartId: input.openWaterProgramStartId } : {}),
     },
   };
 }
@@ -960,6 +965,7 @@ export class PrismaResultsRepository implements ResultsRepository {
     if (!student) throw new AppError(404, 'Student not found');
     await this.assertSeasonLink(input.seasonId, row.data.heldOn);
     await this.assertEventLink(input.eventId, row.data.heldOn, input.seasonId);
+    await validateProgramLinks(this.prisma, input, input.eventId, input);
     const result =
       row.discipline === 'Piscina'
         ? PrismaCompetitiveResultMapper.pool(
@@ -986,11 +992,11 @@ export class PrismaResultsRepository implements ResultsRepository {
     const [poolOld, waterOld] = await Promise.all([
       this.prisma.poolResult.findUnique({
         where: { id },
-        select: { id: true, seasonId: true, eventId: true },
+        select: { id: true, seasonId: true, eventId: true, poolProgramRaceId: true, poolProgramHeatId: true },
       }),
       this.prisma.openWaterResult.findUnique({
         where: { id },
-        select: { id: true, seasonId: true, eventId: true },
+        select: { id: true, seasonId: true, eventId: true, openWaterProgramRaceId: true, openWaterProgramStartId: true },
       }),
     ]);
     if (!poolOld && !waterOld) throw new AppError(404, 'Result not found');
@@ -1009,12 +1015,19 @@ export class PrismaResultsRepository implements ResultsRepository {
     const existingEventId = poolOld?.eventId ?? waterOld?.eventId;
     const effectiveEventId =
       input.eventId === undefined ? existingEventId : input.eventId;
+    const effectiveProgramLinks = {
+      poolProgramRaceId: input.poolProgramRaceId === undefined ? poolOld?.poolProgramRaceId : input.poolProgramRaceId,
+      poolProgramHeatId: input.poolProgramHeatId === undefined ? poolOld?.poolProgramHeatId : input.poolProgramHeatId,
+      openWaterProgramRaceId: input.openWaterProgramRaceId === undefined ? waterOld?.openWaterProgramRaceId : input.openWaterProgramRaceId,
+      openWaterProgramStartId: input.openWaterProgramStartId === undefined ? waterOld?.openWaterProgramStartId : input.openWaterProgramStartId,
+    };
     await this.assertSeasonLink(effectiveSeasonId, row.data.heldOn);
     await this.assertEventLink(
       effectiveEventId,
       row.data.heldOn,
       effectiveSeasonId,
     );
+    await validateProgramLinks(this.prisma, input, effectiveEventId, effectiveProgramLinks);
     const result =
       poolOld && row.discipline === 'Piscina'
         ? PrismaCompetitiveResultMapper.pool(
