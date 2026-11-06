@@ -11,6 +11,7 @@ import { LocalPasswordResetController } from './controllers/local-password-reset
 import { ClassesController } from './controllers/classes.controller';
 import { ExStudentsController } from './controllers/ex-students.controller';
 import { EventsController } from './controllers/events.controller';
+import { CompetitionProgramController } from './controllers/competition-program.controller';
 import { ParentsController } from './controllers/parents.controller';
 import { LocalAdminInvitationController } from './controllers/local-admin-invitation.controller';
 import { PublicResultsController } from './controllers/public-results.controller';
@@ -36,6 +37,7 @@ import { privateImageAccessProvider } from './services/private-image-access.prov
     ClassesController,
     ExStudentsController,
     EventsController,
+    CompetitionProgramController,
     ParentsController,
     LocalAdminInvitationController,
     PublicResultsController,
