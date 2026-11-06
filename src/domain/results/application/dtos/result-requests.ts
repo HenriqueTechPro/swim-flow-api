@@ -22,6 +22,10 @@ export interface CreateResultRequest {
   seasonId?: string | null;
   /** Undefined preserves the current association on update; null unlinks. */
   eventId?: string | null;
+  poolProgramRaceId?: string | null;
+  poolProgramHeatId?: string | null;
+  openWaterProgramRaceId?: string | null;
+  openWaterProgramStartId?: string | null;
   eventFormat: ResultEventFormat;
   time?: string | null;
   date: string;
