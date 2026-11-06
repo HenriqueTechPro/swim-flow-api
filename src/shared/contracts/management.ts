@@ -86,6 +86,10 @@ const applyResultConsistencyRules = (
     time?: string | null;
     poolLengthMeters?: number;
     routeKey?: string;
+    poolProgramRaceId?: string | null;
+    poolProgramHeatId?: string | null;
+    openWaterProgramRaceId?: string | null;
+    openWaterProgramStartId?: string | null;
   },
   ctx: z.RefinementCtx,
 ) => {
@@ -110,6 +114,9 @@ const applyResultConsistencyRules = (
   }
 
   if (data.discipline === 'Piscina') {
+    if (data.openWaterProgramRaceId || data.openWaterProgramStartId) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['openWaterProgramRaceId'], message: 'Pool results cannot link to open-water programming' });
+    }
     if (data.routeKey) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -165,6 +172,9 @@ const applyResultConsistencyRules = (
   }
 
   if (data.discipline === 'Aguas Abertas') {
+    if (data.poolProgramRaceId || data.poolProgramHeatId) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['poolProgramRaceId'], message: 'Open-water results cannot link to pool programming' });
+    }
     if (data.poolLengthMeters !== undefined) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -354,6 +364,10 @@ const resultBaseSchema = z.object({
   routeKey: z.string().trim().min(1).max(160).optional(),
   seasonId: z.string().uuid().nullable().optional(),
   eventId: z.string().uuid().nullable().optional(),
+  poolProgramRaceId: z.string().uuid().nullable().optional(),
+  poolProgramHeatId: z.string().uuid().nullable().optional(),
+  openWaterProgramRaceId: z.string().uuid().nullable().optional(),
+  openWaterProgramStartId: z.string().uuid().nullable().optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   competition: z.string().optional().default(''),
   position: z.number().int().min(0).nullable().optional().default(null),
