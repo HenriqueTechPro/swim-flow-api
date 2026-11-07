@@ -5,7 +5,9 @@ import {
 } from '../repositories/student-physical-assessments-repository';
 
 export class CreateStudentPhysicalAssessmentUseCase {
-  constructor(private readonly assessments: StudentPhysicalAssessmentsRepository) {}
+  constructor(
+    private readonly assessments: StudentPhysicalAssessmentsRepository,
+  ) {}
 
   execute(studentId: string, input: CreateStudentPhysicalAssessmentInput) {
     AnthropometryPolicy.validateAndDerive(input);
