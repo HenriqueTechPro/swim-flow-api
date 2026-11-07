@@ -81,11 +81,7 @@ export class PrismaStudentPhysicalAssessmentsRepository
     const records = await this.prisma.anthropometricAssessment.findMany({
       where: { studentId },
       select: selection,
-      orderBy: [
-        { measuredOn: 'desc' },
-        { createdAt: 'desc' },
-        { id: 'desc' },
-      ],
+      orderBy: [{ measuredOn: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }],
       take: 50,
     });
     return records.map(toHttpRecord);
