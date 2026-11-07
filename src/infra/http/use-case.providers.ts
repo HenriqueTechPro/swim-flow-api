@@ -12,6 +12,9 @@ import { PoolsRepository } from '@/domain/pools/application/repositories/pools-r
 import { ResultsRepository } from '@/domain/results/application/repositories/results-repository';
 import { ResultSeasonsRepository } from '@/domain/results/application/repositories/result-seasons-repository';
 import { StudentsRepository } from '@/domain/students/application/repositories/students-repository';
+import { StudentPhysicalAssessmentsRepository } from '@/domain/assessments/application/repositories/student-physical-assessments-repository';
+import { ListStudentPhysicalAssessmentsUseCase } from '@/domain/assessments/application/use-cases/list-student-physical-assessments';
+import { CreateStudentPhysicalAssessmentUseCase } from '@/domain/assessments/application/use-cases/create-student-physical-assessment';
 import { TeachersRepository } from '@/domain/teachers/application/repositories/teachers-repository';
 import { TeacherAccountLinksRepository } from '@/domain/teachers/application/repositories/teacher-account-links-repository';
 import { GetTeacherAccountLinkUseCase } from '@/domain/teachers/application/use-cases/get-teacher-account-link';
@@ -116,6 +119,14 @@ function provideUseCase<TDependency, TUseCase>(
 }
 
 export const useCaseProviders: Provider[] = [
+  provideUseCase(
+    ListStudentPhysicalAssessmentsUseCase,
+    StudentPhysicalAssessmentsRepository,
+  ),
+  provideUseCase(
+    CreateStudentPhysicalAssessmentUseCase,
+    StudentPhysicalAssessmentsRepository,
+  ),
   provideUseCase(ListAttendanceRecordsUseCase, AttendanceRepository),
   provideUseCase(GetAttendanceSummaryUseCase, AttendanceRepository),
   provideUseCase(SaveAttendanceBatchUseCase, AttendanceRepository),
