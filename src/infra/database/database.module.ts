@@ -13,6 +13,7 @@ import { ResultsRepository } from '@/domain/results/application/repositories/res
 import { CompetitionProgramRepository } from '@/domain/competition-program/application/repositories/competition-program-repository';
 import { ResultSeasonsRepository } from '@/domain/results/application/repositories/result-seasons-repository';
 import { StudentsRepository } from '@/domain/students/application/repositories/students-repository';
+import { StudentPhysicalAssessmentsRepository } from '@/domain/assessments/application/repositories/student-physical-assessments-repository';
 import { TeachersRepository } from '@/domain/teachers/application/repositories/teachers-repository';
 import { TeacherAccountLinksRepository } from '@/domain/teachers/application/repositories/teacher-account-links-repository';
 import { TrainingsRepository } from '@/domain/trainings/application/repositories/trainings-repository';
@@ -31,6 +32,7 @@ import { PrismaClassesRepository } from './prisma/repositories/prisma-classes-re
 import { PrismaAuthProfilesRepository } from './prisma/repositories/prisma-auth-profiles-repository';
 import { PrismaAuthSessionsRepository } from './prisma/repositories/prisma-auth-sessions-repository';
 import { PrismaStudentsRepository } from './prisma/repositories/prisma-students-repository';
+import { PrismaStudentPhysicalAssessmentsRepository } from './prisma/repositories/prisma-student-physical-assessments-repository';
 import { PrismaTeachersRepository } from './prisma/repositories/prisma-teachers-repository';
 import { PrismaTeacherAccountLinksRepository } from './prisma/repositories/prisma-teacher-account-links-repository';
 import { PrismaTrainingsRepository } from './prisma/repositories/prisma-trainings-repository';
@@ -39,6 +41,10 @@ import { PrismaTrainingsRepository } from './prisma/repositories/prisma-training
   imports: [CacheModule, EnvModule],
   providers: [
     PrismaService,
+    {
+      provide: StudentPhysicalAssessmentsRepository,
+      useClass: PrismaStudentPhysicalAssessmentsRepository,
+    },
     {
       provide: AuthProfilesRepository,
       useClass: PrismaAuthProfilesRepository,
@@ -106,6 +112,7 @@ import { PrismaTrainingsRepository } from './prisma/repositories/prisma-training
   ],
   exports: [
     PrismaService,
+    StudentPhysicalAssessmentsRepository,
     AuthProfilesRepository,
     AuthSessionsRepository,
     AttendanceRepository,
