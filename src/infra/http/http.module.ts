@@ -20,6 +20,7 @@ import { ProfileController } from './controllers/profile.controller';
 import { ResultsController } from './controllers/results.controller';
 import { ResultSeasonsController } from './controllers/result-seasons.controller';
 import { StudentsController } from './controllers/students.controller';
+import { StudentPhysicalAssessmentsController } from './controllers/student-physical-assessments.controller';
 import { TeachersController } from './controllers/teachers.controller';
 import { TrainingsController } from './controllers/trainings.controller';
 import { UploadsController } from './controllers/uploads.controller';
@@ -46,6 +47,7 @@ import { privateImageAccessProvider } from './services/private-image-access.prov
     ResultsController,
     ResultSeasonsController,
     StudentsController,
+    StudentPhysicalAssessmentsController,
     TeachersController,
     TrainingsController,
     UploadsController,
