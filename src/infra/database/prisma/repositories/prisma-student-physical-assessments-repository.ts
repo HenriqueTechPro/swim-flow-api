@@ -9,11 +9,19 @@ import {
 import { PrismaService } from '../prisma.service';
 
 const selection = {
-  id: true, studentId: true, measuredOn: true,
-  heightCm: true, bodyMassKg: true, armSpanCm: true,
-  legLengthCm: true, footLengthCm: true,
-  handLengthCm: true, trunkLengthCm: true,
-  measurementMethod: true, notes: true, assessorTeacherId: true,
+  id: true,
+  studentId: true,
+  measuredOn: true,
+  heightCm: true,
+  bodyMassKg: true,
+  armSpanCm: true,
+  legLengthCm: true,
+  footLengthCm: true,
+  handLengthCm: true,
+  trunkLengthCm: true,
+  measurementMethod: true,
+  notes: true,
+  assessorTeacherId: true,
 } as const;
 
 type Row = {
@@ -56,12 +64,14 @@ const toHttpRecord = (row: Row): StudentPhysicalAssessment => {
 
 @Injectable()
 export class PrismaStudentPhysicalAssessmentsRepository
-  implements StudentPhysicalAssessmentsRepository {
+  implements StudentPhysicalAssessmentsRepository
+{
   constructor(private readonly prisma: PrismaService) {}
 
   private async assertStudentExists(studentId: string): Promise<void> {
     const student = await this.prisma.student.findUnique({
-      where: { id: studentId }, select: { id: true },
+      where: { id: studentId },
+      select: { id: true },
     });
     if (!student) throw new AppError(404, 'Student not found');
   }
@@ -71,7 +81,11 @@ export class PrismaStudentPhysicalAssessmentsRepository
     const records = await this.prisma.anthropometricAssessment.findMany({
       where: { studentId },
       select: selection,
-      orderBy: [{ measuredOn: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }],
+      orderBy: [
+        { measuredOn: 'desc' },
+        { createdAt: 'desc' },
+        { id: 'desc' },
+      ],
       take: 50,
     });
     return records.map(toHttpRecord);
