@@ -119,8 +119,14 @@ function provideUseCase<TDependency, TUseCase>(
 }
 
 export const useCaseProviders: Provider[] = [
-  provideUseCase(ListStudentPhysicalAssessmentsUseCase, StudentPhysicalAssessmentsRepository),
-  provideUseCase(CreateStudentPhysicalAssessmentUseCase, StudentPhysicalAssessmentsRepository),
+  provideUseCase(
+    ListStudentPhysicalAssessmentsUseCase,
+    StudentPhysicalAssessmentsRepository,
+  ),
+  provideUseCase(
+    CreateStudentPhysicalAssessmentUseCase,
+    StudentPhysicalAssessmentsRepository,
+  ),
   provideUseCase(ListAttendanceRecordsUseCase, AttendanceRepository),
   provideUseCase(GetAttendanceSummaryUseCase, AttendanceRepository),
   provideUseCase(SaveAttendanceBatchUseCase, AttendanceRepository),
