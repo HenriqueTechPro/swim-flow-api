@@ -92,23 +92,3 @@ test('compares merge base to PR head even when base has advanced separately', ()
     rmSync(dir, { recursive: true, force: true });
   }
 });
-
-test('temporary preview: canonical assessment formatting', async () => {
-  const prettier = await import('prettier');
-  const { readFileSync } = require('node:fs');
-  const { resolve } = require('node:path');
-  for (const relative of [
-    'src/shared/contracts/student-physical-assessments.ts',
-    'src/infra/database/prisma/repositories/prisma-student-physical-assessments-repository.ts',
-  ]) {
-    const path = resolve(process.cwd(), relative);
-    const original = readFileSync(path, 'utf8');
-    const canonical = await prettier.format(original, {
-      ...(await prettier.resolveConfig(path)),
-      filepath: path,
-    });
-    console.log('BEGIN_CANONICAL_PRETTIER ' + relative);
-    console.log(canonical);
-    console.log('END_CANONICAL_PRETTIER ' + relative);
-  }
-});
