@@ -7,6 +7,7 @@ import {
   type StudentPhysicalAssessment,
 } from '@/domain/assessments/application/repositories/student-physical-assessments-repository';
 import { PrismaService } from '../prisma.service';
+
 const selection = {
   id: true,
   studentId: true,
@@ -22,6 +23,7 @@ const selection = {
   notes: true,
   assessorTeacherId: true,
 } as const;
+
 type Row = {
   id: string;
   studentId: string;
@@ -37,6 +39,7 @@ type Row = {
   notes: string | null;
   assessorTeacherId: string | null;
 };
+
 const toHttpRecord = (row: Row): StudentPhysicalAssessment => {
   const measurements = {
     heightCm: row.heightCm?.toNumber() ?? null,
@@ -58,9 +61,11 @@ const toHttpRecord = (row: Row): StudentPhysicalAssessment => {
     ...AnthropometryPolicy.validateAndDerive(measurements),
   };
 };
+
 @Injectable()
 export class PrismaStudentPhysicalAssessmentsRepository implements StudentPhysicalAssessmentsRepository {
   constructor(private readonly prisma: PrismaService) {}
+
   private async assertStudentExists(studentId: string): Promise<void> {
     const student = await this.prisma.student.findUnique({
       where: { id: studentId },
@@ -68,6 +73,7 @@ export class PrismaStudentPhysicalAssessmentsRepository implements StudentPhysic
     });
     if (!student) throw new AppError(404, 'Student not found');
   }
+
   async list(studentId: string): Promise<StudentPhysicalAssessment[]> {
     await this.assertStudentExists(studentId);
     const records = await this.prisma.anthropometricAssessment.findMany({
@@ -78,6 +84,7 @@ export class PrismaStudentPhysicalAssessmentsRepository implements StudentPhysic
     });
     return records.map(toHttpRecord);
   }
+
   async create(
     studentId: string,
     input: CreateStudentPhysicalAssessmentInput,
