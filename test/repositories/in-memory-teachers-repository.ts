@@ -41,6 +41,7 @@ export class InMemoryTeachersRepository implements TeachersRepository {
     const teacher = makeTeacher({
       name: input.name,
       cpf: input.cpf ?? undefined,
+      cref: input.cref ?? undefined,
       birthDate: input.birthDate ?? undefined,
       email: input.email,
       phone: input.phone,
@@ -77,6 +78,7 @@ export class InMemoryTeachersRepository implements TeachersRepository {
       ...this.items[itemIndex],
       name: input.name,
       cpf: input.cpf ?? undefined,
+      cref: input.cref === undefined ? this.items[itemIndex].cref : input.cref ?? undefined,
       birthDate: input.birthDate ?? undefined,
       email: input.email,
       phone: input.phone,
