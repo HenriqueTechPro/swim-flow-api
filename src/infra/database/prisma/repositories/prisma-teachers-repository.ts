@@ -17,7 +17,10 @@ import {
   type UpdateTeacherRepositoryInput,
 } from '@/domain/teachers/application/repositories/teachers-repository';
 import { AppError } from '@/shared/errors/app-error';
-import { parseCategoryValue } from '@/shared/utils/domain-formatters';
+import {
+  formatCategoryLabel,
+  parseCategoryValue,
+} from '@/shared/utils/domain-formatters';
 import { PrismaService } from '../prisma.service';
 import { assertLegacyPhotoWriteAllowed } from './legacy-photo-write-guard';
 import {
@@ -310,7 +313,10 @@ export class PrismaTeachersRepository implements TeachersRepository {
       (category) => !byName.has(category as never),
     );
     if (missing.length > 0) {
-      throw new AppError(422, `Categories not found: ${missing.join(', ')}`);
+      throw new AppError(
+        422,
+        `Categorias não cadastradas: ${missing.map(formatCategoryLabel).join(', ')}`,
+      );
     }
 
     await tx.teacherCategory.createMany({
