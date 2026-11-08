@@ -1,6 +1,7 @@
 export interface CreateTeacherRequest {
   name: string;
   cpf?: string | null;
+  cref?: string | null;
   birthDate?: string | null;
   email: string;
   phone: string;
