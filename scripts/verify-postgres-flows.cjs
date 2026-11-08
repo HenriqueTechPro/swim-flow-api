@@ -33,7 +33,7 @@ async function rejectsConstraint(action, context) {
 async function run() {
   // The baseline quality gate independently verifies migration SQL. These
   // scenarios exercise actual inserts and application repository behavior.
-  const category = await db.category.create({ data: { name: 'Mirim_1' } });
+  const category = await db.category.findUniqueOrThrow({ where: { name: 'Mirim_1' } });
   const level = await db.level.create({ data: { name: 'Iniciante' } });
   const season = await db.season.create({
     data: { year: 2026, label: 'CI 2026', startsOn: new Date('2026-01-01'), endsOn: new Date('2026-12-31'), status: 'PLANNED' },
