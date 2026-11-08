@@ -168,6 +168,7 @@ export class PrismaTeachersRepository implements TeachersRepository {
         data: {
           name: input.name,
           cpf: input.cpf || null,
+          cref: input.cref ?? null,
           birthDate: input.birthDate ? new Date(input.birthDate) : null,
           email: input.email,
           phone: input.phone,
@@ -210,6 +211,7 @@ export class PrismaTeachersRepository implements TeachersRepository {
         data: {
           name: input.name,
           cpf: input.cpf || null,
+          ...(input.cref !== undefined ? { cref: input.cref } : {}),
           birthDate: input.birthDate ? new Date(input.birthDate) : null,
           email: input.email,
           phone: input.phone,
