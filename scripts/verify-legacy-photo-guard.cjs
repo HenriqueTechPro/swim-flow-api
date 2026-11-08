@@ -36,6 +36,7 @@ async function main() {
   const LEGACY = 'https://legacy.example.invalid/old.jpg';
   const ATTACK = 'https://legacy.example.invalid/reintroduced.jpg';
   const mediaIds = [];
+  let createdCategory = false;
   const targets = [
     ['profile-avatar', ids.profile, 'profile', 'avatarUrl'],
     ['student-photo', ids.student, 'student', 'photo'],
@@ -78,9 +79,19 @@ async function main() {
         avatarUrl: LEGACY,
       },
     });
-    await prisma.category.create({
-      data: { id: ids.category, name: Object.values(SwimmingCategory)[0] },
+    const categoryName = Object.values(SwimmingCategory)[0];
+    const existingCategory = await prisma.category.findUnique({
+      where: { name: categoryName },
+      select: { id: true },
     });
+    if (existingCategory) {
+      ids.category = existingCategory.id;
+    } else {
+      await prisma.category.create({
+        data: { id: ids.category, name: categoryName },
+      });
+      createdCategory = true;
+    }
     await prisma.level.create({
       data: { id: ids.level, name: 'Photo-guard CI ' + ids.level },
     });
@@ -219,7 +230,9 @@ async function main() {
     await prisma.student.deleteMany({ where: { id: ids.student } });
     await prisma.teacher.deleteMany({ where: { id: ids.teacher } });
     await prisma.parent.deleteMany({ where: { id: ids.parent } });
-    await prisma.category.deleteMany({ where: { id: ids.category } });
+    if (createdCategory) {
+      await prisma.category.deleteMany({ where: { id: ids.category } });
+    }
     await prisma.level.deleteMany({ where: { id: ids.level } });
     await prisma.profile.deleteMany({ where: { id: ids.profile } });
     await prisma.$disconnect();
