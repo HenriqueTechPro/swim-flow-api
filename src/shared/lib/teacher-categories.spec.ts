@@ -7,16 +7,16 @@ import {
 } from './teacher-categories';
 import { parseCategoryValue } from '@/shared/utils/domain-formatters';
 
-const migration = readFileSync(
-  resolve(
-    process.cwd(),
-    'prisma/migrations/20261108130000_complete_swimming_category_catalog/migration.sql',
-  ),
-  'utf8',
+const migrationPath = resolve(
+  process.cwd(),
+  'prisma/migrations',
+  '20261108130000_complete_swimming_category_catalog',
+  'migration.sql',
 );
+const migration = readFileSync(migrationPath, 'utf8');
 
 describe('Official swimming categories for teachers', () => {
-  it('expands every teacher group to all 28 official categories', () => {
+  it('expands all teacher groups to 28 categories', () => {
     const expanded = expandTeacherCategorySelection(TEACHER_CATEGORY_OPTIONS);
     const keys = expanded.map(parseCategoryValue);
     expect(new Set(keys).size).toBe(28);
@@ -26,28 +26,30 @@ describe('Official swimming categories for teachers', () => {
     expect(keys).toContain('Master_O');
   });
 
-  it('provides the missing senior and master rows in an idempotent migration', () => {
-    for (const name of [
+  it('seeds missing categories without overwriting existing rows', () => {
+    const requiredNames = [
       'Júnior 2',
       'Pré-Master',
       'Master A',
       'Master C',
       'Master O',
-    ]) {
+    ];
+    for (const name of requiredNames) {
       expect(migration).toContain(`('${name}',`);
     }
     expect(migration).toContain('ON CONFLICT ("name") DO NOTHING');
-    expect((migration.match(/^ {2}\('/gm) ?? [])).toHaveLength(28);
+    expect(migration.match(/^ {2}\('/gm)).toHaveLength(28);
   });
 
-  it('can compress the full expanded selection for the teacher edit form', () => {
-    expect(compressTeacherCategoryNames([
+  it('compresses detailed categories into teacher groups', () => {
+    const compressed = compressTeacherCategoryNames([
       'Junior 1',
       'Junior 2',
       'Pre-Master',
       'Master A',
       'Master B',
       'Master O',
-    ])).toEqual(['Junior', 'Master']);
+    ]);
+    expect(compressed).toEqual(['Junior', 'Master']);
   });
 });
