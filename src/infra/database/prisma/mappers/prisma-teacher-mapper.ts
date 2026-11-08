@@ -10,6 +10,7 @@ export interface PrismaTeacherRecord {
   name: string;
   photo: string | null;
   cpf: string | null;
+  cref: string | null;
   speciality: string;
   experience: number;
   phone: string;
@@ -55,6 +56,7 @@ export class PrismaTeacherMapper {
       name: teacher.name,
       photo: teacher.photo ?? undefined,
       cpf: teacher.cpf ?? undefined,
+      cref: teacher.cref ?? undefined,
       speciality: teacher.speciality,
       categories: compressTeacherCategoryNames(categoryNames),
       experience: teacher.experience,
