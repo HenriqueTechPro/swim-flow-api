@@ -471,6 +471,8 @@ model Teacher {
   createdAt             DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime               @default(now()) @map("updated_at") @db.Timestamptz(6)
   cpf                   String?
+  /** CONFEF/CREF registration (without CREF display prefix). */
+  cref                  String?                @db.VarChar(20)
   profileId             String?                @unique @map("profile_id") @db.Uuid
   profile               Profile?               @relation("TeacherAccount", fields: [profileId], references: [id], onDelete: SetNull)
   teacherCategories     TeacherCategory[]
