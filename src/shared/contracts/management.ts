@@ -246,8 +246,14 @@ export const updateStudentSchema = createStudentSchema.partial().extend({
 });
 
 /** CONFEF 617/2026: six digits, G/P, UF and optional secondary "-S". */
-export const teacherCrefSchema = z.string().trim().toUpperCase()
-  .regex(/^(?:CREF\s+)?\d{6}-[GP]\/[A-Z]{2}(?:-S)?$/, 'Invalid CREF registration format')
+export const teacherCrefSchema = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .regex(
+    /^(?:CREF\s+)?\d{6}-[GP]\/[A-Z]{2}(?:-S)?$/,
+    'Invalid CREF registration format',
+  )
   .transform((value) => value.replace(/^CREF\s+/, ''))
   .nullish();
 
