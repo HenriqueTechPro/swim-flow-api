@@ -41,6 +41,7 @@ describe('TeachersController (e2e)', () => {
       .send({
         name: 'Professor E2E',
         cpf: '529.982.247-25',
+        cref: 'CREF 000123-G/BA',
         birthDate: '1990-06-15',
         email: 'professor.e2e@example.com',
         phone: '(71) 99999-1234',
@@ -56,6 +57,7 @@ describe('TeachersController (e2e)', () => {
 
     const teacherId = createResponse.body.data.id as string;
     expect(createResponse.body.data.name).toBe('Professor E2E');
+    expect(createResponse.body.data.cref).toBe('000123-G/BA');
     expect(createResponse.body.data.categories).toEqual(['Pre-Mirim', 'Mirim']);
 
     const updateResponse = await request(app.getHttpServer())
@@ -78,6 +80,8 @@ describe('TeachersController (e2e)', () => {
 
     expect(updateResponse.body.data.name).toBe('Professor E2E Atualizado');
     expect(updateResponse.body.data.experience).toBe(8);
+    // Legacy clients omit CREF; updating their other fields must not erase it.
+    expect(updateResponse.body.data.cref).toBe('000123-G/BA');
     expect(updateResponse.body.data.certifications).toEqual(['CBDA Nivel 2']);
 
     const listAfter = await request(app.getHttpServer())
