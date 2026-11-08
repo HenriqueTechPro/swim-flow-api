@@ -245,9 +245,16 @@ export const updateStudentSchema = createStudentSchema.partial().extend({
   status: z.string().min(1),
 });
 
+/** CONFEF 617/2026: six digits, G/P, UF and optional secondary "-S". */
+export const teacherCrefSchema = z.string().trim().toUpperCase()
+  .regex(/^(?:CREF\s+)?\d{6}-[GP]\/[A-Z]{2}(?:-S)?$/, 'Invalid CREF registration format')
+  .transform((value) => value.replace(/^CREF\s+/, ''))
+  .nullish();
+
 export const createTeacherSchema = z.object({
   name: z.string().min(3),
   cpf: z.string().optional().nullable(),
+  cref: teacherCrefSchema,
   birthDate: z.string().optional().nullable(),
   email: z.string().email(),
   phone: z.string().min(1),
