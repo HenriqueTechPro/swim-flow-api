@@ -8,6 +8,7 @@ export function makeTeacher(override: MakeTeacherOverride = {}): Teacher {
     name: override.name ?? 'Professor Teste',
     photo: override.photo,
     cpf: override.cpf ?? '529.982.247-25',
+    cref: override.cref,
     speciality: override.speciality ?? 'Nado Livre',
     categories: override.categories ?? ['Mirim'],
     experience: override.experience ?? 5,
