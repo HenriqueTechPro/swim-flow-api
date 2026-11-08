@@ -74,11 +74,15 @@ export class InMemoryTeachersRepository implements TeachersRepository {
       throw new AppError(404, 'Teacher not found');
     }
 
+    let nextCref = this.items[itemIndex].cref;
+    if (input.cref !== undefined) {
+      nextCref = input.cref ?? undefined;
+    }
     const updatedTeacher: Teacher = {
       ...this.items[itemIndex],
       name: input.name,
       cpf: input.cpf ?? undefined,
-      cref: input.cref === undefined ? this.items[itemIndex].cref : input.cref ?? undefined,
+      cref: nextCref,
       birthDate: input.birthDate ?? undefined,
       email: input.email,
       phone: input.phone,
