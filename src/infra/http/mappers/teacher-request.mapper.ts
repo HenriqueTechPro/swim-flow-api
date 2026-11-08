@@ -30,6 +30,7 @@ export class TeacherRequestMapper {
     return {
       name: body.name,
       cpf: body.cpf ?? null,
+      cref: body.cref,
       birthDate: body.birthDate ?? null,
       email: body.email,
       phone: body.phone,
