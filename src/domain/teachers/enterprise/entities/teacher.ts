@@ -3,6 +3,8 @@ export interface Teacher {
   name: string;
   photo?: string;
   cpf?: string;
+  /** Professional registration; a qualification belongs in certifications. */
+  cref?: string;
   speciality: string;
   categories: string[];
   experience: number;

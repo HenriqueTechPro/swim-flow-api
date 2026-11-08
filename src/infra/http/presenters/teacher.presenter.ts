@@ -7,6 +7,7 @@ export class TeacherPresenter {
       name: teacher.name,
       photo: teacher.photo,
       cpf: teacher.cpf,
+      cref: teacher.cref ?? null,
       speciality: teacher.speciality,
       categories: teacher.categories,
       experience: teacher.experience,

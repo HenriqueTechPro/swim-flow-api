@@ -8,6 +8,7 @@ const teacher: PrismaTeacherRecord = {
   name: 'Treinadora',
   photo: null,
   cpf: null,
+  cref: '000123-G/BA',
   speciality: 'Natação',
   experience: 8,
   phone: '',
@@ -42,6 +43,7 @@ describe('PrismaTeacherMapper class relation summary', () => {
       ]),
     );
     expect(mapped.studentsCount).toBe(11);
+    expect(mapped.cref).toBe('000123-G/BA');
     expect(mapped.assignedClasses).toEqual([
       { classId: 'class-2', name: 'Mirim II', role: 'assistant_coach' },
       { classId: 'class-1', name: 'Mirim I', role: 'head_coach' },
