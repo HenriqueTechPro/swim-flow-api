@@ -37,7 +37,7 @@ describe('Official swimming categories for teachers', () => {
       expect(migration).toContain(`('${name}',`);
     }
     expect(migration).toContain('ON CONFLICT ("name") DO NOTHING');
-    expect((migration.match(/^  \('/gm) ?? [])).toHaveLength(28);
+    expect((migration.match(/^ {2}\('/gm) ?? [])).toHaveLength(28);
   });
 
   it('can compress the full expanded selection for the teacher edit form', () => {
