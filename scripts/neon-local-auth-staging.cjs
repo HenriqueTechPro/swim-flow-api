@@ -30,6 +30,8 @@ const ADDITIONAL_MIGRATION_BLOBS = Object.freeze({
   '20261106170000_results_program_optional_links': '5f0c041f8216b57543d44a1ecc0140d383230863',
   // Additive optional teacher CREF registration; reviewed migration remains immutable.
   '20261108000000_teacher_cref_registration': 'bc10bd4989eaaefed0896fabed9a204db55080ae',
+  // Restore optional official swimming categories in the reference catalog, without changing existing rows.
+  '20261108130000_complete_swimming_category_catalog': '283e54307aa4ab576a33ae56eb8e4757fe931ff7',
 });
 const HISTORICAL_MIGRATIONS = Object.keys(EXPECTED).length;
 const APPROVED_MIGRATIONS = HISTORICAL_MIGRATIONS +
