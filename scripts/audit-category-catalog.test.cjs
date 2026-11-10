@@ -69,6 +69,34 @@ test('detects missing, duplicated and unexpected category names without repairin
   assert.equal(summary.ready, false);
 });
 
+test('accepts a successful retry after an explicitly rolled-back Prisma attempt', () => {
+  const history = [
+    { name: CATALOG_MIGRATION, finished: false, rolledBack: true },
+    { name: CATALOG_MIGRATION, finished: true, rolledBack: false },
+  ];
+  const result = summarizeCatalog(rows, history, expected);
+  assert.equal(result.migrationStatus, 'recorded');
+  assert.equal(result.ready, true);
+});
+
+test('rejects unresolved failed attempts, even after another successful attempt', () => {
+  const failed = { name: CATALOG_MIGRATION, finished: false, rolledBack: false };
+  const succeeded = { name: CATALOG_MIGRATION, finished: true, rolledBack: false };
+  for (const history of [[failed], [failed, succeeded]]) {
+    const result = summarizeCatalog(rows, history, expected);
+    assert.equal(result.migrationStatus, 'incomplete');
+    assert.equal(result.ready, false);
+  }
+});
+
+test('does not mistake rolled-back-only history for a recorded migration', () => {
+  const result = summarizeCatalog(rows, [
+    { name: CATALOG_MIGRATION, finished: false, rolledBack: true },
+  ], expected);
+  assert.equal(result.migrationStatus, 'incomplete');
+  assert.equal(result.ready, false);
+});
+
 test('success only when the catalog and successful migration history match', async () => {
   const mock = fixture();
   const summary = await auditCategoryCatalog(env, mock.createClient, expected);
