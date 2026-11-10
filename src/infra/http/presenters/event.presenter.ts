@@ -4,6 +4,7 @@ export class EventPresenter {
   static toHTTP(this: void, event: Event) {
     return {
       id: event.id,
+      seasonId: event.seasonId ?? null,
       title: event.title,
       description: event.description,
       type: event.type,

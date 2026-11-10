@@ -535,6 +535,7 @@ export const resultsCompetitionPlacementsQuerySchema = z
   });
 
 export const createEventSchema = z.object({
+  seasonId: z.string().uuid().nullable().optional(),
   title: z.string().min(3),
   description: z.string().optional().default(''),
   type: z.enum(['Competição', 'Reunião', 'Festival']),

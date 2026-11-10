@@ -2,6 +2,7 @@ import type { Event } from '@/domain/events/enterprise/entities/event';
 
 export interface PrismaEventRecord {
   id: string;
+  seasonId?: string | null;
   title: string;
   description: string;
   type: string;
@@ -31,6 +32,7 @@ export class PrismaEventMapper {
   static toDomain(this: void, event: PrismaEventRecord): Event {
     return {
       id: event.id,
+      seasonId: event.seasonId ?? null,
       title: event.title,
       description: event.description,
       type: EVENT_TYPE_LABELS[event.type] ?? 'Festival',

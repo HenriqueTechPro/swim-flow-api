@@ -88,6 +88,43 @@ describe('EventsController (e2e)', () => {
     expect(listFinal.body.data).toEqual([]);
   });
 
+  it('preserves explicit season on GET and PUT omission; null unlinks', async () => {
+    const seasonId = '11111111-1111-4111-8111-111111111111';
+    const input = {
+      title: 'Festival 2027',
+      type: 'Festival',
+      date: '2027-05-18',
+      startTime: '08:00',
+      endTime: '11:00',
+      location: 'Piscina',
+      status: 'Agendado',
+    };
+    const created = await request(app.getHttpServer())
+      .post('/api/events')
+      .send({ ...input, seasonId })
+      .expect(201);
+    const id = created.body.data.id as string;
+    expect(created.body.data.seasonId).toBe(seasonId);
+    const read = await request(app.getHttpServer())
+      .get(`/api/events/${id}`)
+      .expect(200);
+    expect(read.body.data.seasonId).toBe(seasonId);
+    const preserved = await request(app.getHttpServer())
+      .put(`/api/events/${id}`)
+      .send(input)
+      .expect(200);
+    expect(preserved.body.data.seasonId).toBe(seasonId);
+    const unlinked = await request(app.getHttpServer())
+      .put(`/api/events/${id}`)
+      .send({ ...input, seasonId: null })
+      .expect(200);
+    expect(unlinked.body.data.seasonId).toBeNull();
+    await request(app.getHttpServer())
+      .post('/api/events')
+      .send({ ...input, seasonId: 'invalid-uuid' })
+      .expect(400);
+  });
+
   it('filters and paginates events list', async () => {
     eventsRepository.items.push(
       makeEvent({
