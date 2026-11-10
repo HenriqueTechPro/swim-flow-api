@@ -49,6 +49,8 @@ jobs:
         run: npm run neon:preflight:test
       - name: Test read-only Neon inspection with synthetic database responses
         run: npm run neon:inspect:test
+      - name: Test SELECT-only category reconciliation without Neon access
+        run: npm run catalog:readonly:test
       - name: Test guarded Prisma staging migration without real Neon credentials
         run: npm run neon:staging:migrate:test
       - name: Verify incremental local auth staging runner without Neon credentials
