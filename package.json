@@ -32,6 +32,8 @@
     "neon:preflight:test": "node --test scripts/neon-preflight.test.cjs",
     "neon:inspect": "node scripts/neon-inspect.cjs",
     "neon:inspect:test": "node --test scripts/neon-inspect.test.cjs",
+    "catalog:readonly:audit": "node scripts/audit-category-catalog.cjs",
+    "catalog:readonly:test": "node --test scripts/audit-category-catalog.test.cjs",
     "neon:staging:migrate": "node scripts/neon-staging-migrate.cjs",
     "neon:staging:migrate:test": "node --test scripts/neon-staging-migrate.test.cjs",
     "neon:local-auth:staging": "node scripts/neon-local-auth-staging.cjs",
