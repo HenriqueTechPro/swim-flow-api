@@ -106,18 +106,21 @@ describe('Event explicit season links (Prisma)', () => {
     expect(prisma.event.update).toHaveBeenCalledTimes(1);
   });
 
-  it('accepts explicit re-link or null unlink without linked results', async () => {
-    await repo.update(id, { ...input, seasonId: otherSeasonId });
-    const relink = prisma.event.update.mock.calls[0][0] as {
+  it(
+      'accepts explicit re-link or null unlink without linked results',
+      async () => {
+      await repo.update(id, { ...input, seasonId: otherSeasonId });
+      const relink = prisma.event.update.mock.calls[0][0] as {
       data: Record<string, unknown>;
-    };
-    expect(relink.data.seasonId).toBe(otherSeasonId);
-    await repo.update(id, { ...input, seasonId: null, date: '2028-05-01' });
-    const unlink = prisma.event.update.mock.calls[1][0] as {
+      };
+      expect(relink.data.seasonId).toBe(otherSeasonId);
+      await repo.update(id, { ...input, seasonId: null, date: '2028-05-01' });
+      const unlink = prisma.event.update.mock.calls[1][0] as {
       data: Record<string, unknown>;
-    };
-    expect(unlink.data.seasonId).toBeNull();
-  });
+      };
+      expect(unlink.data.seasonId).toBeNull();
+    },
+  );
 
   it('blocks re-link and unlink when results are linked to event', async () => {
     prisma.poolResult.count.mockResolvedValue(1);

@@ -125,7 +125,10 @@ export class PrismaEventsRepository implements EventsRepository {
     );
   }
 
-  private async assertSeasonDate(seasonId: string, date: string): Promise<void> {
+  private async assertSeasonDate(
+    seasonId: string,
+    date: string,
+  ): Promise<void> {
     const season = await this.prisma.season.findUnique({
       where: { id: seasonId },
       select: { startsOn: true, endsOn: true },
