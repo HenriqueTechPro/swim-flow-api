@@ -67,10 +67,13 @@ function summarizeCatalog(rows, history, expected) {
     }
   }
   const unexpected = [...actual.keys()].filter((name) => !expected.has(name));
-  const recorded = history.length === 1 &&
-    history[0].name === CATALOG_MIGRATION &&
-    history[0].finished === true &&
-    history[0].rolledBack === false;
+  // Prisma preserves rolled-back attempts in _prisma_migrations.
+  // A resolved retry is valid only if exactly one non-rolled-back attempt
+  // succeeded and there are no unresolved failed attempts.
+  const activeAttempts = history.filter((entry) => entry.rolledBack === false);
+  const recorded = activeAttempts.length === 1 &&
+    activeAttempts[0].name === CATALOG_MIGRATION &&
+    activeAttempts[0].finished === true;
   const migrationStatus = recorded ? 'recorded' :
     history.length === 0 ? 'missing' : 'incomplete';
 
