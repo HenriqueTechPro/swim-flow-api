@@ -19,6 +19,7 @@ describe('Result season options (e2e)', () => {
   const create = jest.fn();
   const update = jest.fn();
   const overview = jest.fn();
+  const studentComposition = jest.fn();
   const seasonId = '88888888-8888-4888-8888-888888888888';
   const payload = {
     year: 2026,
@@ -34,6 +35,7 @@ describe('Result season options (e2e)', () => {
     create.mockReset();
     update.mockReset();
     overview.mockReset();
+    studentComposition.mockReset();
     overview.mockResolvedValue({
       season: { id: seasonId, ...payload },
       filters: { discipline: 'all' },
@@ -50,6 +52,12 @@ describe('Result season options (e2e)', () => {
         poolWithoutSeasonInPeriod: 2,
         openWaterWithoutSeasonInPeriod: 1,
       },
+    });
+    studentComposition.mockResolvedValue({
+      season: { id: seasonId, ...payload },
+      categoriesRegistered: 60,
+      participants: { distinct: 27, pool: 20, openWater: 15 },
+      enrolledDuringPeriod: 43,
     });
     create.mockImplementation(async (input: object) => ({
       id: seasonId,
@@ -68,7 +76,7 @@ describe('Result season options (e2e)', () => {
     app = await createAuthenticatedE2EApp((builder) =>
       builder
         .overrideProvider(ResultSeasonsRepository)
-        .useValue({ list, create, update, overview }),
+        .useValue({ list, create, update, overview, studentComposition }),
     );
   });
 
@@ -90,6 +98,12 @@ describe('Result season options (e2e)', () => {
       Reflect.getMetadata(
         PERMISSIONS_KEY,
         ResultSeasonsController.prototype.overview,
+      ),
+    ).toEqual(['results:read']);
+    expect(
+      Reflect.getMetadata(
+        PERMISSIONS_KEY,
+        ResultSeasonsController.prototype.studentComposition,
       ),
     ).toEqual(['results:read']);
     expect(
@@ -171,6 +185,20 @@ describe('Result season options (e2e)', () => {
     expect(overview).toHaveBeenCalledTimes(1);
   });
 
+  it('returns real distinct student composition without modifying history', async () => {
+    const url = `/api/results/seasons/${seasonId}/student-composition`;
+    const response = await get(url).expect(200);
+    expect(response.body.data).toMatchObject({
+      categoriesRegistered: 60,
+      participants: { distinct: 27, pool: 20, openWater: 15 },
+      enrolledDuringPeriod: 43,
+    });
+    expect(studentComposition).toHaveBeenCalledTimes(1);
+    expect(studentComposition).toHaveBeenCalledWith(seasonId);
+    await get('/api/results/seasons/not-uuid/student-composition').expect(400);
+    expect(studentComposition).toHaveBeenCalledTimes(1);
+  });
+
   it('defaults new season status to PLANNED', async () => {
     const response = await request(app.getHttpServer())
       .post('/api/results/seasons')
@@ -232,7 +260,7 @@ describe('Result season options (e2e)', () => {
     app = await createE2EApp((builder) =>
       withDefaultTestOverrides(builder)
         .overrideProvider(ResultSeasonsRepository)
-        .useValue({ list, create, update, overview }),
+        .useValue({ list, create, update, overview, studentComposition }),
     );
 
     await get('/api/results/seasons').expect(401);

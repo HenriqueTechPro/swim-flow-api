@@ -7,6 +7,7 @@ describe('ListResultSeasonsUseCase', () => {
       create: jest.fn(),
       update: jest.fn(),
       overview: jest.fn(),
+      studentComposition: jest.fn(),
       list: jest.fn().mockResolvedValue({
         items: [
           {
