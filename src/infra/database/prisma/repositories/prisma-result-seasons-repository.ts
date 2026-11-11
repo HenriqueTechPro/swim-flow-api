@@ -332,7 +332,9 @@ export class PrismaResultSeasonsRepository implements ResultSeasonsRepository {
       ...poolRows.map((row) => row.studentId),
       ...openWaterRows.map((row) => row.studentId),
     ]);
-    const catalogByName = new Map(catalog.map((item) => [item.name, item]));
+    const catalogByName = new Map<string, { id: string; name: string }>(
+      catalog.map((item) => [item.name, item]),
+    );
 
     const items: CategoryRolloverPreviewRow[] = sourceRows.map((row) => {
       const warnings: CategoryRolloverPreviewRow['warnings'] = [];
