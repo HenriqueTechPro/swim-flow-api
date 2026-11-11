@@ -6,6 +6,7 @@ describe('ListResultSeasonsUseCase', () => {
     const repository: ResultSeasonsRepository = {
       create: jest.fn(),
       update: jest.fn(),
+      overview: jest.fn(),
       list: jest.fn().mockResolvedValue({
         items: [
           {

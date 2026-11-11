@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import {
   ResultSeasonsRepository,
   type ResultSeasonOption,
+  type ResultSeasonOverviewFilters,
+  type ResultSeasonOverview,
   type WriteResultSeasonInput,
 } from '@/domain/results/application/repositories/result-seasons-repository';
 import type { PaginationParams } from '@/domain/shared/pagination/pagination-params';
@@ -56,6 +58,125 @@ export class PrismaResultSeasonsRepository implements ResultSeasonsRepository {
     ]);
     const options = rows.map(toSeasonOption);
     return createPaginatedResult(options, total, { page, perPage });
+  }
+
+  async overview(
+    id: string,
+    filters: ResultSeasonOverviewFilters,
+  ): Promise<ResultSeasonOverview> {
+    const seasonRow = await this.prisma.season.findUnique({
+      where: { id },
+      select: SEASON_SELECT,
+    });
+    if (!seasonRow) throw new AppError(404, 'Season not found');
+
+    const discipline = filters.discipline ?? 'all';
+    const includePool = discipline === 'all' || discipline === 'Piscina';
+    const includeOpenWater =
+      discipline === 'all' || discipline === 'Aguas Abertas';
+    const period = {
+      gte: seasonRow.startsOn,
+      lte: seasonRow.endsOn,
+    };
+    const selectedEvent = filters.eventId ? { eventId: filters.eventId } : {};
+    const eventId = filters.eventId ? { id: filters.eventId } : {};
+    const category = filters.category
+      ? { categorySnapshot: { contains: filters.category, mode: 'insensitive' as const } }
+      : {};
+    const student = filters.studentSearch
+      ? {
+          student: {
+            name: { contains: filters.studentSearch, mode: 'insensitive' as const },
+          },
+        }
+      : {};
+    const resultFilters = { ...selectedEvent, ...category, ...student };
+    const linkedEventWhere = { seasonId: id, ...eventId };
+    const raceFilters = {
+      event: { seasonId: id, ...eventId },
+      ...category,
+    };
+
+    // All metrics are database counts; never estimate from a paginated page.
+    // Unlinked records are counted only as data-quality alerts for the period.
+    const [
+      linkedEvents,
+      withoutSeasonEvents,
+      eventRows,
+      poolRaces,
+      openWaterRaces,
+      poolResults,
+      openWaterResults,
+      unlinkedPoolResults,
+      unlinkedOpenWaterResults,
+    ] = await Promise.all([
+      this.prisma.event.count({ where: linkedEventWhere }),
+      this.prisma.event.count({
+        where: { seasonId: null, date: period, ...eventId },
+      }),
+      this.prisma.event.findMany({
+        where: { seasonId: id },
+        select: { id: true, title: true, date: true },
+        orderBy: [{ date: 'desc' }, { id: 'asc' }],
+        take: 60,
+      }),
+      includePool
+        ? this.prisma.poolProgramRace.count({ where: raceFilters })
+        : Promise.resolve(0),
+      includeOpenWater
+        ? this.prisma.openWaterProgramRace.count({ where: raceFilters })
+        : Promise.resolve(0),
+      includePool
+        ? this.prisma.poolResult.count({
+            where: { seasonId: id, ...resultFilters },
+          })
+        : Promise.resolve(0),
+      includeOpenWater
+        ? this.prisma.openWaterResult.count({
+            where: { seasonId: id, ...resultFilters },
+          })
+        : Promise.resolve(0),
+      includePool
+        ? this.prisma.poolResult.count({
+            where: {
+              seasonId: null,
+              heldOn: period,
+              ...resultFilters,
+            },
+          })
+        : Promise.resolve(0),
+      includeOpenWater
+        ? this.prisma.openWaterResult.count({
+            where: {
+              seasonId: null,
+              heldOn: period,
+              ...resultFilters,
+            },
+          })
+        : Promise.resolve(0),
+    ]);
+
+    return {
+      season: toSeasonOption(seasonRow),
+      filters: { ...filters, discipline },
+      events: {
+        linked: linkedEvents,
+        withoutSeasonInPeriod: withoutSeasonEvents,
+        options: eventRows.map((event) => ({
+          id: event.id,
+          title: event.title,
+          date: event.date?.toISOString().slice(0, 10) ?? null,
+        })),
+        optionsTruncated: linkedEvents > eventRows.length,
+      },
+      races: { pool: poolRaces, openWater: openWaterRaces },
+      results: {
+        pool: poolResults,
+        openWater: openWaterResults,
+        poolWithoutSeasonInPeriod: unlinkedPoolResults,
+        openWaterWithoutSeasonInPeriod: unlinkedOpenWaterResults,
+      },
+    };
   }
 
   private async assertNoOverlap(
