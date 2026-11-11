@@ -125,10 +125,38 @@ export class PrismaEventsRepository implements EventsRepository {
     );
   }
 
+  private async assertSeasonDate(
+    seasonId: string,
+    date: string,
+  ): Promise<void> {
+    const season = await this.prisma.season.findUnique({
+      where: { id: seasonId },
+      select: { startsOn: true, endsOn: true },
+    });
+    if (!season) {
+      throw new AppError(422, 'Selected season does not exist');
+    }
+    const eventDate = new Date(`${date}T00:00:00.000Z`);
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+      Number.isNaN(eventDate.getTime()) ||
+      eventDate.toISOString().slice(0, 10) !== date ||
+      season.startsOn > season.endsOn ||
+      eventDate < season.startsOn ||
+      eventDate > season.endsOn
+    ) {
+      throw new AppError(422, 'Event date is outside the selected season');
+    }
+  }
+
   async create(input: CreateEventRepositoryInput) {
+    if (input.seasonId) {
+      await this.assertSeasonDate(input.seasonId, input.date);
+    }
     const event = await this.prisma.event.create({
       data: {
         title: input.title,
+        ...(input.seasonId !== undefined ? { seasonId: input.seasonId } : {}),
         description: input.description || '',
         type: EVENT_TYPE_TO_PRISMA[input.type],
         date: new Date(input.date),
@@ -162,15 +190,21 @@ export class PrismaEventsRepository implements EventsRepository {
   async update(id: string, input: UpdateEventRepositoryInput) {
     const existing = await this.prisma.event.findUnique({
       where: { id },
-      select: { id: true, date: true },
+      select: { id: true, date: true, seasonId: true },
     });
 
     if (!existing) {
       throw new AppError(404, 'Event not found');
     }
 
+    const effectiveSeasonId =
+      input.seasonId === undefined ? existing.seasonId : input.seasonId;
+    if (effectiveSeasonId) {
+      await this.assertSeasonDate(effectiveSeasonId, input.date);
+    }
     if (
       existing.date?.toISOString().slice(0, 10) !== input.date ||
+      existing.seasonId !== effectiveSeasonId ||
       (input.type !== 'Competição' && input.type !== 'Festival') ||
       input.status === 'Cancelado'
     ) {
@@ -181,6 +215,7 @@ export class PrismaEventsRepository implements EventsRepository {
       where: { id },
       data: {
         title: input.title,
+        ...(input.seasonId !== undefined ? { seasonId: input.seasonId } : {}),
         description: input.description || '',
         type: EVENT_TYPE_TO_PRISMA[input.type],
         date: new Date(input.date),

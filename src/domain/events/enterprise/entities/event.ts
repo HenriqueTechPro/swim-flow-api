@@ -1,5 +1,6 @@
 export interface Event {
   id: string;
+  seasonId?: string | null;
   title: string;
   description: string;
   type: 'Competição' | 'Reunião' | 'Festival';

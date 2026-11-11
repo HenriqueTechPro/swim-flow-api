@@ -1,4 +1,5 @@
 export interface CreateEventRequest {
+  seasonId?: string | null;
   title: string;
   description?: string;
   type: 'Competição' | 'Reunião' | 'Festival';

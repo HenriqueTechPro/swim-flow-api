@@ -5,6 +5,7 @@ interface MakeEventOverride extends Partial<Event> {}
 export function makeEvent(override: MakeEventOverride = {}): Event {
   return {
     id: override.id ?? crypto.randomUUID(),
+    seasonId: override.seasonId ?? null,
     title: override.title ?? 'Festival Teste',
     description: override.description ?? '',
     type: override.type ?? 'Festival',
