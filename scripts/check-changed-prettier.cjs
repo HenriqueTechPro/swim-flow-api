@@ -57,6 +57,28 @@ if (require.main === module) {
   try {
     run(process.argv.slice(2));
   } catch (error) {
+    // TEMPORARY: emit the exact formatter output as one JSON log line.
+    // This block is removed from the final PR.
+    if (process.env.GITHUB_ACTIONS === 'true') {
+      const cli = path.resolve(__dirname, '../node_modules/prettier/bin/prettier.cjs');
+      const files = [
+        'src/infra/database/prisma/repositories/prisma-result-season-overview.spec.ts',
+        'src/infra/database/prisma/repositories/prisma-result-seasons-repository.ts',
+        'test/results-seasons.e2e-spec.ts',
+      ];
+      try {
+        const result = {};
+        for (const file of files) {
+          result[file] = execFileSync(process.execPath, [cli, file], {
+            encoding: 'utf8',
+            maxBuffer: 2 * 1024 * 1024,
+          });
+        }
+        process.stderr.write('PRETTIER_JSON_BEGIN' + JSON.stringify(result) + 'PRETTIER_JSON_END\n');
+      } catch (diagnosticError) {
+        process.stderr.write('Prettier diagnostic unavailable: ' + diagnosticError.message + '\n');
+      }
+    }
     process.stderr.write(`Incremental Prettier check failed: ${error.message}\n`);
     process.exitCode = 1;
   }
