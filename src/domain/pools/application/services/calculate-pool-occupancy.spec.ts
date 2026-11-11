@@ -25,6 +25,16 @@ describe('pool planned occupancy', () => {
     expect(response.limits.excludesTrainings).toBe(true);
   });
 
+  it('does not sum different students in sequential sessions inside one time slot', () => {
+    const response = calculatePoolOccupancy(pool, '2026-11-10', 'Terça-feira', [
+      { id: 'a', name: 'A', studentIds: ['1','2'], schedules: [{ startTime: '08:00', endTime: '08:15' }] },
+      { id: 'b', name: 'B', studentIds: ['3','4','5'], schedules: [{ startTime: '08:15', endTime: '08:30' }] },
+    ], []);
+    expect(response.slots).toHaveLength(1);
+    expect(response.slots[0].uniqueStudents).toBe(3);
+    expect(response.slots[0].plannedPercent).toBe(15);
+  });
+
   it('does not manufacture percentages without declared capacity', () => {
     const response = calculatePoolOccupancy({ ...pool, capacity: null }, '2026-11-10', 'Terça-feira', [
       { id: 'a', name: 'Infantil', studentIds: ['1'], schedules: [{ startTime: '10:00', endTime: '10:30' }] },

@@ -41,34 +41,56 @@ export function calculatePoolOccupancy(
   const slots: PoolOccupancySlot[] = [];
   for (let start = 0; start < 1440; start += 30) {
     const end = start + 30;
-    const overlapping = classes.filter((item) =>
-      item.schedules.some(
-        (schedule) => minute(schedule.startTime) < end &&
-          minute(schedule.endTime) > start,
-      ),
-    );
-    const participants = new Set(overlapping.flatMap((item) => item.studentIds));
-    const rawCount = overlapping.reduce(
-      (total, item) => total + new Set(item.studentIds).size,
-      0,
-    );
+    // A 30-minute interval can contain back-to-back sessions. Count the
+    // maximum number of students simultaneously present, not their union.
+    const boundaryMinutes = new Set<number>([start]);
+    for (const item of classes) {
+      for (const schedule of item.schedules) {
+        const begin = minute(schedule.startTime);
+        const finish = minute(schedule.endTime);
+        if (begin < end && finish > start) {
+          boundaryMinutes.add(Math.max(start, begin));
+          if (finish < end) boundaryMinutes.add(finish);
+        }
+      }
+    }
+    let peak = 0;
+    let peakClasses: typeof classes = [];
+    let duplicatedEnrollment = 0;
+    for (const at of [...boundaryMinutes].sort((a, b) => a - b)) {
+      if (at >= end) continue;
+      const concurrent = classes.filter((item) =>
+        item.schedules.some(
+          (schedule) => minute(schedule.startTime) <= at &&
+            minute(schedule.endTime) > at,
+        ),
+      );
+      const participants = new Set(concurrent.flatMap((item) => item.studentIds));
+      if (participants.size > peak || (participants.size === peak && concurrent.length > peakClasses.length)) {
+        peak = participants.size;
+        peakClasses = concurrent;
+        duplicatedEnrollment =
+          concurrent.reduce((sum, item) => sum + new Set(item.studentIds).size, 0) -
+          participants.size;
+      }
+    }
     const trainingAtTime = trainings.some((item) =>
       minute(item.startTime) < end && minute(item.endTime) > start,
     );
-    if (!overlapping.length && !trainingAtTime) continue;
+    if (!peakClasses.length && !trainingAtTime) continue;
     slots.push({
       startTime: hhmm(start),
       endTime: hhmm(end),
-      uniqueStudents: participants.size,
+      uniqueStudents: peak,
       plannedPercent: pool.capacity && pool.capacity > 0
-        ? Math.round((participants.size / pool.capacity) * 100)
+        ? Math.round((peak / pool.capacity) * 100)
         : null,
-      classes: overlapping.map((item) => ({
+      classes: peakClasses.map((item) => ({
         id: item.id,
         name: item.name,
         students: new Set(item.studentIds).size,
       })),
-      overlappingEnrollmentCount: rawCount - participants.size,
+      overlappingEnrollmentCount: duplicatedEnrollment,
     });
   }
   return {
