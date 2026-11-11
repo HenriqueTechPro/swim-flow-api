@@ -8,6 +8,7 @@ describe('ListResultSeasonsUseCase', () => {
       update: jest.fn(),
       overview: jest.fn(),
       studentComposition: jest.fn(),
+      categoryRolloverPreview: jest.fn(),
       list: jest.fn().mockResolvedValue({
         items: [
           {
