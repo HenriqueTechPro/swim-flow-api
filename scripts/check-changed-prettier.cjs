@@ -57,6 +57,25 @@ if (require.main === module) {
   try {
     run(process.argv.slice(2));
   } catch (error) {
+    // TEMPORARY diagnostic: print the formatter's exact output, do not write files.
+    if (process.env.GITHUB_ACTIONS === 'true') {
+      try {
+        const formatted = execFileSync(
+          process.execPath,
+          [
+            path.resolve(__dirname, '../node_modules/prettier/bin/prettier.cjs'),
+            path.resolve(
+              __dirname,
+              '../src/infra/database/prisma/repositories/prisma-events-season-link.spec.ts',
+            ),
+          ],
+          { encoding: 'utf8', maxBuffer: 1024 * 1024 },
+        );
+        process.stderr.write('PRETTIER_SOURCE_BEGIN\n' + formatted + '\nPRETTIER_SOURCE_END\n');
+      } catch (formatError) {
+        process.stderr.write('Prettier diagnostic unavailable: ' + formatError.message + '\n');
+      }
+    }
     process.stderr.write(`Incremental Prettier check failed: ${error.message}\n`);
     process.exitCode = 1;
   }
