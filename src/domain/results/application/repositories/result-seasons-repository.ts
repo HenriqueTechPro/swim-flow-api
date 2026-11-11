@@ -40,6 +40,21 @@ export interface ResultSeasonOverview {
   };
 }
 
+/**
+ * Three distinct notions of season membership. Counts refer to unique students,
+ * NOT records or an inferred cohort. Competitive groups can overlap.
+ */
+export interface StudentSeasonComposition {
+  season: ResultSeasonOption;
+  categoriesRegistered: number;
+  participants: {
+    distinct: number;
+    pool: number;
+    openWater: number;
+  };
+  enrolledDuringPeriod: number;
+}
+
 export interface WriteResultSeasonInput {
   year: number;
   label: string;
@@ -58,6 +73,8 @@ export abstract class ResultSeasonsRepository {
     id: string,
     filters: ResultSeasonOverviewFilters,
   ): Promise<ResultSeasonOverview>;
+
+  abstract studentComposition(id: string): Promise<StudentSeasonComposition>;
 
   abstract create(input: WriteResultSeasonInput): Promise<ResultSeasonOption>;
 
