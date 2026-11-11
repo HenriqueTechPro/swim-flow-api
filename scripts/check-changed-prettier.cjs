@@ -57,27 +57,6 @@ if (require.main === module) {
   try {
     run(process.argv.slice(2));
   } catch (error) {
-    // Temporary diagnostic; restored before PR review.
-    if (process.env.GITHUB_ACTIONS === 'true') {
-      try {
-        const cli = path.resolve(__dirname, '../node_modules/prettier/bin/prettier.cjs');
-        const files = [
-          'src/domain/pools/application/repositories/pools-repository.ts',
-          'src/domain/pools/application/services/calculate-pool-occupancy.spec.ts',
-          'src/domain/pools/application/services/calculate-pool-occupancy.ts',
-          'src/infra/http/controllers/pools.controller.ts',
-          'test/pools.e2e-spec.ts',
-          'test/repositories/in-memory-pools-repository.ts',
-        ];
-        const out = {};
-        for (const file of files) out[file] = execFileSync(process.execPath, [cli, file], {
-          encoding: 'utf8', maxBuffer: 2 * 1024 * 1024,
-        });
-        process.stderr.write('PRETTIER_JSON_BEGIN' + JSON.stringify(out) + 'PRETTIER_JSON_END\n');
-      } catch (err) {
-        process.stderr.write('Prettier diagnostic unavailable: ' + err.message + '\n');
-      }
-    }
     process.stderr.write(`Incremental Prettier check failed: ${error.message}\n`);
     process.exitCode = 1;
   }

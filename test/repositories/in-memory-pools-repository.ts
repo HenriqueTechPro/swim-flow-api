@@ -17,12 +17,16 @@ export class InMemoryPoolsRepository implements PoolsRepository {
     if (!pool) throw new AppError(404, 'Pool not found');
     const day = new Date(`${date}T12:00:00.000Z`);
     const weekdayValues = [
-      'Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira',
-      'Quinta-feira', 'Sexta-feira', 'Sábado',
+      'Domingo',
+      'Segunda-feira',
+      'Terça-feira',
+      'Quarta-feira',
+      'Quinta-feira',
+      'Sexta-feira',
+      'Sábado',
     ];
-    const { calculatePoolOccupancy } = await import(
-      '@/domain/pools/application/services/calculate-pool-occupancy'
-    );
+    const { calculatePoolOccupancy } =
+      await import('@/domain/pools/application/services/calculate-pool-occupancy');
     return calculatePoolOccupancy(
       { id: pool.id, name: pool.name, capacity: pool.maxCapacity ?? null },
       date,

@@ -46,7 +46,10 @@ export interface PoolOccupancyPreview {
 }
 
 export abstract class PoolsRepository {
-  abstract occupancyPreview(id: string, date: string): Promise<PoolOccupancyPreview>;
+  abstract occupancyPreview(
+    id: string,
+    date: string,
+  ): Promise<PoolOccupancyPreview>;
   abstract list(
     params?: ListPoolsRepositoryParams,
   ): Promise<PaginatedResult<Pool>>;

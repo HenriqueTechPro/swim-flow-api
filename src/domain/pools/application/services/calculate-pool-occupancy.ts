@@ -10,8 +10,10 @@ export const poolOccupancyQuerySchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD')
     .refine((value) => {
       const date = new Date(`${value}T00:00:00.000Z`);
-      return !Number.isNaN(date.getTime()) &&
-        date.toISOString().slice(0, 10) === value;
+      return (
+        !Number.isNaN(date.getTime()) &&
+        date.toISOString().slice(0, 10) === value
+      );
     }, 'Invalid calendar date'),
 });
 
@@ -61,30 +63,38 @@ export function calculatePoolOccupancy(
       if (at >= end) continue;
       const concurrent = classes.filter((item) =>
         item.schedules.some(
-          (schedule) => minute(schedule.startTime) <= at &&
-            minute(schedule.endTime) > at,
+          (schedule) =>
+            minute(schedule.startTime) <= at && minute(schedule.endTime) > at,
         ),
       );
-      const participants = new Set(concurrent.flatMap((item) => item.studentIds));
-      if (participants.size > peak || (participants.size === peak && concurrent.length > peakClasses.length)) {
+      const participants = new Set(
+        concurrent.flatMap((item) => item.studentIds),
+      );
+      if (
+        participants.size > peak ||
+        (participants.size === peak && concurrent.length > peakClasses.length)
+      ) {
         peak = participants.size;
         peakClasses = concurrent;
         duplicatedEnrollment =
-          concurrent.reduce((sum, item) => sum + new Set(item.studentIds).size, 0) -
-          participants.size;
+          concurrent.reduce(
+            (sum, item) => sum + new Set(item.studentIds).size,
+            0,
+          ) - participants.size;
       }
     }
-    const trainingAtTime = trainings.some((item) =>
-      minute(item.startTime) < end && minute(item.endTime) > start,
+    const trainingAtTime = trainings.some(
+      (item) => minute(item.startTime) < end && minute(item.endTime) > start,
     );
     if (!peakClasses.length && !trainingAtTime) continue;
     slots.push({
       startTime: hhmm(start),
       endTime: hhmm(end),
       uniqueStudents: peak,
-      plannedPercent: pool.capacity && pool.capacity > 0
-        ? Math.round((peak / pool.capacity) * 100)
-        : null,
+      plannedPercent:
+        pool.capacity && pool.capacity > 0
+          ? Math.round((peak / pool.capacity) * 100)
+          : null,
       classes: peakClasses.map((item) => ({
         id: item.id,
         name: item.name,

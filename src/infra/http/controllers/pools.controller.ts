@@ -72,7 +72,8 @@ export class PoolsController {
   @Permissions('pools:read')
   async occupancyPreview(
     @Param('id', new ParseUUIDPipe()) id: string,
-    @Query(new ZodValidationPipe(poolOccupancyQuerySchema)) query: { date: string },
+    @Query(new ZodValidationPipe(poolOccupancyQuerySchema))
+    query: { date: string },
   ) {
     return { data: await this.getPoolOccupancyPreview.execute(id, query.date) };
   }

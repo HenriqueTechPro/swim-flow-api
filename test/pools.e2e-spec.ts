@@ -104,7 +104,9 @@ describe('PoolsController (e2e)', () => {
       .get('/api/pools/not-a-uuid/occupancy-preview?date=2026-11-10')
       .expect(400);
     await request(app.getHttpServer())
-      .get('/api/pools/00000000-0000-4000-8000-000000000001/occupancy-preview?date=2026-11-10')
+      .get(
+        '/api/pools/00000000-0000-4000-8000-000000000001/occupancy-preview?date=2026-11-10',
+      )
       .expect(404);
   });
 
