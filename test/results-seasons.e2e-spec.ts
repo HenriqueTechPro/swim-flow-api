@@ -87,16 +87,14 @@ describe('Result season options (e2e)', () => {
       total: 0,
     });
     app = await createAuthenticatedE2EApp((builder) =>
-      builder
-        .overrideProvider(ResultSeasonsRepository)
-        .useValue({
-          list,
-          create,
-          update,
-          overview,
-          studentComposition,
-          categoryRolloverPreview,
-        }),
+      builder.overrideProvider(ResultSeasonsRepository).useValue({
+        list,
+        create,
+        update,
+        overview,
+        studentComposition,
+        categoryRolloverPreview,
+      }),
     );
   });
 
