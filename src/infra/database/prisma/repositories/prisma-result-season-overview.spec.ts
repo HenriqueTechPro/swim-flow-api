@@ -34,7 +34,11 @@ describe('Prisma season overview (read only)', () => {
     seasonLookup.mockResolvedValue(season);
     eventCount.mockResolvedValueOnce(4).mockResolvedValueOnce(2);
     eventList.mockResolvedValue([
-      { id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', title: 'Festival', date: season.startsOn },
+      {
+        id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+        title: 'Festival',
+        date: season.startsOn,
+      },
     ]);
     poolCount.mockResolvedValueOnce(45).mockResolvedValueOnce(3);
     openWaterCount.mockResolvedValueOnce(20).mockResolvedValueOnce(5);
@@ -100,7 +104,9 @@ describe('Prisma season overview (read only)', () => {
 
   it('rejects missing seasons before counting or writing any record', async () => {
     seasonLookup.mockResolvedValue(null);
-    await expect(repo.overview(season.id, {})).rejects.toThrow('Season not found');
+    await expect(repo.overview(season.id, {})).rejects.toThrow(
+      'Season not found',
+    );
     expect(prisma.event.count).not.toHaveBeenCalled();
     expect(prisma.poolResult.count).not.toHaveBeenCalled();
   });

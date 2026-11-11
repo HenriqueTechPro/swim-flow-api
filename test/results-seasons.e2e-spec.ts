@@ -37,7 +37,12 @@ describe('Result season options (e2e)', () => {
     overview.mockResolvedValue({
       season: { id: seasonId, ...payload },
       filters: { discipline: 'all' },
-      events: { linked: 4, withoutSeasonInPeriod: 1, options: [], optionsTruncated: false },
+      events: {
+        linked: 4,
+        withoutSeasonInPeriod: 1,
+        options: [],
+        optionsTruncated: false,
+      },
       races: { pool: 3, openWater: 2 },
       results: {
         pool: 45,

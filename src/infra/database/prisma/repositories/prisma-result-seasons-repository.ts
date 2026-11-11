@@ -81,12 +81,20 @@ export class PrismaResultSeasonsRepository implements ResultSeasonsRepository {
     const selectedEvent = filters.eventId ? { eventId: filters.eventId } : {};
     const eventId = filters.eventId ? { id: filters.eventId } : {};
     const category = filters.category
-      ? { categorySnapshot: { contains: filters.category, mode: 'insensitive' as const } }
+      ? {
+          categorySnapshot: {
+            contains: filters.category,
+            mode: 'insensitive' as const,
+          },
+        }
       : {};
     const student = filters.studentSearch
       ? {
           student: {
-            name: { contains: filters.studentSearch, mode: 'insensitive' as const },
+            name: {
+              contains: filters.studentSearch,
+              mode: 'insensitive' as const,
+            },
           },
         }
       : {};
