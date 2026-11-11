@@ -12,13 +12,16 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   resultSeasonsQuerySchema,
+  resultSeasonOverviewQuerySchema,
   createResultSeasonSchema,
   updateResultSeasonSchema,
   type ResultSeasonsQueryDto,
+  type ResultSeasonOverviewQueryDto,
   type CreateResultSeasonDto,
   type UpdateResultSeasonDto,
 } from '@/shared/contracts/management';
 import { ListResultSeasonsUseCase } from '@/domain/results/application/use-cases/list-result-seasons';
+import { GetResultSeasonOverviewUseCase } from '@/domain/results/application/use-cases/get-result-season-overview';
 import { CreateResultSeasonUseCase } from '@/domain/results/application/use-cases/create-result-season';
 import { UpdateResultSeasonUseCase } from '@/domain/results/application/use-cases/update-result-season';
 import { JwtAuthGuard } from '@/infra/auth/jwt-auth.guard';
@@ -36,6 +39,7 @@ import { ZodValidationPipe } from '../pipes/zod-validation-pipe';
 export class ResultSeasonsController {
   constructor(
     private readonly listResultSeasons: ListResultSeasonsUseCase,
+    private readonly getResultSeasonOverview: GetResultSeasonOverviewUseCase,
     private readonly createResultSeason: CreateResultSeasonUseCase,
     private readonly updateResultSeason: UpdateResultSeasonUseCase,
   ) {}
@@ -48,6 +52,16 @@ export class ResultSeasonsController {
   ) {
     const { seasons, meta } = await this.listResultSeasons.execute(query);
     return { data: seasons, meta };
+  }
+
+  @Get(':id/overview')
+  @Permissions('results:read')
+  async overview(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Query(new ZodValidationPipe(resultSeasonOverviewQuerySchema))
+    query: ResultSeasonOverviewQueryDto,
+  ) {
+    return { data: await this.getResultSeasonOverview.execute(id, query) };
   }
 
   @Post()

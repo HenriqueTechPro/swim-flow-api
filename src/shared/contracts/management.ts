@@ -449,6 +449,17 @@ export const createResultSeasonSchema = seasonWriteBaseSchema
 export const updateResultSeasonSchema =
   seasonWriteBaseSchema.superRefine(validateSeasonPeriod);
 
+export const resultSeasonOverviewQuerySchema = z.object({
+  discipline: z.enum(['all', 'Piscina', 'Aguas Abertas']).default('all'),
+  eventId: z.string().uuid().optional(),
+  category: z.string().trim().min(1).max(120).optional(),
+  studentSearch: z.string().trim().min(2).max(100).optional(),
+});
+
+export type ResultSeasonOverviewQueryDto = z.infer<
+  typeof resultSeasonOverviewQuerySchema
+>;
+
 export const resultSeasonsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).optional().default(1),
   perPage: z.coerce.number().int().min(1).max(100).optional().default(25),
