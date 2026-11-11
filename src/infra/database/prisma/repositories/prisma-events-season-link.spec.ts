@@ -1,7 +1,9 @@
 import type { PrismaService } from '../prisma.service';
 import type { CacheRepository } from '@/infra/cache/cache-repository';
 import type { EnvService } from '@/infra/env/env.service';
-import type { CreateEventRepositoryInput } from '@/domain/events/application/repositories/events-repository';
+import type {
+  CreateEventRepositoryInput,
+} from '@/domain/events/application/repositories/events-repository';
 import { PrismaEventsRepository } from './prisma-events-repository';
 
 describe('Event explicit season links (Prisma)', () => {
