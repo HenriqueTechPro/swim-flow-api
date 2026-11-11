@@ -126,7 +126,7 @@ export class PrismaResultSeasonsRepository implements ResultSeasonsRepository {
         where: { seasonId: id },
         select: { id: true, title: true, date: true },
         orderBy: [{ date: 'desc' }, { id: 'asc' }],
-        take: 60,
+        take: 61,
       }),
       includePool
         ? this.prisma.poolProgramRace.count({ where: raceFilters })
@@ -170,12 +170,12 @@ export class PrismaResultSeasonsRepository implements ResultSeasonsRepository {
       events: {
         linked: linkedEvents,
         withoutSeasonInPeriod: withoutSeasonEvents,
-        options: eventRows.map((event) => ({
+        options: eventRows.slice(0, 60).map((event) => ({
           id: event.id,
           title: event.title,
           date: event.date?.toISOString().slice(0, 10) ?? null,
         })),
-        optionsTruncated: linkedEvents > eventRows.length,
+        optionsTruncated: eventRows.length > 60,
       },
       races: { pool: poolRaces, openWater: openWaterRaces },
       results: {

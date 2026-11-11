@@ -102,6 +102,28 @@ describe('Prisma season overview (read only)', () => {
     });
   });
 
+  it('limits event picker options independently of a filtered event count', async () => {
+    const eventId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    eventList.mockResolvedValue(
+      Array.from({ length: 61 }, (_, index) => ({
+        id: String(index),
+        title: 'Evento',
+        date: season.startsOn,
+      })),
+    );
+    eventCount.mockReset();
+    eventCount.mockResolvedValueOnce(1).mockResolvedValueOnce(0);
+    const result = await repo.overview(season.id, { eventId });
+    expect(result.events.options).toHaveLength(60);
+    expect(result.events.optionsTruncated).toBe(true);
+    expect(prisma.event.findMany).toHaveBeenCalledWith({
+      where: { seasonId: season.id },
+      select: { id: true, title: true, date: true },
+      orderBy: [{ date: 'desc' }, { id: 'asc' }],
+      take: 61,
+    });
+  });
+
   it('rejects missing seasons before counting or writing any record', async () => {
     seasonLookup.mockResolvedValue(null);
     await expect(repo.overview(season.id, {})).rejects.toThrow(
