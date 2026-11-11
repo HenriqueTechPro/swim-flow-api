@@ -83,6 +83,31 @@ describe('PoolsController (e2e)', () => {
     expect(listFinal.body.data).toEqual([]);
   });
 
+  it('returns an empty, read-only occupancy preview and rejects invalid dates', async () => {
+    const pool = makePool({ maxCapacity: 30 });
+    poolsRepository.items.push(pool);
+    const response = await request(app.getHttpServer())
+      .get(`/api/pools/${pool.id}/occupancy-preview?date=2026-11-10`)
+      .expect(200);
+    expect(response.body.data).toMatchObject({
+      pool: { id: pool.id, capacity: 30 },
+      date: '2026-11-10',
+      weekday: 'Terça-feira',
+      measurement: 'PLANNED_ENROLLMENT',
+      slots: [],
+      trainingsNotCounted: [],
+    });
+    await request(app.getHttpServer())
+      .get(`/api/pools/${pool.id}/occupancy-preview?date=2026-02-30`)
+      .expect(400);
+    await request(app.getHttpServer())
+      .get('/api/pools/not-a-uuid/occupancy-preview?date=2026-11-10')
+      .expect(400);
+    await request(app.getHttpServer())
+      .get('/api/pools/00000000-0000-4000-8000-000000000001/occupancy-preview?date=2026-11-10')
+      .expect(404);
+  });
+
   it('filters and paginates pools list', async () => {
     poolsRepository.items.push(
       makePool({
