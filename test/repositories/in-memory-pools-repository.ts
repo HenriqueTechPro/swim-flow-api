@@ -1,3 +1,4 @@
+import { calculatePoolOccupancy } from '@/domain/pools/application/services/calculate-pool-occupancy';
 import { AppError } from '@/shared/errors/app-error';
 import type {
   CreatePoolRepositoryInput,
@@ -25,8 +26,7 @@ export class InMemoryPoolsRepository implements PoolsRepository {
       'Sexta-feira',
       'Sábado',
     ];
-    const { calculatePoolOccupancy } =
-      await import('@/domain/pools/application/services/calculate-pool-occupancy');
+
     return calculatePoolOccupancy(
       { id: pool.id, name: pool.name, capacity: pool.maxCapacity ?? null },
       date,
