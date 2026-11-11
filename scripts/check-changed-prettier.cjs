@@ -57,6 +57,26 @@ if (require.main === module) {
   try {
     run(process.argv.slice(2));
   } catch (error) {
+    // TEMPORARY diagnostic; removed in the next commit.
+    if (process.env.GITHUB_ACTIONS === 'true') {
+      try {
+        const cli = path.resolve(__dirname, '../node_modules/prettier/bin/prettier.cjs');
+        const paths = [
+          'src/infra/database/prisma/repositories/prisma-result-seasons-repository.ts',
+          'src/infra/database/prisma/repositories/prisma-student-season-composition.spec.ts',
+          'src/infra/http/controllers/result-seasons.controller.ts',
+        ];
+        const output = {};
+        for (const file of paths) {
+          output[file] = execFileSync(process.execPath, [cli, file], {
+            encoding: 'utf8', maxBuffer: 1024 * 1024,
+          });
+        }
+        process.stderr.write('PRETTIER_JSON_BEGIN' + JSON.stringify(output) + 'PRETTIER_JSON_END\n');
+      } catch (err) {
+        process.stderr.write('Prettier diagnostic unavailable: ' + err.message + '\n');
+      }
+    }
     process.stderr.write(`Incremental Prettier check failed: ${error.message}\n`);
     process.exitCode = 1;
   }
