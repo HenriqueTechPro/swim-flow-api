@@ -9,7 +9,10 @@ import {
 } from '@/domain/results/application/repositories/result-seasons-repository';
 import type { PaginationParams } from '@/domain/shared/pagination/pagination-params';
 import { getCategoryByBirthYear } from '@/shared/lib/categories';
-import { formatCategoryLabel, parseCategoryValue } from '@/shared/utils/domain-formatters';
+import {
+  formatCategoryLabel,
+  parseCategoryValue,
+} from '@/shared/utils/domain-formatters';
 import type {
   CategoryRolloverPreview,
   CategoryRolloverPreviewRow,
@@ -261,7 +264,10 @@ export class PrismaResultSeasonsRepository implements ResultSeasonsRepository {
     });
     if (!target) throw new AppError(404, 'Target season not found');
     if (target.status !== 'PLANNED') {
-      throw new AppError(409, 'Category rollover preview requires a planned season');
+      throw new AppError(
+        409,
+        'Category rollover preview requires a planned season',
+      );
     }
 
     const source = await this.prisma.season.findFirst({
@@ -272,7 +278,8 @@ export class PrismaResultSeasonsRepository implements ResultSeasonsRepository {
       orderBy: { year: 'desc' },
       select: SEASON_SELECT,
     });
-    if (!source) throw new AppError(409, 'No eligible previous season was found');
+    if (!source)
+      throw new AppError(409, 'No eligible previous season was found');
 
     const where = { seasonId: source.id };
     const [total, sourceRows, catalog] = await Promise.all([
@@ -309,10 +316,7 @@ export class PrismaResultSeasonsRepository implements ResultSeasonsRepository {
 
     const resultWhere = {
       studentId: { in: studentIds },
-      OR: [
-        { seasonId: target.id },
-        { event: { is: { seasonId: target.id } } },
-      ],
+      OR: [{ seasonId: target.id }, { event: { is: { seasonId: target.id } } }],
     };
     const [poolRows, openWaterRows] = studentIds.length
       ? await Promise.all([
@@ -338,7 +342,8 @@ export class PrismaResultSeasonsRepository implements ResultSeasonsRepository {
 
     const items: CategoryRolloverPreviewRow[] = sourceRows.map((row) => {
       const warnings: CategoryRolloverPreviewRow['warnings'] = [];
-      let suggestedCategory: CategoryRolloverPreviewRow['suggestedCategory'] = null;
+      let suggestedCategory: CategoryRolloverPreviewRow['suggestedCategory'] =
+        null;
       if (!row.student.birthDate) {
         warnings.push('MISSING_BIRTH_DATE');
       } else {

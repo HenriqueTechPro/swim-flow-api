@@ -63,7 +63,11 @@ describe('Result season options (e2e)', () => {
     });
     categoryRolloverPreview.mockResolvedValue({
       source: { id: seasonId, ...payload },
-      target: { id: '99999999-9999-4999-8999-999999999999', ...payload, year: 2027 },
+      target: {
+        id: '99999999-9999-4999-8999-999999999999',
+        ...payload,
+        year: 2027,
+      },
       items: [],
       meta: { page: 1, perPage: 25, total: 0, totalPages: 0 },
       readOnly: true,
@@ -85,7 +89,14 @@ describe('Result season options (e2e)', () => {
     app = await createAuthenticatedE2EApp((builder) =>
       builder
         .overrideProvider(ResultSeasonsRepository)
-        .useValue({ list, create, update, overview, studentComposition, categoryRolloverPreview }),
+        .useValue({
+          list,
+          create,
+          update,
+          overview,
+          studentComposition,
+          categoryRolloverPreview,
+        }),
     );
   });
 
@@ -219,11 +230,14 @@ describe('Result season options (e2e)', () => {
     const response = await get(`${url}?page=2&perPage=10`).expect(200);
     expect(response.body.data.readOnly).toBe(true);
     expect(categoryRolloverPreview).toHaveBeenCalledWith(seasonId, {
-      page: 2, perPage: 10,
+      page: 2,
+      perPage: 10,
     });
     await get(`${url}?page=0`).expect(400);
     await get(`${url}?perPage=100`).expect(400);
-    await get('/api/results/seasons/not-uuid/category-rollover-preview').expect(400);
+    await get('/api/results/seasons/not-uuid/category-rollover-preview').expect(
+      400,
+    );
     expect(categoryRolloverPreview).toHaveBeenCalledTimes(1);
   });
 
@@ -288,7 +302,14 @@ describe('Result season options (e2e)', () => {
     app = await createE2EApp((builder) =>
       withDefaultTestOverrides(builder)
         .overrideProvider(ResultSeasonsRepository)
-        .useValue({ list, create, update, overview, studentComposition, categoryRolloverPreview }),
+        .useValue({
+          list,
+          create,
+          update,
+          overview,
+          studentComposition,
+          categoryRolloverPreview,
+        }),
     );
 
     await get('/api/results/seasons').expect(401);
