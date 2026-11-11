@@ -67,6 +67,7 @@ import { UpdateParentUseCase } from '@/domain/parents/application/use-cases/upda
 import { CreatePoolUseCase } from '@/domain/pools/application/use-cases/create-pool';
 import { DeletePoolUseCase } from '@/domain/pools/application/use-cases/delete-pool';
 import { ListPoolsUseCase } from '@/domain/pools/application/use-cases/list-pools';
+import { GetPoolOccupancyPreviewUseCase } from '@/domain/pools/application/use-cases/get-pool-occupancy-preview';
 import { UpdatePoolUseCase } from '@/domain/pools/application/use-cases/update-pool';
 import { CreateResultUseCase } from '@/domain/results/application/use-cases/create-result';
 import { DeleteResultUseCase } from '@/domain/results/application/use-cases/delete-result';
@@ -202,6 +203,7 @@ export const useCaseProviders: Provider[] = [
   provideUseCase(CreatePoolUseCase, PoolsRepository),
   provideUseCase(DeletePoolUseCase, PoolsRepository),
   provideUseCase(ListPoolsUseCase, PoolsRepository),
+  provideUseCase(GetPoolOccupancyPreviewUseCase, PoolsRepository),
   provideUseCase(UpdatePoolUseCase, PoolsRepository),
   provideUseCase(CreateResultUseCase, ResultsRepository),
   provideUseCase(DeleteResultUseCase, ResultsRepository),

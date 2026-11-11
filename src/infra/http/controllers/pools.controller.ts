@@ -20,6 +20,8 @@ import {
 import { CreatePoolUseCase } from '@/domain/pools/application/use-cases/create-pool';
 import { DeletePoolUseCase } from '@/domain/pools/application/use-cases/delete-pool';
 import { ListPoolsUseCase } from '@/domain/pools/application/use-cases/list-pools';
+import { GetPoolOccupancyPreviewUseCase } from '@/domain/pools/application/use-cases/get-pool-occupancy-preview';
+import { poolOccupancyQuerySchema } from '@/domain/pools/application/services/calculate-pool-occupancy';
 import { UpdatePoolUseCase } from '@/domain/pools/application/use-cases/update-pool';
 import { normalizePaginationParams } from '@/domain/shared/pagination/pagination-utils';
 import { JwtAuthGuard } from '@/infra/auth/jwt-auth.guard';
@@ -39,6 +41,7 @@ import { PoolPresenter } from '../presenters/pool.presenter';
 export class PoolsController {
   constructor(
     private readonly listPools: ListPoolsUseCase,
+    private readonly getPoolOccupancyPreview: GetPoolOccupancyPreviewUseCase,
     private readonly createPool: CreatePoolUseCase,
     private readonly updatePool: UpdatePoolUseCase,
     private readonly deletePool: DeletePoolUseCase,
@@ -63,6 +66,15 @@ export class PoolsController {
       status,
     });
     return { data: pools.map(PoolPresenter.toHTTP), meta };
+  }
+
+  @Get(':id/occupancy-preview')
+  @Permissions('pools:read')
+  async occupancyPreview(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Query(new ZodValidationPipe(poolOccupancyQuerySchema)) query: { date: string },
+  ) {
+    return { data: await this.getPoolOccupancyPreview.execute(id, query.date) };
   }
 
   @Post()

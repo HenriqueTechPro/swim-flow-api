@@ -18,6 +18,8 @@ import {
 } from '@/domain/pools/application/repositories/pools-repository';
 import { AppError } from '@/shared/errors/app-error';
 import { PrismaService } from '../prisma.service';
+import { calculatePoolOccupancy } from '@/domain/pools/application/services/calculate-pool-occupancy';
+import { weekdayValues, normalizeWeekday } from '@/shared/contracts/weekdays';
 import {
   PrismaPoolMapper,
   type PrismaPoolRecord,
@@ -41,6 +43,75 @@ export class PrismaPoolsRepository implements PoolsRepository {
     private readonly cache: CacheRepository,
     private readonly env: EnvService,
   ) {}
+
+  async occupancyPreview(id: string, date: string) {
+    const day = new Date(`${date}T12:00:00.000Z`);
+    const weekday = weekdayValues[(day.getUTCDay() + 6) % 7];
+    const dateValue = new Date(`${date}T00:00:00.000Z`);
+    const pool = await this.prisma.pool.findUnique({
+      where: { id },
+      select: { id: true, name: true, maxCapacity: true },
+    });
+    if (!pool) throw new AppError(404, 'Pool not found');
+
+    const [classes, trainings] = await Promise.all([
+      this.prisma.swimmingClass.findMany({
+        where: { poolId: id, status: 'Ativa' },
+        select: {
+          id: true,
+          name: true,
+          classSchedules: {
+            select: { dayOfWeek: true, startTime: true, endTime: true },
+          },
+          studentClasses: {
+            where: {
+              fromDate: { lte: dateValue },
+              OR: [{ toDate: null }, { toDate: { gte: dateValue } }],
+            },
+            select: { studentId: true },
+          },
+        },
+      }),
+      this.prisma.training.findMany({
+        where: { poolId: id, venueType: 'Piscina', status: 'Ativo' },
+        select: {
+          id: true,
+          title: true,
+          dayOfWeek: true,
+          startTime: true,
+          endTime: true,
+          currentParticipants: true,
+        },
+      }),
+    ]);
+    const mapped = classes.map((item) => ({
+      id: item.id,
+      name: item.name,
+      studentIds: item.studentClasses.map((enrollment) => enrollment.studentId),
+      schedules: item.classSchedules
+        .filter((schedule) => normalizeWeekday(schedule.dayOfWeek) === weekday)
+        .map((schedule) => ({
+          startTime: schedule.startTime.toISOString().slice(11, 16),
+          endTime: schedule.endTime.toISOString().slice(11, 16),
+        })),
+    }));
+    const trainingItems = trainings
+      .filter((item) => normalizeWeekday(item.dayOfWeek) === weekday)
+      .map((item) => ({
+        id: item.id,
+        title: item.title,
+        startTime: item.startTime.toISOString().slice(11, 16),
+        endTime: item.endTime.toISOString().slice(11, 16),
+        declaredParticipants: item.currentParticipants,
+      }));
+    return calculatePoolOccupancy(
+      { id: pool.id, name: pool.name, capacity: pool.maxCapacity },
+      date,
+      weekday,
+      mapped,
+      trainingItems,
+    );
+  }
 
   async list(params?: ListPoolsRepositoryParams) {
     const { page, perPage } = normalizePaginationParams(params);
