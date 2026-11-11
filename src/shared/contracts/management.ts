@@ -460,6 +460,14 @@ export type ResultSeasonOverviewQueryDto = z.infer<
   typeof resultSeasonOverviewQuerySchema
 >;
 
+export const categoryRolloverPreviewQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).optional().default(1),
+  perPage: z.coerce.number().int().min(1).max(50).optional().default(25),
+});
+export type CategoryRolloverPreviewQueryDto = z.infer<
+  typeof categoryRolloverPreviewQuerySchema
+>;
+
 export const resultSeasonsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).optional().default(1),
   perPage: z.coerce.number().int().min(1).max(100).optional().default(25),

@@ -82,6 +82,7 @@ import { ListResultsUseCase } from '@/domain/results/application/use-cases/list-
 import { ListResultSeasonsUseCase } from '@/domain/results/application/use-cases/list-result-seasons';
 import { GetResultSeasonOverviewUseCase } from '@/domain/results/application/use-cases/get-result-season-overview';
 import { GetStudentSeasonCompositionUseCase } from '@/domain/results/application/use-cases/get-student-season-composition';
+import { GetCategoryRolloverPreviewUseCase } from '@/domain/results/application/use-cases/get-category-rollover-preview';
 import { CreateResultSeasonUseCase } from '@/domain/results/application/use-cases/create-result-season';
 import { UpdateResultSeasonUseCase } from '@/domain/results/application/use-cases/update-result-season';
 import { UpdateResultUseCase } from '@/domain/results/application/use-cases/update-result';
@@ -216,6 +217,7 @@ export const useCaseProviders: Provider[] = [
   provideUseCase(ListResultSeasonsUseCase, ResultSeasonsRepository),
   provideUseCase(GetResultSeasonOverviewUseCase, ResultSeasonsRepository),
   provideUseCase(GetStudentSeasonCompositionUseCase, ResultSeasonsRepository),
+  provideUseCase(GetCategoryRolloverPreviewUseCase, ResultSeasonsRepository),
   provideUseCase(CreateResultSeasonUseCase, ResultSeasonsRepository),
   provideUseCase(UpdateResultSeasonUseCase, ResultSeasonsRepository),
   provideUseCase(UpdateResultUseCase, ResultsRepository),

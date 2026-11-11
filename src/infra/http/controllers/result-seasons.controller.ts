@@ -13,16 +13,19 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   resultSeasonsQuerySchema,
   resultSeasonOverviewQuerySchema,
+  categoryRolloverPreviewQuerySchema,
   createResultSeasonSchema,
   updateResultSeasonSchema,
   type ResultSeasonsQueryDto,
   type ResultSeasonOverviewQueryDto,
+  type CategoryRolloverPreviewQueryDto,
   type CreateResultSeasonDto,
   type UpdateResultSeasonDto,
 } from '@/shared/contracts/management';
 import { ListResultSeasonsUseCase } from '@/domain/results/application/use-cases/list-result-seasons';
 import { GetResultSeasonOverviewUseCase } from '@/domain/results/application/use-cases/get-result-season-overview';
 import { GetStudentSeasonCompositionUseCase } from '@/domain/results/application/use-cases/get-student-season-composition';
+import { GetCategoryRolloverPreviewUseCase } from '@/domain/results/application/use-cases/get-category-rollover-preview';
 import { CreateResultSeasonUseCase } from '@/domain/results/application/use-cases/create-result-season';
 import { UpdateResultSeasonUseCase } from '@/domain/results/application/use-cases/update-result-season';
 import { JwtAuthGuard } from '@/infra/auth/jwt-auth.guard';
@@ -42,6 +45,7 @@ export class ResultSeasonsController {
     private readonly listResultSeasons: ListResultSeasonsUseCase,
     private readonly getResultSeasonOverview: GetResultSeasonOverviewUseCase,
     private readonly getStudentSeasonComposition: GetStudentSeasonCompositionUseCase,
+    private readonly getCategoryRolloverPreview: GetCategoryRolloverPreviewUseCase,
     private readonly createResultSeason: CreateResultSeasonUseCase,
     private readonly updateResultSeason: UpdateResultSeasonUseCase,
   ) {}
@@ -70,6 +74,16 @@ export class ResultSeasonsController {
   @Permissions('results:read')
   async studentComposition(@Param('id', new ParseUUIDPipe()) id: string) {
     return { data: await this.getStudentSeasonComposition.execute(id) };
+  }
+
+  @Get(':id/category-rollover-preview')
+  @Permissions('students:read')
+  async categoryRolloverPreview(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Query(new ZodValidationPipe(categoryRolloverPreviewQuerySchema))
+    query: CategoryRolloverPreviewQueryDto,
+  ) {
+    return { data: await this.getCategoryRolloverPreview.execute(id, query) };
   }
 
   @Post()

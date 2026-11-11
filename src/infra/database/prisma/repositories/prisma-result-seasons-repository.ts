@@ -8,6 +8,15 @@ import {
   type WriteResultSeasonInput,
 } from '@/domain/results/application/repositories/result-seasons-repository';
 import type { PaginationParams } from '@/domain/shared/pagination/pagination-params';
+import { getCategoryByBirthYear } from '@/shared/lib/categories';
+import {
+  formatCategoryLabel,
+  parseCategoryValue,
+} from '@/shared/utils/domain-formatters';
+import type {
+  CategoryRolloverPreview,
+  CategoryRolloverPreviewRow,
+} from '@/domain/results/application/repositories/result-seasons-repository';
 import {
   createPaginatedResult,
   normalizePaginationParams,
@@ -238,6 +247,161 @@ export class PrismaResultSeasonsRepository implements ResultSeasonsRepository {
       categoriesRegistered,
       participants: { distinct, pool, openWater },
       enrolledDuringPeriod,
+    };
+  }
+
+  /**
+   * Read-only preview: source is the latest real ACTIVE/CLOSED season before
+   * target; never infer a historical association from the calendar year.
+   */
+  async categoryRolloverPreview(
+    id: string,
+    params: { page: number; perPage: number },
+  ): Promise<CategoryRolloverPreview> {
+    const target = await this.prisma.season.findUnique({
+      where: { id },
+      select: SEASON_SELECT,
+    });
+    if (!target) throw new AppError(404, 'Target season not found');
+    if (target.status !== 'PLANNED') {
+      throw new AppError(
+        409,
+        'Category rollover preview requires a planned season',
+      );
+    }
+
+    const source = await this.prisma.season.findFirst({
+      where: {
+        year: { lt: target.year },
+        status: { in: ['ACTIVE', 'CLOSED'] },
+      },
+      orderBy: { year: 'desc' },
+      select: SEASON_SELECT,
+    });
+    if (!source)
+      throw new AppError(409, 'No eligible previous season was found');
+
+    const where = { seasonId: source.id };
+    const [total, sourceRows, catalog] = await Promise.all([
+      this.prisma.studentSeasonCategory.count({ where }),
+      this.prisma.studentSeasonCategory.findMany({
+        where,
+        select: {
+          studentId: true,
+          student: { select: { name: true, birthDate: true, status: true } },
+          category: { select: { id: true, name: true } },
+        },
+        orderBy: [{ student: { name: 'asc' } }, { studentId: 'asc' }],
+        skip: (params.page - 1) * params.perPage,
+        take: params.perPage,
+      }),
+      this.prisma.category.findMany({
+        select: { id: true, name: true },
+      }),
+    ]);
+
+    const studentIds = sourceRows.map((row) => row.studentId);
+    const targetLinks = studentIds.length
+      ? await this.prisma.studentSeasonCategory.findMany({
+          where: { seasonId: target.id, studentId: { in: studentIds } },
+          select: {
+            studentId: true,
+            category: { select: { id: true, name: true } },
+          },
+        })
+      : [];
+    const targetCategoryByStudent = new Map(
+      targetLinks.map((row) => [row.studentId, row.category]),
+    );
+
+    const resultWhere = {
+      studentId: { in: studentIds },
+      OR: [{ seasonId: target.id }, { event: { is: { seasonId: target.id } } }],
+    };
+    const [poolRows, openWaterRows] = studentIds.length
+      ? await Promise.all([
+          this.prisma.poolResult.findMany({
+            where: resultWhere,
+            select: { studentId: true },
+            distinct: ['studentId'],
+          }),
+          this.prisma.openWaterResult.findMany({
+            where: resultWhere,
+            select: { studentId: true },
+            distinct: ['studentId'],
+          }),
+        ])
+      : [[], []];
+    const protectedIds = new Set([
+      ...poolRows.map((row) => row.studentId),
+      ...openWaterRows.map((row) => row.studentId),
+    ]);
+    const catalogByName = new Map<string, { id: string; name: string }>(
+      catalog.map((item) => [item.name, item]),
+    );
+
+    const items: CategoryRolloverPreviewRow[] = sourceRows.map((row) => {
+      const warnings: CategoryRolloverPreviewRow['warnings'] = [];
+      let suggestedCategory: CategoryRolloverPreviewRow['suggestedCategory'] =
+        null;
+      if (!row.student.birthDate) {
+        warnings.push('MISSING_BIRTH_DATE');
+      } else {
+        try {
+          const birthYear = row.student.birthDate.getUTCFullYear();
+          const name = parseCategoryValue(
+            getCategoryByBirthYear(birthYear, target.year),
+          );
+          const matched = catalogByName.get(name);
+          if (matched) {
+            suggestedCategory = {
+              id: matched.id,
+              name: formatCategoryLabel(matched.name),
+            };
+            if (
+              name === 'Senior' ||
+              name === 'Pre_Master' ||
+              name.startsWith('Master_')
+            ) {
+              warnings.push('SENIOR_MASTER_REVIEW');
+            }
+          } else {
+            warnings.push('CATEGORY_NOT_IN_CATALOG');
+          }
+        } catch {
+          warnings.push('INVALID_BIRTH_YEAR');
+        }
+      }
+      const existing = targetCategoryByStudent.get(row.studentId);
+      if (existing) warnings.push('TARGET_ALREADY_ASSIGNED');
+      if (protectedIds.has(row.studentId)) warnings.push('TARGET_HAS_RESULTS');
+      return {
+        studentId: row.studentId,
+        studentName: row.student.name,
+        studentStatus: row.student.status,
+        sourceCategory: {
+          id: row.category.id,
+          name: formatCategoryLabel(row.category.name),
+        },
+        suggestedCategory,
+        existingTargetCategory: existing
+          ? { id: existing.id, name: formatCategoryLabel(existing.name) }
+          : null,
+        warnings,
+      };
+    });
+
+    return {
+      source: toSeasonOption(source),
+      target: toSeasonOption(target),
+      items,
+      meta: {
+        page: params.page,
+        perPage: params.perPage,
+        total,
+        totalPages: Math.ceil(total / params.perPage),
+      },
+      readOnly: true,
     };
   }
 

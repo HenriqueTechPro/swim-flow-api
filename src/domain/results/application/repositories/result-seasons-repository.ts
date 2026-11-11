@@ -55,6 +55,31 @@ export interface StudentSeasonComposition {
   enrolledDuringPeriod: number;
 }
 
+export interface CategoryRolloverPreviewRow {
+  studentId: string;
+  studentName: string;
+  studentStatus: string;
+  sourceCategory: { id: string; name: string };
+  suggestedCategory: { id: string; name: string } | null;
+  existingTargetCategory: { id: string; name: string } | null;
+  warnings: Array<
+    | 'MISSING_BIRTH_DATE'
+    | 'INVALID_BIRTH_YEAR'
+    | 'CATEGORY_NOT_IN_CATALOG'
+    | 'TARGET_ALREADY_ASSIGNED'
+    | 'TARGET_HAS_RESULTS'
+    | 'SENIOR_MASTER_REVIEW'
+  >;
+}
+
+export interface CategoryRolloverPreview {
+  source: ResultSeasonOption;
+  target: ResultSeasonOption;
+  items: CategoryRolloverPreviewRow[];
+  meta: { page: number; perPage: number; total: number; totalPages: number };
+  readOnly: true;
+}
+
 export interface WriteResultSeasonInput {
   year: number;
   label: string;
@@ -75,6 +100,11 @@ export abstract class ResultSeasonsRepository {
   ): Promise<ResultSeasonOverview>;
 
   abstract studentComposition(id: string): Promise<StudentSeasonComposition>;
+
+  abstract categoryRolloverPreview(
+    id: string,
+    params: { page: number; perPage: number },
+  ): Promise<CategoryRolloverPreview>;
 
   abstract create(input: WriteResultSeasonInput): Promise<ResultSeasonOption>;
 
