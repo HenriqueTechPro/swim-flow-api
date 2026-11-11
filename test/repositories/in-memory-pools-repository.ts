@@ -1,3 +1,4 @@
+import { calculatePoolOccupancy } from '@/domain/pools/application/services/calculate-pool-occupancy';
 import { AppError } from '@/shared/errors/app-error';
 import type {
   CreatePoolRepositoryInput,
@@ -11,6 +12,29 @@ import { makePool } from '../factories/make-pool';
 
 export class InMemoryPoolsRepository implements PoolsRepository {
   public items: Pool[] = [];
+
+  async occupancyPreview(id: string, date: string) {
+    const pool = this.items.find((item) => item.id === id);
+    if (!pool) throw new AppError(404, 'Pool not found');
+    const day = new Date(`${date}T12:00:00.000Z`);
+    const weekdayValues = [
+      'Domingo',
+      'Segunda-feira',
+      'Terça-feira',
+      'Quarta-feira',
+      'Quinta-feira',
+      'Sexta-feira',
+      'Sábado',
+    ];
+
+    return calculatePoolOccupancy(
+      { id: pool.id, name: pool.name, capacity: pool.maxCapacity ?? null },
+      date,
+      weekdayValues[day.getUTCDay()],
+      [],
+      [],
+    );
+  }
 
   async list(params?: ListPoolsRepositoryParams) {
     const search = params?.search?.trim().toLowerCase();
