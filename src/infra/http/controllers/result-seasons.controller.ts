@@ -68,9 +68,7 @@ export class ResultSeasonsController {
 
   @Get(':id/student-composition')
   @Permissions('results:read')
-  async studentComposition(
-    @Param('id', new ParseUUIDPipe()) id: string,
-  ) {
+  async studentComposition(@Param('id', new ParseUUIDPipe()) id: string) {
     return { data: await this.getStudentSeasonComposition.execute(id) };
   }
 

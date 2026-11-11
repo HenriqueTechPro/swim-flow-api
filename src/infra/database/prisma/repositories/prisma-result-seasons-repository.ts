@@ -197,39 +197,41 @@ export class PrismaResultSeasonsRepository implements ResultSeasonsRepository {
 
     // All counts are DISTINCT by student through the Student table.
     // No reliance on current enrollment, current category, or current status.
-    const [categoriesRegistered, distinct, pool, openWater, enrolledDuringPeriod] =
-      await Promise.all([
-        this.prisma.student.count({
-          where: { seasonCategories: { some: { seasonId: id } } },
-        }),
-        this.prisma.student.count({
-          where: {
-            OR: [
-              { poolResults: { some: { seasonId: id } } },
-              { openWaterResults: { some: { seasonId: id } } },
-            ],
-          },
-        }),
-        this.prisma.student.count({
-          where: { poolResults: { some: { seasonId: id } } },
-        }),
-        this.prisma.student.count({
-          where: { openWaterResults: { some: { seasonId: id } } },
-        }),
-        this.prisma.student.count({
-          where: {
-            studentClasses: {
-              some: {
-                fromDate: { lte: season.endsOn },
-                OR: [
-                  { toDate: null },
-                  { toDate: { gte: season.startsOn } },
-                ],
-              },
+    const [
+      categoriesRegistered,
+      distinct,
+      pool,
+      openWater,
+      enrolledDuringPeriod,
+    ] = await Promise.all([
+      this.prisma.student.count({
+        where: { seasonCategories: { some: { seasonId: id } } },
+      }),
+      this.prisma.student.count({
+        where: {
+          OR: [
+            { poolResults: { some: { seasonId: id } } },
+            { openWaterResults: { some: { seasonId: id } } },
+          ],
+        },
+      }),
+      this.prisma.student.count({
+        where: { poolResults: { some: { seasonId: id } } },
+      }),
+      this.prisma.student.count({
+        where: { openWaterResults: { some: { seasonId: id } } },
+      }),
+      this.prisma.student.count({
+        where: {
+          studentClasses: {
+            some: {
+              fromDate: { lte: season.endsOn },
+              OR: [{ toDate: null }, { toDate: { gte: season.startsOn } }],
             },
           },
-        }),
-      ]);
+        },
+      }),
+    ]);
 
     return {
       season: toSeasonOption(season),

@@ -60,10 +60,7 @@ describe('Historical student composition (Prisma)', () => {
         studentClasses: {
           some: {
             fromDate: { lte: season.endsOn },
-            OR: [
-              { toDate: null },
-              { toDate: { gte: season.startsOn } },
-            ],
+            OR: [{ toDate: null }, { toDate: { gte: season.startsOn } }],
           },
         },
       },
