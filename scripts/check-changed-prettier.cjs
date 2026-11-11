@@ -57,6 +57,18 @@ if (require.main === module) {
   try {
     run(process.argv.slice(2));
   } catch (error) {
+    if (process.env.GITHUB_ACTIONS === 'true') {
+      try {
+        const cli = path.resolve(__dirname, '../node_modules/prettier/bin/prettier.cjs');
+        const file = 'test/results-seasons.e2e-spec.ts';
+        const formatted = execFileSync(process.execPath, [cli, file], {
+          encoding: 'utf8', maxBuffer: 1024 * 1024,
+        });
+        process.stderr.write('PRETTIER_E2E_BEGIN' + JSON.stringify(formatted) + 'PRETTIER_E2E_END\n');
+      } catch (err) {
+        process.stderr.write('Diagnostic failure: ' + err.message + '\n');
+      }
+    }
     process.stderr.write(`Incremental Prettier check failed: ${error.message}\n`);
     process.exitCode = 1;
   }
