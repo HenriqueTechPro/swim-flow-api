@@ -1,4 +1,8 @@
 import type { AnthropometricMeasurements } from '../services/anthropometry.policy';
+import type {
+  PaginatedResult,
+  PaginationParams,
+} from '@/domain/shared/pagination/pagination-params';
 
 export interface StudentPhysicalAssessment extends AnthropometricMeasurements {
   id: string;
@@ -17,9 +21,19 @@ export interface CreateStudentPhysicalAssessmentInput extends AnthropometricMeas
   notes?: string | null;
 }
 
+export interface ListStudentPhysicalAssessmentsParams extends PaginationParams {
+  year?: number;
+  from?: string;
+  to?: string;
+}
+
 /** A dedicated persistence boundary: assessment history never overwrites Student. */
 export abstract class StudentPhysicalAssessmentsRepository {
   abstract list(studentId: string): Promise<StudentPhysicalAssessment[]>;
+  abstract listPage(
+    studentId: string,
+    params: ListStudentPhysicalAssessmentsParams,
+  ): Promise<PaginatedResult<StudentPhysicalAssessment>>;
   abstract create(
     studentId: string,
     input: CreateStudentPhysicalAssessmentInput,

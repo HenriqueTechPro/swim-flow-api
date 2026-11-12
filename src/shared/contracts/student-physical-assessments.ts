@@ -31,3 +31,35 @@ export const createStudentPhysicalAssessmentSchema = z
 export type CreateStudentPhysicalAssessmentDto = z.infer<
   typeof createStudentPhysicalAssessmentSchema
 >;
+
+/**
+ * Opt-in read-only history filters. A request without query parameters
+ * continues to use the legacy unpaginated response (latest 50 records).
+ */
+export const listStudentPhysicalAssessmentsQuerySchema = z
+  .object({
+    page: z.coerce.number().int().min(1).max(100000).optional(),
+    perPage: z.coerce.number().int().min(1).max(100).optional(),
+    year: z.coerce.number().int().min(1900).max(2100).optional(),
+    from: calendarDateSchema.optional(),
+    to: calendarDateSchema.optional(),
+  })
+  .strict()
+  .superRefine((query, context) => {
+    if (query.year !== undefined && (query.from || query.to)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Use year or a date interval, not both',
+      });
+    }
+    if (query.from && query.to && query.from > query.to) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'from must be on or before to',
+      });
+    }
+  });
+
+export type ListStudentPhysicalAssessmentsQuery = z.infer<
+  typeof listStudentPhysicalAssessmentsQuerySchema
+>;

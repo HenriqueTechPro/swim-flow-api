@@ -1,4 +1,7 @@
-import { StudentPhysicalAssessmentsRepository } from '../repositories/student-physical-assessments-repository';
+import {
+  StudentPhysicalAssessmentsRepository,
+  type ListStudentPhysicalAssessmentsParams,
+} from '../repositories/student-physical-assessments-repository';
 
 export class ListStudentPhysicalAssessmentsUseCase {
   constructor(
@@ -7,5 +10,9 @@ export class ListStudentPhysicalAssessmentsUseCase {
 
   execute(studentId: string) {
     return this.assessments.list(studentId);
+  }
+
+  executePage(studentId: string, params: ListStudentPhysicalAssessmentsParams) {
+    return this.assessments.listPage(studentId, params);
   }
 }

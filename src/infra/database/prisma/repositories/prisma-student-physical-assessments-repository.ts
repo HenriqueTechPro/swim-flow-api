@@ -1,9 +1,15 @@
 import { Injectable } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
+import {
+  createPaginatedResult,
+  normalizePaginationParams,
+} from '@/domain/shared/pagination/pagination-utils';
 import { AppError } from '@/shared/errors/app-error';
 import { AnthropometryPolicy } from '@/domain/assessments/application/services/anthropometry.policy';
 import {
   StudentPhysicalAssessmentsRepository,
   type CreateStudentPhysicalAssessmentInput,
+  type ListStudentPhysicalAssessmentsParams,
   type StudentPhysicalAssessment,
 } from '@/domain/assessments/application/repositories/student-physical-assessments-repository';
 import { PrismaService } from '../prisma.service';
@@ -83,6 +89,51 @@ export class PrismaStudentPhysicalAssessmentsRepository implements StudentPhysic
       take: 50,
     });
     return records.map(toHttpRecord);
+  }
+
+  async listPage(
+    studentId: string,
+    params: ListStudentPhysicalAssessmentsParams,
+  ) {
+    await this.assertStudentExists(studentId);
+    const { page, perPage } = normalizePaginationParams(params);
+    const range =
+      params.year !== undefined
+        ? {
+            gte: new Date(Date.UTC(params.year, 0, 1)),
+            lt: new Date(Date.UTC(params.year + 1, 0, 1)),
+          }
+        : {
+            ...(params.from
+              ? { gte: new Date(params.from + 'T00:00:00.000Z') }
+              : {}),
+            ...(params.to
+              ? { lte: new Date(params.to + 'T00:00:00.000Z') }
+              : {}),
+          };
+    const where: Prisma.AnthropometricAssessmentWhereInput = {
+      studentId,
+      ...(Object.keys(range).length > 0 ? { measuredOn: range } : {}),
+    };
+
+    const [records, total] = await this.prisma.$transaction([
+      this.prisma.anthropometricAssessment.findMany({
+        where,
+        select: selection,
+        orderBy: [
+          { measuredOn: 'desc' },
+          { createdAt: 'desc' },
+          { id: 'desc' },
+        ],
+        skip: (page - 1) * perPage,
+        take: perPage,
+      }),
+      this.prisma.anthropometricAssessment.count({ where }),
+    ]);
+    return createPaginatedResult(records.map(toHttpRecord), total, {
+      page,
+      perPage,
+    });
   }
 
   async create(

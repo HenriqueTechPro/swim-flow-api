@@ -5,13 +5,17 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   createStudentPhysicalAssessmentSchema,
+  listStudentPhysicalAssessmentsQuerySchema,
   type CreateStudentPhysicalAssessmentDto,
+  type ListStudentPhysicalAssessmentsQuery,
 } from '@/shared/contracts/student-physical-assessments';
+import { toPaginationMeta } from '@/domain/shared/pagination/pagination-utils';
 import { CreateStudentPhysicalAssessmentUseCase } from '@/domain/assessments/application/use-cases/create-student-physical-assessment';
 import { ListStudentPhysicalAssessmentsUseCase } from '@/domain/assessments/application/use-cases/list-student-physical-assessments';
 import { JwtAuthGuard } from '@/infra/auth/jwt-auth.guard';
@@ -34,8 +38,19 @@ export class StudentPhysicalAssessmentsController {
 
   @Get()
   @Permissions('students:read')
-  async list(@Param('id', new ParseUUIDPipe()) studentId: string) {
-    return { data: await this.listAssessments.execute(studentId) };
+  async list(
+    @Param('id', new ParseUUIDPipe()) studentId: string,
+    @Query(new ZodValidationPipe(listStudentPhysicalAssessmentsQuerySchema))
+    query: ListStudentPhysicalAssessmentsQuery,
+  ) {
+    // Keep existing consumers compatible while offering bounded, filtered
+    // history on explicit opt-in. Never send all historical measurements.
+    if (Object.keys(query).length === 0) {
+      return { data: await this.listAssessments.execute(studentId) };
+    }
+
+    const page = await this.listAssessments.executePage(studentId, query);
+    return { data: page.items, meta: toPaginationMeta(page) };
   }
 
   @Post()
