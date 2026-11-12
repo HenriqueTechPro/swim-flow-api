@@ -161,6 +161,19 @@ describe('Prisma season overview (read only)', () => {
   });
 
   it('offers only open-water events when filtering for open water', async () => {
+    eventList.mockResolvedValue([
+      {
+        id: 'openwater',
+        title: 'Travessia',
+        date: season.startsOn,
+        _count: {
+          poolProgramRaces: 0,
+          openWaterProgramRaces: 1,
+          poolResults: 0,
+          openWaterResults: 0,
+        },
+      },
+    ]);
     const result = await repo.overview(season.id, { discipline: 'Aguas Abertas' });
     expect(prisma.event.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -182,9 +195,7 @@ describe('Prisma season overview (read only)', () => {
         ],
       },
     });
-    expect(result.events.options[0].disciplines).toEqual(['Piscina']);
-    // The event mock is independent of Prisma filtering; only the predicate
-    // above determines which rows would be returned by a real database.
+    expect(result.events.options[0].disciplines).toEqual(['Aguas Abertas']);
   });
 
   it('marks mixed events, but never infers modality from their title', async () => {
