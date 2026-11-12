@@ -2,7 +2,9 @@ import type { PrismaService } from '../prisma.service';
 import {
   listStudentPhysicalAssessmentsQuerySchema,
 } from '@/shared/contracts/student-physical-assessments';
-import { PrismaStudentPhysicalAssessmentsRepository } from './prisma-student-physical-assessments-repository';
+import {
+  PrismaStudentPhysicalAssessmentsRepository,
+} from './prisma-student-physical-assessments-repository';
 
 describe('student physical assessment history (read only)', () => {
   const studentId = '11111111-1111-4111-8111-111111111111';
@@ -27,7 +29,7 @@ describe('student physical assessment history (read only)', () => {
     prisma.anthropometricAssessment.count.mockResolvedValue(125);
   });
 
-  it('keeps the legacy GET as an array of at most 50 latest records', async () => {
+  it('keeps the legacy GET limited to the 50 latest records', async () => {
     expect(await repository.list(studentId)).toEqual([]);
     expect(prisma.anthropometricAssessment.findMany).toHaveBeenCalledWith({
       where: { studentId },
@@ -42,7 +44,7 @@ describe('student physical assessment history (read only)', () => {
     expect(prisma.anthropometricAssessment.count).not.toHaveBeenCalled();
   });
 
-  it('retrieves historical pages after the first 50 without changing records', async () => {
+  it('retrieves pages beyond the initial 50 records', async () => {
     const page = await repository.listPage(studentId, { page: 6, perPage: 10 });
     expect(page).toMatchObject({ total: 125, page: 6, perPage: 10, items: [] });
     expect(prisma.anthropometricAssessment.findMany).toHaveBeenCalledWith({
@@ -62,7 +64,7 @@ describe('student physical assessment history (read only)', () => {
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
   });
 
-  it('filters a calendar year with an exclusive next-year boundary', async () => {
+  it('filters one calendar year using exclusive end', async () => {
     await repository.listPage(studentId, { year: 2026, page: 1, perPage: 20 });
     const where = {
       studentId,
@@ -74,7 +76,9 @@ describe('student physical assessment history (read only)', () => {
     expect(prisma.anthropometricAssessment.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where }),
     );
-    expect(prisma.anthropometricAssessment.count).toHaveBeenCalledWith({ where });
+    expect(prisma.anthropometricAssessment.count).toHaveBeenCalledWith({
+      where,
+    });
   });
 
   it('supports a bounded inclusive date interval', async () => {
@@ -92,19 +96,20 @@ describe('student physical assessment history (read only)', () => {
     expect(prisma.anthropometricAssessment.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where, skip: 0, take: 20 }),
     );
-    expect(prisma.anthropometricAssessment.count).toHaveBeenCalledWith({ where });
+    expect(prisma.anthropometricAssessment.count).toHaveBeenCalledWith({
+      where,
+    });
   });
 
-  it('rejects a missing student before querying sensitive assessment data', async () => {
+  it('rejects missing students without querying history', async () => {
     prisma.student.findUnique.mockResolvedValue(null);
-    await expect(
-      repository.listPage(studentId, { page: 1 }),
-    ).rejects.toMatchObject({ statusCode: 404 });
+    const request = repository.listPage(studentId, { page: 1 });
+    await expect(request).rejects.toMatchObject({ statusCode: 404 });
     expect(prisma.anthropometricAssessment.findMany).not.toHaveBeenCalled();
     expect(prisma.anthropometricAssessment.count).not.toHaveBeenCalled();
   });
 
-  it('validates pagination, impossible dates and mutually exclusive date filters', () => {
+  it('rejects invalid pages, dates and conflicting filters', () => {
     const valid = listStudentPhysicalAssessmentsQuerySchema.safeParse({
       page: '2',
       perPage: '25',
