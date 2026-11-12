@@ -38,6 +38,12 @@ describe('Prisma season overview (read only)', () => {
         id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
         title: 'Festival',
         date: season.startsOn,
+        _count: {
+          poolProgramRaces: 1,
+          openWaterProgramRaces: 0,
+          poolResults: 0,
+          openWaterResults: 0,
+        },
       },
     ]);
     poolCount.mockResolvedValueOnce(45).mockResolvedValueOnce(3);
@@ -50,7 +56,11 @@ describe('Prisma season overview (read only)', () => {
     const result = await repo.overview(season.id, { discipline: 'all' });
     expect(result).toMatchObject({
       season: { id: season.id, year: 2026 },
-      events: { linked: 4, withoutSeasonInPeriod: 2 },
+      events: {
+        linked: 4,
+        withoutSeasonInPeriod: 2,
+        options: [{ disciplines: ['Piscina'] }],
+      },
       races: { pool: 8, openWater: 2 },
       results: {
         pool: 45,
@@ -86,6 +96,16 @@ describe('Prisma season overview (read only)', () => {
     });
     expect(prisma.openWaterResult.count).not.toHaveBeenCalled();
     expect(prisma.openWaterProgramRace.count).not.toHaveBeenCalled();
+    expect(prisma.event.count).toHaveBeenNthCalledWith(1, {
+      where: {
+        seasonId: season.id,
+        id: eventId,
+        OR: [
+          { poolProgramRaces: { some: {} } },
+          { poolResults: { some: { seasonId: season.id } } },
+        ],
+      },
+    });
     expect(prisma.poolResult.count).toHaveBeenCalledWith({
       where: {
         seasonId: season.id,
@@ -109,6 +129,10 @@ describe('Prisma season overview (read only)', () => {
         id: String(index),
         title: 'Evento',
         date: season.startsOn,
+        _count: {
+          poolProgramRaces: 1, openWaterProgramRaces: 0,
+          poolResults: 0, openWaterResults: 0,
+        },
       })),
     );
     eventCount.mockReset();
@@ -118,10 +142,82 @@ describe('Prisma season overview (read only)', () => {
     expect(result.events.optionsTruncated).toBe(true);
     expect(prisma.event.findMany).toHaveBeenCalledWith({
       where: { seasonId: season.id },
-      select: { id: true, title: true, date: true },
+      select: {
+        id: true,
+        title: true,
+        date: true,
+        _count: {
+          select: {
+            poolProgramRaces: true,
+            openWaterProgramRaces: true,
+            poolResults: { where: { seasonId: season.id } },
+            openWaterResults: { where: { seasonId: season.id } },
+          },
+        },
+      },
       orderBy: [{ date: 'desc' }, { id: 'asc' }],
       take: 61,
     });
+  });
+
+  it('offers only open-water events when filtering for open water', async () => {
+    const result = await repo.overview(season.id, { discipline: 'Aguas Abertas' });
+    expect(prisma.event.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          seasonId: season.id,
+          OR: [
+            { openWaterProgramRaces: { some: {} } },
+            { openWaterResults: { some: { seasonId: season.id } } },
+          ],
+        },
+      }),
+    );
+    expect(prisma.event.count).toHaveBeenNthCalledWith(1, {
+      where: {
+        seasonId: season.id,
+        OR: [
+          { openWaterProgramRaces: { some: {} } },
+          { openWaterResults: { some: { seasonId: season.id } } },
+        ],
+      },
+    });
+    expect(result.events.options[0].disciplines).toEqual(['Piscina']);
+    // The event mock is independent of Prisma filtering; only the predicate
+    // above determines which rows would be returned by a real database.
+  });
+
+  it('marks mixed events, but never infers modality from their title', async () => {
+    eventList.mockResolvedValue([
+      {
+        id: 'mixed',
+        title: 'Travessia e festival',
+        date: season.startsOn,
+        _count: {
+          poolProgramRaces: 2,
+          openWaterProgramRaces: 1,
+          poolResults: 0,
+          openWaterResults: 4,
+        },
+      },
+      {
+        id: 'no-program',
+        title: 'Travessia sem prova',
+        date: season.startsOn,
+        _count: {
+          poolProgramRaces: 0,
+          openWaterProgramRaces: 0,
+          poolResults: 0,
+          openWaterResults: 0,
+        },
+      },
+    ]);
+    const result = await repo.overview(season.id, { discipline: 'all' });
+    expect(result.events.options[0].disciplines).toEqual([
+      'Piscina',
+      'Aguas Abertas',
+    ]);
+    expect(result.events.options[1].disciplines).toEqual([]);
   });
 
   it('rejects missing seasons before counting or writing any record', async () => {
