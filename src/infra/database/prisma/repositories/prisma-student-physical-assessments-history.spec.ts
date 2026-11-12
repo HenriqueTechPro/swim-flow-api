@@ -1,10 +1,6 @@
 import type { PrismaService } from '../prisma.service';
-import {
-  listStudentPhysicalAssessmentsQuerySchema,
-} from '@/shared/contracts/student-physical-assessments';
-import {
-  PrismaStudentPhysicalAssessmentsRepository,
-} from './prisma-student-physical-assessments-repository';
+import { listStudentPhysicalAssessmentsQuerySchema } from '@/shared/contracts/student-physical-assessments';
+import { PrismaStudentPhysicalAssessmentsRepository } from './prisma-student-physical-assessments-repository';
 
 describe('student physical assessment history (read only)', () => {
   const studentId = '11111111-1111-4111-8111-111111111111';
@@ -34,11 +30,7 @@ describe('student physical assessment history (read only)', () => {
     expect(prisma.anthropometricAssessment.findMany).toHaveBeenCalledWith({
       where: { studentId },
       select: expect.any(Object),
-      orderBy: [
-        { measuredOn: 'desc' },
-        { createdAt: 'desc' },
-        { id: 'desc' },
-      ],
+      orderBy: [{ measuredOn: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }],
       take: 50,
     });
     expect(prisma.anthropometricAssessment.count).not.toHaveBeenCalled();
@@ -50,11 +42,7 @@ describe('student physical assessment history (read only)', () => {
     expect(prisma.anthropometricAssessment.findMany).toHaveBeenCalledWith({
       where: { studentId },
       select: expect.any(Object),
-      orderBy: [
-        { measuredOn: 'desc' },
-        { createdAt: 'desc' },
-        { id: 'desc' },
-      ],
+      orderBy: [{ measuredOn: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }],
       skip: 50,
       take: 10,
     });
