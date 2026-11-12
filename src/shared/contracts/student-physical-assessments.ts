@@ -32,7 +32,6 @@ export type CreateStudentPhysicalAssessmentDto = z.infer<
   typeof createStudentPhysicalAssessmentSchema
 >;
 
-
 /**
  * Opt-in read-only history filters. A request without query parameters
  * continues to use the legacy unpaginated response (latest 50 records).
