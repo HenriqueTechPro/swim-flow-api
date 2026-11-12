@@ -1,5 +1,7 @@
 import type { PrismaService } from '../prisma.service';
-import { listStudentPhysicalAssessmentsQuerySchema } from '@/shared/contracts/student-physical-assessments';
+import {
+  listStudentPhysicalAssessmentsQuerySchema,
+} from '@/shared/contracts/student-physical-assessments';
 import { PrismaStudentPhysicalAssessmentsRepository } from './prisma-student-physical-assessments-repository';
 
 describe('student physical assessment history (read only)', () => {
@@ -122,8 +124,9 @@ describe('student physical assessment history (read only)', () => {
       { unwanted: 'field' },
     ];
     for (const query of invalidQueries) {
-      expect(listStudentPhysicalAssessmentsQuerySchema.safeParse(query).success)
-        .toBe(false);
+      expect(
+        listStudentPhysicalAssessmentsQuerySchema.safeParse(query).success,
+      ).toBe(false);
     }
   });
 });
