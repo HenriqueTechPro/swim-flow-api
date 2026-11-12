@@ -130,8 +130,10 @@ describe('Prisma season overview (read only)', () => {
         title: 'Evento',
         date: season.startsOn,
         _count: {
-          poolProgramRaces: 1, openWaterProgramRaces: 0,
-          poolResults: 0, openWaterResults: 0,
+          poolProgramRaces: 1,
+          openWaterProgramRaces: 0,
+          poolResults: 0,
+          openWaterResults: 0,
         },
       })),
     );
@@ -174,7 +176,9 @@ describe('Prisma season overview (read only)', () => {
         },
       },
     ]);
-    const result = await repo.overview(season.id, { discipline: 'Aguas Abertas' });
+    const result = await repo.overview(season.id, {
+      discipline: 'Aguas Abertas',
+    });
     expect(prisma.event.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
