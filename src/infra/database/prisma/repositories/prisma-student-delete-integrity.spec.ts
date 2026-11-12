@@ -73,7 +73,9 @@ describe('PrismaStudentsRepository protected hard delete', () => {
     expect(tx.student.findUniqueOrThrow).toHaveBeenCalledWith({
       where: { id },
       include: expect.objectContaining({
-        _count: { select: Object.fromEntries(relations.map((name) => [name, true])) },
+        _count: {
+          select: Object.fromEntries(relations.map((name) => [name, true])),
+        },
       }),
     });
     expect(tx.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
@@ -97,20 +99,20 @@ describe('PrismaStudentsRepository protected hard delete', () => {
     expect(cache.deleteMatching).not.toHaveBeenCalled();
   });
 
-  it.each([
-    { photo: 'private-photo-reference' },
-    { achievements: 1 },
-  ])('does not erase student-owned data: %o', async (changes) => {
-    tx.student.findUniqueOrThrow.mockResolvedValue({
-      ...student,
-      ...changes,
-      _count: emptyCounts(),
-    });
-    await expect(repository.remove(id)).rejects.toMatchObject({
-      statusCode: 409,
-    });
-    expect(tx.student.delete).not.toHaveBeenCalled();
-  });
+  it.each([{ photo: 'private-photo-reference' }, { achievements: 1 }])(
+    'does not erase student-owned data: %o',
+    async (changes) => {
+      tx.student.findUniqueOrThrow.mockResolvedValue({
+        ...student,
+        ...changes,
+        _count: emptyCounts(),
+      });
+      await expect(repository.remove(id)).rejects.toMatchObject({
+        statusCode: 409,
+      });
+      expect(tx.student.delete).not.toHaveBeenCalled();
+    },
+  );
 
   it('returns 404 without reading or deleting when the row does not exist', async () => {
     tx.$queryRaw.mockResolvedValue([]);
