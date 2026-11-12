@@ -54,7 +54,7 @@ describe('PrismaStudentsRepository protected hard delete', () => {
   );
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
     tx.$queryRaw.mockResolvedValue([{ id }]);
     tx.student.findUniqueOrThrow.mockResolvedValue({
       ...student,
