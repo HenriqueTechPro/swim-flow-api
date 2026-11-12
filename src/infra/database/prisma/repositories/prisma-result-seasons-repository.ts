@@ -109,7 +109,33 @@ export class PrismaResultSeasonsRepository implements ResultSeasonsRepository {
         }
       : {};
     const resultFilters = { ...selectedEvent, ...category, ...student };
-    const linkedEventWhere = { seasonId: id, ...eventId };
+    // When the user filters by discipline, show only events with an
+    // official program race or a result linked to this season. Never guess
+    // an event's modality from its title, date, or generic event type.
+    const modalityWhere =
+      discipline === 'Piscina'
+        ? {
+            OR: [
+              { poolProgramRaces: { some: {} } },
+              { poolResults: { some: { seasonId: id } } },
+            ],
+          }
+        : discipline === 'Aguas Abertas'
+          ? {
+              OR: [
+                { openWaterProgramRaces: { some: {} } },
+                { openWaterResults: { some: { seasonId: id } } },
+              ],
+            }
+          : {};
+    const eventOptionsWhere = { seasonId: id, ...modalityWhere };
+    const eventCountSelect = {
+      poolProgramRaces: true,
+      openWaterProgramRaces: true,
+      poolResults: { where: { seasonId: id } },
+      openWaterResults: { where: { seasonId: id } },
+    } as const;
+    const linkedEventWhere = { ...eventOptionsWhere, ...eventId };
     const raceFilters = {
       event: { seasonId: id, ...eventId },
       ...category,
@@ -133,8 +159,13 @@ export class PrismaResultSeasonsRepository implements ResultSeasonsRepository {
         where: { seasonId: null, date: period, ...eventId },
       }),
       this.prisma.event.findMany({
-        where: { seasonId: id },
-        select: { id: true, title: true, date: true },
+        where: eventOptionsWhere,
+        select: {
+          id: true,
+          title: true,
+          date: true,
+          _count: { select: eventCountSelect },
+        },
         orderBy: [{ date: 'desc' }, { id: 'asc' }],
         take: 61,
       }),
@@ -184,6 +215,16 @@ export class PrismaResultSeasonsRepository implements ResultSeasonsRepository {
           id: event.id,
           title: event.title,
           date: event.date?.toISOString().slice(0, 10) ?? null,
+          disciplines: [
+            ...(event._count.poolProgramRaces > 0 ||
+            event._count.poolResults > 0
+              ? (['Piscina'] as const)
+              : []),
+            ...(event._count.openWaterProgramRaces > 0 ||
+            event._count.openWaterResults > 0
+              ? (['Aguas Abertas'] as const)
+              : []),
+          ],
         })),
         optionsTruncated: eventRows.length > 60,
       },

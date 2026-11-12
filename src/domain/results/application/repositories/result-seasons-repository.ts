@@ -28,7 +28,12 @@ export interface ResultSeasonOverview {
   events: {
     linked: number;
     withoutSeasonInPeriod: number;
-    options: Array<{ id: string; title: string; date: string | null }>;
+    options: Array<{
+      id: string;
+      title: string;
+      date: string | null;
+      disciplines: Array<'Piscina' | 'Aguas Abertas'>;
+    }>;
     optionsTruncated: boolean;
   };
   races: { pool: number; openWater: number };
