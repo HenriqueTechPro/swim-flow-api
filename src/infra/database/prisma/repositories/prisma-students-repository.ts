@@ -33,6 +33,22 @@ import {
   type PrismaStudentRecord,
 } from '../mappers/prisma-student-mapper';
 
+// All Student-backed relations are checked before a hard delete. In particular,
+// several assessment and guardian relations currently use ON DELETE CASCADE.
+// This guard must stay exhaustive until a dedicated retention/purge policy exists.
+const protectedStudentRelations = {
+  guardians: true,
+  exStudents: true,
+  poolResults: true,
+  openWaterResults: true,
+  studentClasses: true,
+  attendanceRecords: true,
+  anthropometricAssessments: true,
+  technicalAssessments: true,
+  levelHistory: true,
+  seasonCategories: true,
+} as const;
+
 const studentInclude = {
   category: { select: { name: true } },
   level: { select: { name: true } },
@@ -505,15 +521,53 @@ export class PrismaStudentsRepository implements StudentsRepository {
   }
 
   async remove(id: string) {
-    const existing = await this.prisma.student.findUnique({
-      where: { id },
-      include: studentInclude,
-    });
+    // Lock the parent before checking for children: foreign-key inserts need
+    // KEY SHARE and cannot race a deletion across this FOR UPDATE lock.
+    // Only truly unused students may be permanently removed.
+    const existing = await this.prisma.$transaction(async (tx) => {
+      const locked = await tx.$queryRaw<Array<{ id: string }>>(
+        Prisma.sql`SELECT id FROM students WHERE id = ${id}::uuid FOR UPDATE`,
+      );
+      if (locked.length === 0) {
+        throw new AppError(404, 'Student not found');
+      }
 
-    if (!existing) throw new AppError(404, 'Student not found');
+      const student = await tx.student.findUniqueOrThrow({
+        where: { id },
+        include: {
+          ...studentInclude,
+          _count: { select: protectedStudentRelations },
+        },
+      });
 
-    await this.prisma.student.delete({
-      where: { id },
+      if (
+        student.photo ||
+        student.achievements > 0 ||
+        Object.values(student._count).some((count) => count > 0)
+      ) {
+        throw new AppError(
+          409,
+          'Student has linked records or history. Archive instead of deleting.',
+        );
+      }
+
+      try {
+        await tx.student.delete({ where: { id } });
+      } catch (error) {
+        // A new foreign-key relationship must fail closed, not become a 500
+        // or be silently removed.
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          (error.code === 'P2003' || error.code === 'P2014')
+        ) {
+          throw new AppError(
+            409,
+            'Student has linked records. Archive instead of deleting.',
+          );
+        }
+        throw error;
+      }
+      return student;
     });
 
     await this.cache.deleteMatching('students:list:');

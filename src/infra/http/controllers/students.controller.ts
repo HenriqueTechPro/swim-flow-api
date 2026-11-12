@@ -140,6 +140,7 @@ export class StudentsController {
   }
 
   @Delete(':id')
+  @Roles('admin')
   @Permissions('students:write')
   async remove(@Param('id', new ParseUUIDPipe()) id: string) {
     const { student } = await this.deleteStudent.execute(id);
