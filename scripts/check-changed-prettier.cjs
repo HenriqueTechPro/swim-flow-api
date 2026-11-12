@@ -58,16 +58,6 @@ if (require.main === module) {
     run(process.argv.slice(2));
   } catch (error) {
     process.stderr.write(`Incremental Prettier check failed: ${error.message}\n`);
-    // Temporary diagnostic for the new history spec; removed before review.
-    if (process.env.FORMAT_HEAD_SHA) {
-      const file = path.resolve(__dirname, '../src/infra/database/prisma/repositories/prisma-student-physical-assessments-history.spec.ts');
-      const cli = path.resolve(__dirname, '../node_modules/prettier/bin/prettier.cjs');
-      const formatted = execFileSync(process.execPath, [cli, file], {
-        encoding: 'utf8',
-      });
-      process.stderr.write('EXPECTED_PRETTIER_BEGIN\n' + formatted + '\nEXPECTED_PRETTIER_END\n');
-    }
-
     process.exitCode = 1;
   }
 }
