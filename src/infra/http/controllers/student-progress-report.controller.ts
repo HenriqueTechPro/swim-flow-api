@@ -43,6 +43,15 @@ export class StudentProgressReportController {
   ) {
     return { data: await this.reports.get(studentId, query, user) };
   }
+  @Get('seasons')
+  @Permissions('students:read')
+  async seasons(
+    @Param('id', new ParseUUIDPipe()) studentId: string,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return { data: await this.reports.listSeasons(studentId, user) };
+  }
+
   @Put('observation')
   // Teachers don't have general students:write. The service enforces an
   // independent student+teacher scope before touching the observation.
