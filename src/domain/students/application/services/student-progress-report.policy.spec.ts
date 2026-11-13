@@ -45,6 +45,16 @@ describe('Student progress report rules', () => {
     expect(result.changes).toEqual({ heightCm: 5.5 });
   });
 
+  it('does not call multiple same-day measurements physical evolution', () => {
+    const result = summarizePhysicalProgress(
+      2,
+      { measuredOn: '2026-08-20', values: measure(140) },
+      { measuredOn: '2026-08-20', values: measure(141.5) },
+    );
+    expect(result.assessmentCount).toBe(2);
+    expect(result.changes).toEqual({});
+  });
+
   it('does not invent growth when there is only one assessment', () => {
     const entry = { measuredOn: '2026-01-10', values: measure(120) };
     const result = summarizePhysicalProgress(1, entry, entry);
