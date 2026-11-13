@@ -55,10 +55,12 @@ describe('Student progress report observation', () => {
         actor,
       ),
     ).rejects.toThrow(NotFoundException);
-    expect(prisma.studentProgressReportObservation.upsert).not.toHaveBeenCalled();
+    expect(
+      prisma.studentProgressReportObservation.upsert,
+    ).not.toHaveBeenCalled();
   });
 
-  it('snapshots the linked teacher identity and the author profile', async () => {
+  it('snapshots the teacher identity and author', async () => {
     const { prisma, service } = setup();
     await service.saveObservation(
       studentId,
@@ -98,14 +100,15 @@ describe('Student progress report observation', () => {
     expect(prisma.studentProgressReportObservation.upsert).not.toHaveBeenCalled();
   });
 
-  it('does not infer a current coach for an administrator with no selection', async () => {
+  it('avoids guessing an admin-selected coach', async () => {
     const { prisma, service } = setup();
     await service.saveObservation(
       studentId,
       { seasonId, observation: 'Relatório de fechamento' },
       { ...actor, role: 'admin' },
     );
-    const arg = prisma.studentProgressReportObservation.upsert.mock.calls[0]?.[0];
+    const arg =
+      prisma.studentProgressReportObservation.upsert.mock.calls[0]?.[0];
     expect(arg?.create).not.toHaveProperty('responsibleTeacherId');
     expect(arg?.update).not.toHaveProperty('responsibleTeacherId');
   });
