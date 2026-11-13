@@ -258,6 +258,8 @@ model Profile {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
   authSessions AuthSession[]
+  progressReportCreated StudentProgressReportObservation[] @relation("ProgressReportCreatedBy")
+  progressReportUpdated StudentProgressReportObservation[] @relation("ProgressReportUpdatedBy")
   localAuthIdentity LocalAuthIdentity?
   privateMediaUploads PrivateMediaObject[] @relation("PrivateMediaUploader")
   teacher      Teacher? @relation("TeacherAccount")
@@ -330,6 +332,7 @@ model Season {
   createdAt           DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime                @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   studentCategories   StudentSeasonCategory[]
+  progressReportObservations StudentProgressReportObservation[]
   events              Event[]
   poolResults         PoolResult[]
   openWaterResults    OpenWaterResult[]
@@ -508,6 +511,7 @@ model Student {
   studentClasses  StudentClass[]
   attendanceRecords        AttendanceRecord[]
   anthropometricAssessments AnthropometricAssessment[]
+  progressReportObservations StudentProgressReportObservation[]
   technicalAssessments     StudentTechnicalAssessment[]
   levelHistory             StudentLevelHistory[]
   seasonCategories        StudentSeasonCategory[]
@@ -1052,3 +1056,30 @@ model PrivateMediaActiveBinding {
   @@map("private_media_active_bindings")
 }
 
+
+// Textual teacher observations: one per student and season. Snapshots preserve
+// the responsible teacher and authorship even after changes to current classes.
+model StudentProgressReportObservation {
+  id                           String   @id @default(uuid()) @db.Uuid
+  studentId                    String   @map("student_id") @db.Uuid
+  seasonId                     String   @map("season_id") @db.Uuid
+  observation                  String   @db.VarChar(2000)
+  responsibleTeacherId         String?  @map("responsible_teacher_id") @db.Uuid
+  responsibleTeacherName       String?  @map("responsible_teacher_name") @db.VarChar(160)
+  responsibleTeacherCref       String?  @map("responsible_teacher_cref") @db.VarChar(20)
+  createdByProfileId           String?  @map("created_by_profile_id") @db.Uuid
+  createdByName                String   @map("created_by_name") @db.VarChar(160)
+  updatedByProfileId           String?  @map("updated_by_profile_id") @db.Uuid
+  updatedByName                String   @map("updated_by_name") @db.VarChar(160)
+  createdAt                    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  student                      Student  @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  season                       Season   @relation(fields: [seasonId], references: [id], onDelete: Restrict)
+  createdByProfile             Profile? @relation("ProgressReportCreatedBy", fields: [createdByProfileId], references: [id], onDelete: SetNull)
+  updatedByProfile             Profile? @relation("ProgressReportUpdatedBy", fields: [updatedByProfileId], references: [id], onDelete: SetNull)
+
+  @@unique([studentId, seasonId])
+  @@index([seasonId])
+  @@index([responsibleTeacherId])
+  @@map("student_progress_report_observations")
+}
