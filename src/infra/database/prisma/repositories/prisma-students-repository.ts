@@ -44,6 +44,7 @@ const protectedStudentRelations = {
   studentClasses: true,
   attendanceRecords: true,
   anthropometricAssessments: true,
+  progressReportObservations: true,
   technicalAssessments: true,
   levelHistory: true,
   seasonCategories: true,
