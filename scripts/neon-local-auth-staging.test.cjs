@@ -67,7 +67,7 @@ test('check mode does not call any database action', async () => {
     inspectAfter: unexpected,
     status: unexpected,
   });
-  assert.deepEqual(result, { verifiedFiles: 11, wroteDatabase: false });
+  assert.deepEqual(result, { verifiedFiles: 12, wroteDatabase: false });
 });
 
 test('retired one-time local-auth runner refuses applying new media migrations', async () => {

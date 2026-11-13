@@ -14,6 +14,7 @@ describe('PrismaStudentsRepository protected hard delete', () => {
     'studentClasses',
     'attendanceRecords',
     'anthropometricAssessments',
+    'progressReportObservations',
     'technicalAssessments',
     'levelHistory',
     'seasonCategories',
