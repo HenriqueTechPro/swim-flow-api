@@ -314,7 +314,9 @@ export class StudentProgressReportService {
     }
 
     const authorName = (
-      profile.fullName.trim() || user.email || 'Usuário autorizado'
+      profile.fullName.trim() ||
+      user.email ||
+      'Usuário autorizado'
     ).slice(0, 160);
 
     const responsibleSnapshot =
