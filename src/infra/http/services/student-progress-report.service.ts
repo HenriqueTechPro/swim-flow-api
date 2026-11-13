@@ -348,4 +348,49 @@ export class StudentProgressReportService {
       updatedAt: saved.updatedAt,
     };
   }
+
+  async listSeasons(studentId: string, user: AuthUser) {
+    if (user.role !== 'admin' && user.role !== 'teacher') {
+      throw new NotFoundException('Aluno não encontrado');
+    }
+    const student = await this.prisma.student.findFirst({
+      where: {
+        id: studentId,
+        ...(user.role === 'teacher'
+          ? {
+              studentClasses: {
+                some: {
+                  toDate: null,
+                  swimmingClass: {
+                    classTeachers: {
+                      some: {
+                        teacher: {
+                          profileId: user.id,
+                          status: 'Ativo' as const,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            }
+          : {}),
+      },
+      select: { id: true },
+    });
+    if (!student) throw new NotFoundException('Aluno não encontrado');
+
+    const seasons = await this.prisma.season.findMany({
+      select: { id: true, label: true, year: true, startsOn: true, endsOn: true },
+      orderBy: { year: 'desc' },
+      take: 30,
+    });
+    return seasons.map((season) => ({
+      id: season.id,
+      label: season.label,
+      year: season.year,
+      from: isoDate(season.startsOn),
+      to: isoDate(season.endsOn),
+    }));
+  }
 }
