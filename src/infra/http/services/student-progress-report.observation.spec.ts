@@ -31,7 +31,7 @@ function setup(studentFound = true) {
       findUnique: jest.fn(async () => null),
     },
     studentProgressReportObservation: {
-      upsert: jest.fn(async () => ({
+      upsert: jest.fn(async (_args: unknown) => ({
         seasonId,
         updatedAt: new Date('2026-11-13T12:00:00.000Z'),
       })),
