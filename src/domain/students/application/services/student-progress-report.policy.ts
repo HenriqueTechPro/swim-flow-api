@@ -91,7 +91,14 @@ export function summarizePhysicalProgress(
   final: DatedMeasurements | null,
 ): PhysicalProgressSummary {
   const changes: Partial<Record<PhysicalMeasure, number>> = {};
-  if (assessmentCount >= 2 && initial && final) {
+  // Repeated measurements on the same day are not longitudinal evolution.
+  // They may represent a correction or measurement variability instead.
+  if (
+    assessmentCount >= 2 &&
+    initial &&
+    final &&
+    initial.measuredOn !== final.measuredOn
+  ) {
     for (const key of PHYSICAL_MEASURES) {
       const before = initial.values[key];
       const after = final.values[key];
