@@ -1,0 +1,13 @@
+name: One-time runner availability probe (no secrets)
+on:
+  push:
+    branches: [ops/neon-staging-student-report-20261113]
+    paths:
+      - .github/workflows/staging-report-runner-probe.yml
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "GitHub runner available. No credentials or database access."
