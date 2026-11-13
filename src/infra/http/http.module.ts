@@ -21,6 +21,8 @@ import { ResultsController } from './controllers/results.controller';
 import { ResultSeasonsController } from './controllers/result-seasons.controller';
 import { StudentsController } from './controllers/students.controller';
 import { StudentPhysicalAssessmentsController } from './controllers/student-physical-assessments.controller';
+import { StudentProgressReportController } from './controllers/student-progress-report.controller';
+import { StudentProgressReportService } from './services/student-progress-report.service';
 import { TeachersController } from './controllers/teachers.controller';
 import { TrainingsController } from './controllers/trainings.controller';
 import { UploadsController } from './controllers/uploads.controller';
@@ -48,6 +50,7 @@ import { privateImageAccessProvider } from './services/private-image-access.prov
     ResultSeasonsController,
     StudentsController,
     StudentPhysicalAssessmentsController,
+    StudentProgressReportController,
     TeachersController,
     TrainingsController,
     UploadsController,
@@ -59,6 +62,7 @@ import { privateImageAccessProvider } from './services/private-image-access.prov
       useExisting: SupabaseManagedUploadsRepository,
     },
     ...useCaseProviders,
+    StudentProgressReportService,
     privateImageUploadProvider,
     privateImageAccessProvider,
   ],
