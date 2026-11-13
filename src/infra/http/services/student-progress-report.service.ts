@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import type { AuthUser } from '@/infra/auth/auth.types';
 import { PrismaService } from '@/infra/database/prisma/prisma.service';
 import {
@@ -381,7 +385,13 @@ export class StudentProgressReportService {
     if (!student) throw new NotFoundException('Aluno não encontrado');
 
     const seasons = await this.prisma.season.findMany({
-      select: { id: true, label: true, year: true, startsOn: true, endsOn: true },
+      select: {
+        id: true,
+        label: true,
+        year: true,
+        startsOn: true,
+        endsOn: true,
+      },
       orderBy: { year: 'desc' },
       take: 30,
     });
