@@ -119,11 +119,7 @@ export class StudentProgressReportService {
       }),
       this.prisma.anthropometricAssessment.findFirst({
         where: physicalWhere,
-        orderBy: [
-          { measuredOn: 'asc' },
-          { createdAt: 'asc' },
-          { id: 'asc' },
-        ],
+        orderBy: [{ measuredOn: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
         select: physicalSelection,
       }),
       this.prisma.anthropometricAssessment.findFirst({
