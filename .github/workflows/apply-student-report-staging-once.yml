@@ -1,0 +1,67 @@
+# One-time execution authorized in chat on 2026-11-13.
+# Workflow lives ONLY on the dedicated ops branch, NOT on main.
+# No production, pull request or ordinary merge triggers.
+name: Apply report migrations to Neon staging (one time)
+
+on:
+  push:
+    branches:
+      - ops/neon-staging-student-report-20261113
+    paths:
+      - .github/workflows/apply-student-report-staging-once.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: swimflow-neon-staging-schema-migration
+  cancel-in-progress: false
+
+jobs:
+  migrate-approved-staging:
+    if: >-
+      github.repository == 'HenriqueTechPro/swim-flow-api' &&
+      github.ref == 'refs/heads/ops/neon-staging-student-report-20261113' &&
+      github.event_name == 'push' &&
+      github.event.head_commit.message == 'ops(neon): trigger approved one-time staging report migration'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    environment:
+      name: swimflow-neon-staging
+    env:
+      NODE_ENV: test
+      NEON_PROJECT_ID: raspy-breeze-33258358
+      NEON_BRANCH_ID: br-gentle-wildflower-b7qrnd74
+      SWIMFLOW_STUDENT_REPORT_STAGING_APPROVAL: APPLY_STUDENT_REPORT_TO_NEON_STAGING
+    steps:
+      - name: Checkout exact staging ops source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Node.js 22 and locked dependencies
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies WITHOUT database credentials
+        run: npm ci
+      - name: Generate Prisma client with offline-only placeholders
+        env:
+          DATABASE_URL: postgresql://offline:offline@localhost:5432/swimflow?schema=public
+          DIRECT_URL: postgresql://offline:offline@localhost:5432/swimflow?schema=public
+        run: |
+          npm run prisma:validate
+          npm run prisma:generate
+      - name: Verify exact reviewed Prisma SQL bytes and offline safety tests
+        run: |
+          node scripts/apply-student-report-staging-once.cjs --check
+          node --test scripts/apply-student-report-staging-once.test.cjs
+      - name: Run only authorized migrations on Neon staging (official Prisma deploy)
+        env:
+          DATABASE_URL: ${{ secrets.SWIMFLOW_STAGING_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.SWIMFLOW_STAGING_DIRECT_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$DATABASE_URL"
+          test -n "$DIRECT_URL"
+          node scripts/apply-student-report-staging-once.cjs --apply
