@@ -389,6 +389,7 @@ export class StudentProgressReportService {
         id: true,
         label: true,
         year: true,
+        status: true,
         startsOn: true,
         endsOn: true,
       },
@@ -399,6 +400,7 @@ export class StudentProgressReportService {
       id: season.id,
       label: season.label,
       year: season.year,
+      status: season.status,
       from: isoDate(season.startsOn),
       to: isoDate(season.endsOn),
     }));
