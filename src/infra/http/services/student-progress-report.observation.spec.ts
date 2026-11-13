@@ -97,7 +97,9 @@ describe('Student progress report observation', () => {
         actor,
       ),
     ).rejects.toThrow(ForbiddenException);
-    expect(prisma.studentProgressReportObservation.upsert).not.toHaveBeenCalled();
+    expect(
+      prisma.studentProgressReportObservation.upsert,
+    ).not.toHaveBeenCalled();
   });
 
   it('avoids guessing an admin-selected coach', async () => {
