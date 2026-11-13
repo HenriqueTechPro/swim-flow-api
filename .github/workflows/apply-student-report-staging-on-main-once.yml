@@ -1,4 +1,5 @@
 # One-time schema execution approved by the user on 2026-11-13.
+# Retry after correcting an offline-test fixture; prior workflow never connected to DB.
 # Secret-bearing step runs only on reviewed main in protected staging environment.
 name: Apply student progress report migrations on Neon staging — approved
 
