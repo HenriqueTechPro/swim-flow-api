@@ -1,0 +1,65 @@
+# One-time schema execution approved by the user on 2026-11-13.
+# Secret-bearing step runs only on reviewed main in protected staging environment.
+name: Apply student progress report migrations on Neon staging — approved
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/apply-student-report-staging-on-main-once.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: swimflow-neon-staging-schema-migration
+  cancel-in-progress: false
+
+jobs:
+  approved-report-migration:
+    if: >-
+      github.repository == 'HenriqueTechPro/swim-flow-api' &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      startsWith(github.event.head_commit.message, 'ops(neon): apply approved student report staging migration')
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    environment:
+      name: swimflow-neon-staging
+    env:
+      NODE_ENV: test
+      NEON_PROJECT_ID: raspy-breeze-33258358
+      NEON_BRANCH_ID: br-gentle-wildflower-b7qrnd74
+      SWIMFLOW_STUDENT_REPORT_STAGING_APPROVAL: APPLY_STUDENT_REPORT_TO_NEON_STAGING
+    steps:
+      - name: Checkout reviewed main commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Node.js 22 with npm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies without database credentials
+        run: npm ci
+      - name: Validate and generate Prisma only against offline placeholders
+        env:
+          DATABASE_URL: postgresql://offline:offline@localhost:5432/swimflow?schema=public
+          DIRECT_URL: postgresql://offline:offline@localhost:5432/swimflow?schema=public
+        run: |
+          npm run prisma:validate
+          npm run prisma:generate
+      - name: Verify pinned SQL migrations and staging-only preflight offline
+        run: |
+          node scripts/apply-student-report-staging-once.cjs --check
+          node --test scripts/apply-student-report-staging-once.test.cjs
+      - name: Apply exact two reviewed migrations with official Prisma ledger
+        env:
+          DATABASE_URL: ${{ secrets.SWIMFLOW_STAGING_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.SWIMFLOW_STAGING_DIRECT_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$DATABASE_URL"
+          test -n "$DIRECT_URL"
+          node scripts/apply-student-report-staging-once.cjs --apply
