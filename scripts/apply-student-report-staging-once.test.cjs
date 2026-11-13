@@ -55,7 +55,7 @@ function snapshot(after) {
 test('pins the specific staging hosts, branch, repository and approval', () => {
   assert.doesNotThrow(() => assertEnvironment(targetEnv));
   for (const [key, bad] of [
-    ['GITHUB_REF', 'refs/heads/main'],
+    ['GITHUB_REF', 'refs/heads/unauthorized-branch'],
     ['GITHUB_REPOSITORY', 'another-owner/repo'],
     ['GITHUB_EVENT_NAME', 'pull_request'],
     ['NEON_BRANCH_ID', 'br-unapproved'],
