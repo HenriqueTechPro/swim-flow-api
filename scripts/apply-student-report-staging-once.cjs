@@ -182,10 +182,12 @@ async function run() {
   );
 }
 
-run().catch(() => {
+if (require.main === module) run().catch(() => {
   // Deliberately do not expose database URLs or Prisma exception details.
   process.stderr.write(
     'BLOCKED: Neon staging report migration verification failed. Do not retry automatically; inspect migration state first.\n',
   );
   process.exitCode = 1;
 });
+
+module.exports = { assertEnvironment, assertHistory, assertSnapshot, STATUS_SQL, HISTORY_SQL };
