@@ -44,3 +44,17 @@ export const studentProgressReportQuerySchema = z
 export type StudentProgressReportQuery = z.infer<
   typeof studentProgressReportQuerySchema
 >;
+
+export const saveStudentProgressObservationSchema = z
+  .object({
+    seasonId: z.string().uuid(),
+    observation: z.string().trim().max(2000),
+    // Administrators can choose a historical responsible teacher deliberately.
+    // Teachers may only sign under their own linked teacher identity.
+    responsibleTeacherId: z.string().uuid().nullable().optional(),
+  })
+  .strict();
+
+export type SaveStudentProgressObservationDto = z.infer<
+  typeof saveStudentProgressObservationSchema
+>;
