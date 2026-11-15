@@ -1,0 +1,107 @@
+# Opt-in production schema initialization. No writes happen on pushes or PRs.
+# Before dispatch: create GitHub Environment "swimflow-neon-production" with
+# required reviewers and two secrets copied directly from the NEW Neon project.
+name: Neon production — apply empty Prisma baseline (manual)
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/neon-production-empty-baseline.yml
+      - scripts/neon-production-target.cjs
+      - scripts/neon-production-target.test.cjs
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type APPLY_SWIM_FLOW_EMPTY_PRODUCTION_SCHEMA (new EMPTY Neon project only)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: swimflow-neon-production-schema
+  cancel-in-progress: false
+
+jobs:
+  offline-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate reviewed migrations and target checks without secrets
+        run: |
+          node scripts/neon-production-target.cjs --check
+          node --test scripts/neon-production-target.test.cjs
+
+  apply-empty-production-schema:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.repository == 'HenriqueTechPro/swim-flow-api' &&
+      github.ref == 'refs/heads/main' &&
+      inputs.confirmation == 'APPLY_SWIM_FLOW_EMPTY_PRODUCTION_SCHEMA'
+    needs: offline-guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: swimflow-neon-production
+    env:
+      NODE_ENV: test
+      NEON_PROJECT_ID: round-bonus-30138797
+      NEON_BRANCH_ID: br-tiny-mud-bb79ybtx
+      SWIMFLOW_PRODUCTION_MIGRATION_APPROVAL: APPLY_SWIM_FLOW_EMPTY_PRODUCTION_SCHEMA
+    steps:
+      - name: Checkout reviewed main only
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install exact dependencies without production credentials
+        run: npm ci
+      - name: Validate Prisma schema offline
+        env:
+          DATABASE_URL: postgresql://offline:offline@localhost:5432/swimflow?schema=public
+          DIRECT_URL: postgresql://offline:offline@localhost:5432/swimflow?schema=public
+        run: |
+          npm run prisma:validate
+          npm run prisma:generate
+      - name: Verify exact production URLs and reviewed migration set (no connection)
+        env:
+          DATABASE_URL: ${{ secrets.SWIMFLOW_PRODUCTION_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.SWIMFLOW_PRODUCTION_DIRECT_URL }}
+        run: |
+          set -euo pipefail
+          node scripts/neon-production-target.cjs --verify-env
+      - name: Apply official Prisma migrations to EMPTY production, no seed
+        env:
+          DATABASE_URL: ${{ secrets.SWIMFLOW_PRODUCTION_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.SWIMFLOW_PRODUCTION_DIRECT_URL }}
+        run: |
+          set -euo pipefail
+          npm run prisma:migrate:deploy
+          npm run prisma:migrate:status
+      - name: Assert no demonstration or real user data was imported
+        env:
+          DATABASE_URL: ${{ secrets.SWIMFLOW_PRODUCTION_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.SWIMFLOW_PRODUCTION_DIRECT_URL }}
+        run: |
+          node - <<'NODE'
+          const { PrismaClient } = require('@prisma/client');
+          const prisma = new PrismaClient();
+          (async () => {
+            const tables = ['students','teachers','parents','profiles','classes','attendance_records','pool_results','open_water_results','auth_sessions','private_media_objects'];
+            for (const table of tables) {
+              const rows = await prisma.$queryRawUnsafe('SELECT COUNT(*)::int AS amount FROM public."' + table + '"');
+              if (rows[0].amount !== 0) throw new Error('Production table unexpectedly contains data: ' + table);
+            }
+            const migrations = await prisma.$queryRawUnsafe('SELECT COUNT(*)::int AS amount FROM public._prisma_migrations WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL');
+            if (migrations[0].amount !== 12) throw new Error('Expected exactly 12 complete Prisma migrations');
+            process.stdout.write('PASS: 12 migrations, zero user/demo data in the production database.\n');
+          })().catch((error) => { console.error(error.message); process.exitCode = 1; }).finally(() => prisma.$disconnect());
+          NODE
