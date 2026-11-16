@@ -1,12 +1,13 @@
 # Optional Render Blueprint: Swim Flow API PRODUCTION (not auto-applied by GitHub).
-# Importing this file creates a *billable* STARTER service. Review recurring
-# costs and explicitly approve in Render before importing or deploying.
+# Manual-only Render Free pilot for RaiaNexo production. Render Free has idle
+# spin-down and no shell/pre-deploy jobs; upgrade before real customer traffic.
+# Use this file only in the new production Render account; render.yaml is STAGING.
 # Staging render.yaml is untouched. NO database is provisioned here.
 services:
   - type: web
     name: swim-flow-api-production
     runtime: node
-    plan: starter
+    plan: free
     region: virginia
     branch: main
     autoDeployTrigger: off
