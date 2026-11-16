@@ -6,7 +6,7 @@
 const { assertProductionBootstrapTarget } = require('./bootstrap-production-first-admin.cjs');
 const { EXPECTED_MIGRATIONS } = require('./neon-production-target.cjs');
 
-const OPERATIONS = Object.freeze(['inspect', 'apply', 'resend']);
+const OPERATIONS = Object.freeze(['inspect', 'apply', 'resend', 'retarget']);
 function assertOperation(value) {
   if (!OPERATIONS.includes(value)) throw new Error('Unknown production first-admin operation.');
   return value;
@@ -30,7 +30,7 @@ function validateState(state, actualMigrations, operation) {
        state.identities !== 0 || state.sessions !== 0 || state.pending !== 0)) {
     throw new Error('Production is not empty: first administrator creation refused. Review pending invitation before retrying.');
   }
-  if (operation === 'resend' &&
+  if ((operation === 'resend' || operation === 'retarget') &&
       (state.profiles !== 1 || state.admins !== 1 ||
        state.identities !== 1 || state.sessions !== 0 || state.pending !== 1)) {
     throw new Error('Production does not have exactly one pending first admin: resend refused.');
@@ -42,7 +42,7 @@ async function inspectProduction(prisma, operation, env) {
   assertOperation(operation);
   // The validation intentionally performs URL/target checks for ALL operations
   // even for inspect; it never invokes a mutating bootstrap here.
-  assertProductionBootstrapTarget(env, ['--' + (operation === 'resend' ? 'resend' : 'apply')]);
+  assertProductionBootstrapTarget(env, ['--' + ((operation === 'resend' || operation === 'retarget') ? 'resend' : 'apply')]);
 
   const [counts, migrations] = await Promise.all([
     prisma.$queryRaw`SELECT

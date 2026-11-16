@@ -9,11 +9,13 @@ on:
       - .github/workflows/raianexo-production-first-admin.yml
       - scripts/raianexo-production-first-admin-preflight.cjs
       - scripts/raianexo-production-first-admin-preflight.test.cjs
+      - scripts/retarget-production-pending-admin.cjs
+      - scripts/retarget-production-pending-admin.test.cjs
       - docs/RAIANEXO_FIRST_ADMIN_PRODUCTION.md
   workflow_dispatch:
     inputs:
       operation:
-        description: 'inspect = read-only; apply = first invite; resend = pending invite only'
+        description: 'inspect = read-only; apply = first invite; resend = pending invite; retarget = pending admin email only'
         required: true
         default: inspect
         type: choice
@@ -21,8 +23,9 @@ on:
           - inspect
           - apply
           - resend
+          - retarget
       confirmation:
-        description: 'For inspect: INSPECT_RAIANEXO_PRODUCTION; for apply: CREATE_RAIANEXO_FIRST_ADMIN; for resend: RESEND_RAIANEXO_FIRST_ADMIN'
+        description: 'For inspect: INSPECT_RAIANEXO_PRODUCTION; for apply: CREATE_RAIANEXO_FIRST_ADMIN; for resend: RESEND_RAIANEXO_FIRST_ADMIN; for retarget: RETARGET_RAIANEXO_PENDING_ADMIN'
         required: true
         type: string
 
@@ -50,6 +53,7 @@ jobs:
         run: |
           node --test scripts/raianexo-production-first-admin-preflight.test.cjs
           node --test scripts/bootstrap-production-first-admin.test.cjs
+          node --test scripts/retarget-production-pending-admin.test.cjs
 
   first-admin:
     name: Review production status and optionally invite first administrator
@@ -80,6 +84,7 @@ jobs:
             inspect) expected="INSPECT_RAIANEXO_PRODUCTION" ;;
             apply) expected="CREATE_RAIANEXO_FIRST_ADMIN" ;;
             resend) expected="RESEND_RAIANEXO_FIRST_ADMIN" ;;
+            retarget) expected="RETARGET_RAIANEXO_PENDING_ADMIN" ;;
             *) echo "Unknown first-admin operation"; exit 1 ;;
           esac
           if [ "$CONFIRMATION" != "$expected" ]; then
@@ -109,6 +114,15 @@ jobs:
           DATABASE_URL: ${{ secrets.SWIMFLOW_PRODUCTION_DATABASE_URL }}
           DIRECT_URL: ${{ secrets.SWIMFLOW_PRODUCTION_DIRECT_URL }}
         run: node scripts/raianexo-production-first-admin-preflight.cjs "$OPERATION"
+      - name: Correct solely pending first administrator email (ONLY manual retarget)
+        if: ${{ inputs.operation == 'retarget' }}
+        env:
+          DATABASE_URL: ${{ secrets.SWIMFLOW_PRODUCTION_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.SWIMFLOW_PRODUCTION_DIRECT_URL }}
+          SWIMFLOW_BOOTSTRAP_ADMIN_EMAIL: ${{ secrets.RAIANEXO_ADMIN_EMAIL }}
+          SWIMFLOW_BOOTSTRAP_ADMIN_NAME: ${{ secrets.RAIANEXO_ADMIN_FULL_NAME }}
+          SWIMFLOW_PENDING_ADMIN_RETARGET_APPROVAL: RETARGET_RAIANEXO_PENDING_ADMIN_ONCE
+        run: node scripts/retarget-production-pending-admin.cjs --retarget
       - name: Send guarded first administrator invitation (ONLY manual apply/resend)
         if: ${{ inputs.operation == 'apply' || inputs.operation == 'resend' }}
         env:

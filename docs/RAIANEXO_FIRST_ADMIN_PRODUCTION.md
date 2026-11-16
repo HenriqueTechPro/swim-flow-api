@@ -58,3 +58,20 @@ O código grava a conta pendente antes da tentativa de e-mail. Se o envio falhar
 - Esse fluxo é apenas para **a primeira conta**. Não é uma área pública `Criar primeiro administrador`.
 - Depois da ativação, manter os quatro segredos protegidos no ambiente; se não forem necessários, revogar o segredo de e-mail do workflow ou desativar a permissão de execução manual.
 - Não alterar banco, JWT, staging ou dashboard para contornar o processo.
+
+## Recuperação protegida: trocar e-mail do ÚNICO administrador ainda pendente
+
+Este procedimento é excepcional para o piloto que utiliza o remetente `onboarding@resend.dev`, quando o destinatário originalmente escolhido não é o e-mail autorizado da conta Resend. **Nunca editar SQL manualmente, excluir a conta ou repetir `apply`.**
+
+1. No GitHub Environment `swimflow-neon-production`, confirme que `RAIANEXO_RESEND_FROM_EMAIL=onboarding@resend.dev` e que `RAIANEXO_ADMIN_EMAIL` contém **o e-mail autorizado/associado à conta Resend**. Preserve `RAIANEXO_ADMIN_FULL_NAME` sem alterações. Não compartilhe e-mails ou chaves em issues e logs.
+2. Execute `inspect` com `INSPECT_RAIANEXO_PRODUCTION`: devem existir **exatamente 1 perfil, 1 administrador, 1 identidade e 0 sessões**. É necessária uma identidade pendente ainda não ativada; o script verifica o restante antes de gravar.
+3. Execute manualmente o mesmo workflow **em `main`**, selecionando:
+   - **Operation**: `retarget`
+   - **Confirmation**: `RETARGET_RAIANEXO_PENDING_ADMIN`
+4. Somente o job protegido pelo environment, após a checagem de destino Neon, executa `scripts/retarget-production-pending-admin.cjs --retarget`. Em transação com o lock compartilhado do bootstrap, ele exige **um único administrador pendente**, nome preservado, nenhuma senha, e-mail confirmado, sessão ou login anterior, e nenhum token de outro tipo pendente. Troca apenas `local_auth_identities.email` e **revoga todos os tokens de convite ainda não usados**. Não envia e-mail nem imprime os endereços.
+5. Confirme a execução verde. Faça um novo `inspect`. A seguir execute **outra execução manual**:
+   - **Operation**: `resend`
+   - **Confirmation**: `RESEND_RAIANEXO_FIRST_ADMIN`
+6. O novo convite usa o e-mail corrigido e o remetente de testes. Se o Resend ainda responder com erro, examine o código e a mensagem em **Resend Logs**, sem divulgar tokens. **Não repita `retarget`** quando o novo endereço já corresponder ao cadastro, e jamais use `apply` para essa conta.
+
+O procedimento é de uso único e **não faz parte do futuro onboarding SaaS**. O remetente `resend.dev` só atende testes autorizados, não convites a clientes reais. Quando houver domínio de envio verificado, devemos usar um e-mail administrativo apropriado ao cliente e desativar a possibilidade de retarget.
