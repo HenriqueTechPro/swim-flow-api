@@ -17,7 +17,7 @@ const env = () => ({
 });
 
 test('allowed operations are explicit and unknown operation is denied', () => {
-  for (const name of ['inspect', 'apply', 'resend']) assert.equal(assertOperation(name), name);
+  for (const name of ['inspect', 'apply', 'resend', 'retarget']) assert.equal(assertOperation(name), name);
   for (const name of ['--apply', '', 'reset', 'seed', 'migrate']) assert.throws(() => assertOperation(name));
 });
 
@@ -39,6 +39,18 @@ test('resend only accepts one unactivated administrator, no sessions', () => {
   }
   assert.throws(() => validateState({ ...pending, pending: 0 }, EXPECTED_MIGRATIONS, 'resend'));
 });
+test('retarget only accepts one pending administrator with no sessions', () => {
+  const pending = { profiles: 1, admins: 1, identities: 1, sessions: 0, pending: 1 };
+  assert.ok(validateState(pending, EXPECTED_MIGRATIONS, 'retarget'));
+  assert.throws(() => validateState(state(), EXPECTED_MIGRATIONS, 'retarget'));
+  for (const key of Object.keys(pending)) {
+    assert.throws(() => validateState({
+      ...pending, [key]: pending[key] + 1,
+    }, EXPECTED_MIGRATIONS, 'retarget'));
+  }
+  assert.throws(() => validateState({ ...pending, pending: 0 }, EXPECTED_MIGRATIONS, 'retarget'));
+});
+
 test('migrations must match all reviewed production migration names', () => {
   assert.throws(() => validateState(state(), EXPECTED_MIGRATIONS.slice(0, -1), 'inspect'));
   assert.throws(() => validateState(state(), [...EXPECTED_MIGRATIONS.slice(1), EXPECTED_MIGRATIONS[0]], 'inspect'));
@@ -69,6 +81,8 @@ test('workflow is gated to manual main and protected production environment, no 
   assert.match(yml, /name: swimflow-neon-production/);
   assert.match(yml, /CREATE_RAIANEXO_FIRST_ADMIN/);
   assert.match(yml, /RESEND_RAIANEXO_FIRST_ADMIN/);
+  assert.match(yml, /RETARGET_RAIANEXO_PENDING_ADMIN/);
+  assert.match(yml, /scripts\\/retarget-production-pending-admin.cjs --retarget/);
   assert.match(yml, /RAIANEXO_RESEND_API_KEY/);
   assert.match(yml, /SWIMFLOW_PRODUCTION_DATABASE_URL/);
   assert.match(yml, /SWIMFLOW_PRODUCTION_DIRECT_URL/);
