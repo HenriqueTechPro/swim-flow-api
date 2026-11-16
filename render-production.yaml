@@ -1,0 +1,54 @@
+# Optional Render Blueprint: Swim Flow API PRODUCTION (not auto-applied by GitHub).
+# Importing this file creates a *billable* STARTER service. Review recurring
+# costs and explicitly approve in Render before importing or deploying.
+# Staging render.yaml is untouched. NO database is provisioned here.
+services:
+  - type: web
+    name: swim-flow-api-production
+    runtime: node
+    plan: starter
+    region: virginia
+    branch: main
+    autoDeployTrigger: off
+    healthCheckPath: /health
+    buildCommand: npm ci --include=dev && npm run prisma:generate && npm run build
+    startCommand: npm run start:prod
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: SWAGGER_ENABLED
+        value: "false"
+      - key: AUTH_COOKIE_SAME_SITE
+        value: none
+      - key: AUTH_SECURE_COOKIES
+        value: "true"
+      - key: AUTH_COOKIE_PATH
+        value: /api/auth
+      - key: AUTH_REFRESH_COOKIE_NAME
+        value: swim_flow_refresh_token
+      - key: JWT_ACCESS_TTL_SECONDS
+        value: "900"
+      - key: REFRESH_TOKEN_TTL_DAYS
+        value: "7"
+      - key: SWIMFLOW_LOCAL_PASSWORD_LOGIN_ENABLED
+        value: "false"
+      - key: SWIMFLOW_LOCAL_INVITES_ENABLED
+        value: "false"
+      - key: SWIMFLOW_FIRST_ADMIN_INVITE_ENABLED
+        value: "false"
+      - key: SWIMFLOW_PRIVATE_BLOB_ENABLED
+        value: "false"
+      - key: SWIMFLOW_PRIVATE_MEDIA_S3_ENABLED
+        value: "false"
+      - key: SWIMFLOW_R2_STORAGE_ENABLED
+        value: "false"
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: API_CORS_ORIGIN
+        sync: false
