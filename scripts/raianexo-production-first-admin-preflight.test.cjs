@@ -82,7 +82,7 @@ test('workflow is gated to manual main and protected production environment, no 
   assert.match(yml, /CREATE_RAIANEXO_FIRST_ADMIN/);
   assert.match(yml, /RESEND_RAIANEXO_FIRST_ADMIN/);
   assert.match(yml, /RETARGET_RAIANEXO_PENDING_ADMIN/);
-  assert.match(yml, /scripts\\/retarget-production-pending-admin.cjs --retarget/);
+  assert.ok(yml.includes('node scripts/retarget-production-pending-admin.cjs --retarget'));
   assert.match(yml, /RAIANEXO_RESEND_API_KEY/);
   assert.match(yml, /SWIMFLOW_PRODUCTION_DATABASE_URL/);
   assert.match(yml, /SWIMFLOW_PRODUCTION_DIRECT_URL/);
