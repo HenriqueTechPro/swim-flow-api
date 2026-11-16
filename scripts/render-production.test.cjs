@@ -14,9 +14,9 @@ function envSection(key) {
     ? undefined : blueprint.indexOf('      - key:', pos + 8));
 }
 
-test('production is a separate billable, manual-only service; staging remains separate', () => {
+test('production is a separate free, manual-only service; staging remains separate', () => {
   assert.match(blueprint, /^    name: swim-flow-api-production$/m);
-  assert.match(blueprint, /^    plan: starter$/m);
+  assert.match(blueprint, /^    plan: free$/m);
   assert.match(blueprint, /^    autoDeployTrigger: off$/m);
   assert.match(blueprint, /^    branch: main$/m);
   assert.match(blueprint, /^    healthCheckPath: \/health$/m);
