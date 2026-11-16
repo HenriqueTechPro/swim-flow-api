@@ -1,0 +1,127 @@
+# Manual-only first administrator bootstrap for the independent Neon PRODUCTION database.
+# This workflow never runs a production write on push/PR. PR runs offline tests only.
+# Reuses the previously reviewed GitHub Environment swimflow-neon-production.
+name: RaiaNexo production — first admin invitation (manual)
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/raianexo-production-first-admin.yml
+      - scripts/raianexo-production-first-admin-preflight.cjs
+      - scripts/raianexo-production-first-admin-preflight.test.cjs
+      - docs/RAIANEXO_FIRST_ADMIN_PRODUCTION.md
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: 'inspect = read-only; apply = first invite; resend = pending invite only'
+        required: true
+        default: inspect
+        type: choice
+        options:
+          - inspect
+          - apply
+          - resend
+      confirmation:
+        description: 'For inspect: INSPECT_RAIANEXO_PRODUCTION; for apply: CREATE_RAIANEXO_FIRST_ADMIN; for resend: RESEND_RAIANEXO_FIRST_ADMIN'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: raianexo-first-admin-production
+  cancel-in-progress: false
+
+jobs:
+  offline-safety:
+    name: Verify bootstrap guards without secrets or production access
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate guard and production script offline
+        run: |
+          node --test scripts/raianexo-production-first-admin-preflight.test.cjs
+          node --test scripts/bootstrap-production-first-admin.test.cjs
+
+  first-admin:
+    name: Review production status and optionally invite first administrator
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' &&
+          github.repository == 'HenriqueTechPro/swim-flow-api' &&
+          github.ref == 'refs/heads/main' }}
+    needs: offline-safety
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: swimflow-neon-production
+    env:
+      NODE_ENV: test
+      NEON_PROJECT_ID: round-bonus-30138797
+      NEON_BRANCH_ID: br-tiny-mud-bb79ybtx
+      SWIMFLOW_PRODUCTION_BOOTSTRAP_ADMIN_APPROVAL: BOOTSTRAP_SWIM_FLOW_PRODUCTION_ADMIN_ONCE
+      OPERATION: ${{ inputs.operation }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+    steps:
+      - name: Validate exact repository, branch, action and typed confirmation
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = "HenriqueTechPro/swim-flow-api"
+          test "$GITHUB_REF" = "refs/heads/main"
+          case "$OPERATION" in
+            inspect) expected="INSPECT_RAIANEXO_PRODUCTION" ;;
+            apply) expected="CREATE_RAIANEXO_FIRST_ADMIN" ;;
+            resend) expected="RESEND_RAIANEXO_FIRST_ADMIN" ;;
+            *) echo "Unknown first-admin operation"; exit 1 ;;
+          esac
+          if [ "$CONFIRMATION" != "$expected" ]; then
+            echo "Typed confirmation does not match the selected operation"
+            exit 1
+          fi
+      - name: Checkout reviewed main (no persisted Git credentials)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies WITHOUT production credentials
+        run: npm ci
+      - name: Generate Prisma client using OFFLINE placeholder URLs
+        env:
+          DATABASE_URL: postgresql://offline:offline@localhost:5432/swimflow?schema=public
+          DIRECT_URL: postgresql://offline:offline@localhost:5432/swimflow?schema=public
+        run: |
+          npm run prisma:validate
+          npm run prisma:generate
+      - name: Read-only production target and administrator preflight
+        env:
+          DATABASE_URL: ${{ secrets.SWIMFLOW_PRODUCTION_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.SWIMFLOW_PRODUCTION_DIRECT_URL }}
+        run: node scripts/raianexo-production-first-admin-preflight.cjs "$OPERATION"
+      - name: Send guarded first administrator invitation (ONLY manual apply/resend)
+        if: ${{ inputs.operation == 'apply' || inputs.operation == 'resend' }}
+        env:
+          DATABASE_URL: ${{ secrets.SWIMFLOW_PRODUCTION_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.SWIMFLOW_PRODUCTION_DIRECT_URL }}
+          SWIMFLOW_FIRST_ADMIN_INVITE_ENABLED: 'true'
+          SWIMFLOW_LOCAL_INVITES_ENABLED: 'true'
+          SWIMFLOW_BOOTSTRAP_ADMIN_EMAIL: ${{ secrets.RAIANEXO_ADMIN_EMAIL }}
+          SWIMFLOW_BOOTSTRAP_ADMIN_NAME: ${{ secrets.RAIANEXO_ADMIN_FULL_NAME }}
+          RESEND_API_KEY: ${{ secrets.RAIANEXO_RESEND_API_KEY }}
+          RESEND_FROM_EMAIL: ${{ secrets.RAIANEXO_RESEND_FROM_EMAIL }}
+          SWIMFLOW_AUTH_APP_ORIGIN: https://swim-flow-dash.vercel.app
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$OPERATION" in
+            apply) node scripts/bootstrap-production-first-admin.cjs --apply ;;
+            resend) node scripts/bootstrap-production-first-admin.cjs --resend ;;
+            *) echo 'Mutation refused: invalid operation'; exit 1 ;;
+          esac
