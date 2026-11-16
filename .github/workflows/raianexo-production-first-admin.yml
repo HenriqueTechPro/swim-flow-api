@@ -30,7 +30,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: raianexo-first-admin-production
+  # Recovery for an orphaned GitHub Actions queued run (#43912655104): 0 jobs,
+  # no pending deployment approval, GitHub cancel fails. Preserve serialization
+  # for new runs; the existing bootstrap's transactional empty-DB guard also
+  # prevents duplicate first-admin creation if the orphan ever resumes.
+  group: raianexo-first-admin-production-recovery-20261116
   cancel-in-progress: false
 
 jobs:
